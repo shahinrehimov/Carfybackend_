@@ -1,16 +1,28 @@
-name: 📂 Deploy using SSH
-uses: appleboy/ssh-action@master
-with:
-  host: ${{ secrets.SSH_HOST }}
-  username: ${{ secrets.SSH_USERNAME }}
-  password: ${{ secrets.SSH_PASSWORD }}
-  port: 222
-  script: |
-    cd /usr/www/users/kvadrv/projects/carfy
-    if [ ! -d ".git" ]; then
-      echo "Repo not found, cloning fresh..."
-      git clone --depth=1 -b main https://github.com/gurularavel/carfy_backend.git .
-    else
-      echo "Repo exists, pulling latest changes..."
-      git pull origin main
-    fi
+name: Deploy to Server
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: 📂 Deploy using SSH
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USERNAME }}
+          password: ${{ secrets.SSH_PASSWORD }}
+          port: 222
+          script: |
+            cd /usr/www/users/kvadrv/projects/carfy
+            if [ ! -d ".git" ]; then
+              echo "Repo not found, cloning fresh..."
+              git clone --depth=1 -b main https://github.com/gurularavel/carfy_backend.git .
+            else
+              echo "Repo exists, pulling latest changes..."
+              git pull origin main
+            fi
