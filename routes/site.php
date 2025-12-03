@@ -2,6 +2,11 @@
 
 use Illuminate\Support\Facades\Route;
 
-Route::middleware(['general_access:site'])->prefix('site')->group(static function () {
-    require 'app_core.php';
-});
+/** @var Closure $coreAppRoutes */
+
+Route::prefix('site')
+    ->middleware(['general_access:site'])
+    ->group(function () use ($coreAppRoutes) {
+        $coreAppRoutes(); // shared core
+        //require __DIR__ . '/site_extra.php';
+    });

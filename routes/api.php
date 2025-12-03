@@ -7,6 +7,9 @@ Route::get('versions', static function () {
     return LangService::instance()->getVersionsJson();
 });
 
-require_once 'control.php';
-require_once 'app.php';
-require_once 'site.php';
+$coreAppRoutes = require __DIR__ . '/app_core.php';
+
+require __DIR__ . '/control.php';
+
+require __DIR__ . '/app.php';
+require __DIR__ . '/site.php';
