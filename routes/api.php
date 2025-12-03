@@ -9,3 +9,4 @@ Route::get('versions', static function () {
 
 require_once 'control.php';
 require_once 'app.php';
+require_once 'site.php';

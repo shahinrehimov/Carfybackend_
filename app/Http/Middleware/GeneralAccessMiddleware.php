@@ -28,6 +28,7 @@ class GeneralAccessMiddleware
 
         $langGroup = match($name) {
             'admin' => TranslationGroupEnum::ADMIN,
+            'site' => TranslationGroupEnum::SITE,
             'app' => TranslationGroupEnum::APP,
             default => TranslationGroupEnum::ALL,
         };
