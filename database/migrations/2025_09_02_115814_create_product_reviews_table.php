@@ -19,7 +19,8 @@ return new class extends Migration
             $table->foreignIdFor(Product::class)->constrained()->cascadeOnDelete();
             $table->foreignIdFor(User::class)->nullable()->constrained()->nullOnDelete();
             $table->unsignedTinyInteger('rating');
-            $table->string('full_name', 500);
+            $table->string('name', 150);
+            $table->string('surname', 150);
             $table->string('email', 150);
             $table->string('review', 5000);
             $table->dateTime('approved_at')->nullable();

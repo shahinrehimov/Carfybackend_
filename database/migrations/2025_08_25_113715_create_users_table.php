@@ -13,7 +13,8 @@ return new class extends Migration
     {
         Schema::create('users', static function (Blueprint $table) {
             $table->id();
-            $table->string('full_name', 500);
+            $table->string('name', 150);
+            $table->string('surname', 150);
             $table->date('birth_date');
             $table->string('gender')->comment('GenderEnum');
             $table->string('email', 150);

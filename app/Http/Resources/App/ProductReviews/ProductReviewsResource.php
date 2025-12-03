@@ -8,7 +8,8 @@ use Illuminate\Http\Resources\Json\JsonResource;
 /**
  * @property mixed $id
  * @property mixed $rating
- * @property mixed $full_name
+ * @property mixed $name
+ * @property mixed $surname
  * @property mixed $review
  * @property mixed $created_at
  */
@@ -26,7 +27,8 @@ class ProductReviewsResource extends JsonResource
         return [
             'id' => $this->id,
             'rating' => $this->rating,
-            'full_name' => $this->full_name,
+            'name' => $this->name,
+            'surname' => $this->surname,
             'review' => $this->review,
             'date' => $this->created_at?->format('d.m.Y'),
         ];

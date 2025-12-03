@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Casts\Users\FullNameCast;
 use App\Notifications\CustomChangePasswordNotificationOTP;
 use App\Notifications\CustomVerifyEmailNotification;
 use App\Notifications\CustomVerifyEmailNotificationOTP;
@@ -25,15 +26,20 @@ use Laravel\Sanctum\HasApiTokens;
  * @property mixed $password
  * @property mixed $id
  * @property mixed $email
+ * @property mixed $name
+ * @property mixed $surname
  * @property mixed $email_verified_at
  * @property mixed $google_id
+ * @property mixed $email_verified
+ * @property mixed $created_at
  */
 class User extends Authenticatable implements MustVerifyEmail
 {
     use HasApiTokens, Notifiable, SoftDeletes, ActionBy, ActionUser, CascadeSoftDeletes;
 
     protected $fillable = [
-        'full_name',
+        'name',
+        'surname',
         'email',
         'gender',
         'birth_date',
@@ -50,6 +56,7 @@ class User extends Authenticatable implements MustVerifyEmail
         'password' => 'hashed',
         'birth_date' => 'date',
         'email_verified_at' => 'datetime',
+        'full_name' => FullNameCast::class,
     ];
 
     protected $hidden = [

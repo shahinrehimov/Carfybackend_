@@ -11,7 +11,8 @@ use Illuminate\Support\Str;
  * @property mixed $id
  * @property mixed $token
  * @property mixed $gender
- * @property mixed $full_name
+ * @property mixed $name
+ * @property mixed $surname
  * @property mixed $email
  * @property mixed $birth_date
  */
@@ -27,7 +28,8 @@ class UserResource extends JsonResource
         return [
             'id' => $this->id,
             'email' => $this->email,
-            'full_name' => $this->full_name,
+            'name' => $this->name,
+            'surname' => $this->surname,
             'gender' => $this->gender,
             'gender_label' => LangService::instance()
                 ->setDefault(Str::title($this->gender))

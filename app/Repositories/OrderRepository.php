@@ -35,8 +35,9 @@ class OrderRepository
             ->when($validated['user'] ?? null, function ($q) use ($validated) {
                 $user = $validated['user'];
                 $q->whereHas('user', function ($q) use ($user) {
-                    $q->where('full_name', 'like', '%' . $user . '%');
-                    $q->orWhere('email', 'like', '%' . $user . '%');
+                    $q->where('name', 'ILIKE', '%' . $user . '%');
+                    $q->orWhere('surname', 'ILIKE', '%' . $user . '%');
+                    $q->orWhere('email', 'ILIKE', '%' . $user . '%');
                 });
             })
             ->when($validated['search'] ?? null, function ($q) use ($validated) {

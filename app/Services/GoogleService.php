@@ -56,7 +56,8 @@ class GoogleService
     {
         if (!$user) {
             return UserService::instance()->registerUser([
-                'full_name' => $gUser->getName() ?? Str::before($gUser->getEmail(), '@'),
+                'name' => $gUser->getName() ?? Str::before($gUser->getEmail(), '@'),
+                'surname' => $gUser->getName() ?? Str::before($gUser->getEmail(), '@'), // TODO:: get surname
                 'email' => $gUser->getEmail(),
                 'email_verified_at' => Carbon::now(),
                 'email_verified' => 'yes',

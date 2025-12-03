@@ -22,7 +22,8 @@ class ProductReview extends Model
         'product_variant_id',
         'user_id', // nullable
         'rating',
-        'full_name', // 500
+        'name', // 150
+        'surname', // 150
         'email', // 150
         'review', // 5000
         'approved_at', // nullable

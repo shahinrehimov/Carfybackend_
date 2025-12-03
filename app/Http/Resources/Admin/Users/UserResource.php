@@ -15,6 +15,8 @@ use Illuminate\Support\Str;
  * @property mixed $birth_date
  * @property mixed $email_verified_at
  * @property mixed $created_at
+ * @property mixed $name
+ * @property mixed $surname
  * @method isActive()
  * @method isEmailVerified()
  */
@@ -32,6 +34,8 @@ class UserResource extends JsonResource
         return [
             'id' => $this->id,
             'email' => $this->email,
+            'name' => $this->name,
+            'surname' => $this->surname,
             'full_name' => $this->full_name,
             'gender' => $this->gender,
             'gender_label' => LangService::instance()

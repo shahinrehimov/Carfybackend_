@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enum\UserOtpProvidersEnum;
 use App\Enum\UserOtpTypesEnum;
 use App\Models\Guest;
 use App\Models\ThirdPartyProviderLoginToken;
@@ -190,6 +191,7 @@ class UserService
         $user->otpCodes()->create([
             'code' => $otp,
             'type' => $type->value,
+            'provider' => UserOtpProvidersEnum::EMAIL->value, // TODO:: email or sms
         ]);
 
         return $otp;

@@ -25,7 +25,8 @@ class ProductReviewStoreRequest extends FormRequest
     {
         return [
             'rating' => ['required', 'integer', 'min:1', 'max:5'],
-            'full_name' => ['required', 'string', 'max:500'],
+            'name' => ['required', 'string', 'max:150'],
+            'surname' => ['required', 'string', 'max:150'],
             'email' => ['required', 'email', 'max:150'],
             'review' => ['required', 'string', 'max:5000'],
         ];

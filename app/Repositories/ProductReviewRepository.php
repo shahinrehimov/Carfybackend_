@@ -52,7 +52,8 @@ class ProductReviewRepository
             })
             ->when($validated['user'] ?? null, function (Builder $builder) use ($validated) {
                 $builder->where(function (Builder $builder) use ($validated) {
-                    $builder->where('full_name', 'ILIKE', '%' . $validated['user'] . '%');
+                    $builder->where('name', 'ILIKE', '%' . $validated['user'] . '%');
+                    $builder->orWhere('surname', 'ILIKE', '%' . $validated['user'] . '%');
                     $builder->orWhere('email', 'ILIKE', '%' . $validated['user'] . '%');
                 });
             })

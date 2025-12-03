@@ -28,7 +28,8 @@ class UpdateProfileRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'full_name' => ['required', 'string', 'max:500'],
+            'name' => ['required', 'string', 'max:150'],
+            'surname' => ['required', 'string', 'max:150'],
             //'email' => ['required', 'email', 'max:150'],
             'gender' => ['required', 'string', Rule::in(GenderEnum::cases())],
             'birth_date' => ['required', 'date', 'before:today'],

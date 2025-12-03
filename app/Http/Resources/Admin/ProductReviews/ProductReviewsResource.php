@@ -11,7 +11,8 @@ use Illuminate\Http\Resources\Json\JsonResource;
 /**
  * @property mixed $id
  * @property mixed $rating
- * @property mixed $full_name
+ * @property mixed $name
+ * @property mixed $surname
  * @property mixed $review
  * @property mixed $created_at
  * @property mixed $approved_at
@@ -33,7 +34,8 @@ class ProductReviewsResource extends JsonResource
             'product_variant' => ProductVariantsListResource::make($this->whenLoaded('productVariant')),
             'user' => UsersListResource::make($this->whenLoaded('user')),
             'rating' => $this->rating,
-            'full_name' => $this->full_name,
+            'name' => $this->name,
+            'surname' => $this->surname,
             'review' => $this->review,
             'created_at' => $this->created_at?->toDateTimeString(),
             'is_approved' => $this->isApproved(),

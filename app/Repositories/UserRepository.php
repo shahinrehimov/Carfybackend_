@@ -19,7 +19,8 @@ class UserRepository
             ->when($validated['search'] ?? null, function (Builder $builder) use ($validated) {
                 $builder->where(function (Builder $builder) use ($validated) {
                     $builder->where(function (Builder $query) use ($validated) {
-                        $query->where('full_name', 'ILIKE', '%' . $validated['search'] . '%');
+                        $query->where('name', 'ILIKE', '%' . $validated['search'] . '%');
+                        $query->orWhere('surname', 'ILIKE', '%' . $validated['search'] . '%');
                         $query->orWhere('email', 'ILIKE', '%' . $validated['search'] . '%');
                     });
                 });
@@ -32,7 +33,7 @@ class UserRepository
     {
         return User::query()
             ->active()
-            ->orderBy('full_name')
+            ->orderBy('name')
             ->get();
     }
 
