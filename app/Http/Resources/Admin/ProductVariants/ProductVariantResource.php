@@ -1,0 +1,73 @@
+<?php
+
+namespace App\Http\Resources\Admin\ProductVariants;
+
+use App\Http\Resources\Admin\Groups\GroupsListResource;
+use App\Http\Resources\Admin\Products\ProductsListResource;
+use Illuminate\Http\Request;
+use Illuminate\Http\Resources\Json\JsonResource;
+
+/**
+ * @property mixed $id
+ * @property mixed $translations
+ * @property mixed $image
+ * @property mixed $uuid
+ * @property mixed $sort
+ * @property mixed $slug
+ * @property mixed $main_image
+ * @property mixed $hover_image
+ * @property mixed $images
+ * @property mixed $brand_id
+ * @property mixed $stock
+ * @property mixed $price
+ * @property mixed $price_final
+ * @property mixed $discount_type
+ * @property mixed $discount
+ * @property mixed $discount_start_at
+ * @property mixed $discount_end_at
+ * @method isActive()
+ * @method isSet()
+ * @method isDefault()
+ */
+class ProductVariantResource extends JsonResource
+{
+    /**
+     * Transform the resource into an array.
+     *
+     * @param Request $request
+     * @return array
+     */
+
+    public function toArray(Request $request): array
+    {
+        return [
+            'id' => $this->id,
+            'uuid' => $this->uuid,
+            'slug' => $this->slug,
+            'main_image' => $this->whenLoaded('media', function () {
+                return $this->main_image;
+            }),
+            'hover_image' => $this->whenLoaded('media', function () {
+                return $this->hover_image;
+            }),
+            'images' => $this->whenLoaded('media', function () {
+                return $this->images;
+            }),
+            'is_set' => $this->isSet(),
+            'sets' => ProductVariantsListResource::collection($this->whenLoaded('sets')),
+            'groups' => GroupsListResource::collection($this->whenLoaded('groups')),
+            'options' => ProductVariantOptionsResource::collection($this->whenLoaded('options')),
+            'stock' => $this->stock,
+            'price' => $this->price,
+            'price_final' => $this->price_final,
+            'discount_type' => $this->discount_type,
+            'discount' => $this->discount,
+            'discount_start_at' => $this->discount_start_at?->toDatetimeString(),
+            'discount_end_at' => $this->discount_end_at?->toDatetimeString(),
+            'translations' => $this->translations,
+            'is_default' => $this->isDefault(),
+            'is_active' => $this->isActive(),
+            'product' => ProductsListResource::make($this->whenLoaded('product')),
+        ];
+    }
+}

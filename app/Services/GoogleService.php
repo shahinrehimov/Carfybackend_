@@ -1,0 +1,84 @@
+<?php
+
+namespace App\Services;
+
+
+use App\Models\User;
+use Carbon\Carbon;
+use Illuminate\Support\Facades\Request;
+use Illuminate\Support\Str;
+use Laravel\Socialite\Facades\Socialite;
+use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
+
+class GoogleService
+{
+    private static ?GoogleService $instance = null;
+    private ?string $name = null;
+
+    private function __construct()
+    {
+
+    }
+
+    public static function instance(): GoogleService
+    {
+        if (self::$instance === null) {
+            self::$instance = new self();
+        }
+
+        return self::$instance;
+    }
+
+    public function getLoginUrl(): string
+    {
+        return Socialite::driver('google')
+            ->stateless()
+            ->redirect()
+            ->getTargetUrl();
+    }
+
+    public function getCallbackUser(Request $request)
+    {
+        $gUser = Socialite::driver('google')->stateless()->user();
+
+        if (empty($gUser->getEmail())) {
+            throw new AccessDeniedHttpException(
+                LangService::instance()
+                    ->setDefault('Unable to retrieve email from Google account!')
+                    ->getLang('unable_to_retrieve_email_from_google_account')
+            );
+        }
+
+        return $gUser;
+    }
+
+    public function updateOrCreateUser(?User $user, $gUser): User
+    {
+        if (!$user) {
+            return UserService::instance()->registerUser([
+                'full_name' => $gUser->getName() ?? Str::before($gUser->getEmail(), '@'),
+                'email' => $gUser->getEmail(),
+                'email_verified_at' => Carbon::now(),
+                'email_verified' => 'yes',
+                'google_id' => $gUser->getId(),
+                'google_avatar' => $gUser->getAvatar(),
+            ], false);
+        }
+
+        $data = [];
+
+        if (!$user->isGoogleUser()) {
+            $data['google_id'] = $gUser->getId();
+            $data['google_avatar'] = $gUser->getAvatar();
+        }
+
+        if (!$user->isEmailVerified()) {
+            $data['email_verified_at'] = Carbon::now();
+            $data['email_verified'] = 'yes';
+        }
+
+        $user->update($data);
+
+        return $user;
+    }
+}

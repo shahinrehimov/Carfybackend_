@@ -1,0 +1,548 @@
+<?php
+
+namespace App\Services;
+
+use App\Models\Basket;
+use App\Models\Guest;
+use App\Models\ProductVariant;
+use App\Models\User;
+use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Support\Facades\DB;
+use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
+
+class BasketService
+{
+    private static ?BasketService $instance = null;
+
+    private function __construct()
+    {
+
+    }
+
+    public static function instance(): BasketService
+    {
+        if (self::$instance === null) {
+            self::$instance = new self();
+        }
+
+        return self::$instance;
+    }
+
+    public function add(ProductVariant $productVariant, int $quantity, array $sets = []): bool
+    {
+        $productVariant = ProductService::instance()->setProductVariant($productVariant)->getActiveProductVariant();
+
+        /*if ($quantity > $productVariant->stock) {
+            LoggerService::instance()->log('Not enough stock for productVariant ID: ' . $productVariant->id . ', requested quantity: ' . $quantity . ', available stock: ' . $productVariant->stock);
+
+            throw new BadRequestHttpException(
+                LangService::instance()
+                    ->setDefault('Cannot add this product to the basket, not enough stock!')
+                    ->getLang('basket_not_enough_stock_for_product')
+            );
+        }*/
+
+        ProductService::instance()->setProductVariant($productVariant)->loadVariantRelationsForSite();
+
+        $relations = ProductService::instance()->getVariantRelationsForSite('', true);
+
+        $productVariant->loadMissing([
+            'product' => function ($builder) use ($relations) {
+                $builder->with([
+                    'sets' => function ($query) use ($relations) {
+                        $query->active();
+                        $query->when(count($relations['with']) > 0, fn($q) => $q->with($relations['with']));
+                        $query->when(count($relations['exists']) > 0, fn($q) => $q->withExists($relations['exists']));
+                        $query->when(count($relations['counts']) > 0, fn($q) => $q->withCount($relations['counts']));
+                    }
+                ]);
+            }
+        ]);
+
+        [$productVariant, $sets] = $this->checkSets($productVariant, $quantity, $sets);
+
+        $basket = DB::transaction(function () use ($productVariant, $quantity, $sets) {
+            return UserService::instance()->getUserOrGuest()
+                ->baskets()
+                ->updateOrCreate(
+                    [
+                        'product_variant_id' => $productVariant->id,
+                        'product_id' => $productVariant->product_id,
+                    ],
+                    [
+                        'quantity' => $quantity,
+                        'is_set' => $productVariant->isSet(),
+                        'sets' => $productVariant->isSet() ? $sets : null,
+                    ]
+                );
+        });
+
+        $this->calculateBasketQuantity($productVariant, $quantity, $sets);
+
+        if (!$basket->wasRecentlyCreated) {
+            return false;
+        }
+
+        return true;
+    }
+
+    public function increment(ProductVariant $productVariant): int
+    {
+        $productVariant = ProductService::instance()->setProductVariant($productVariant)->getActiveProductVariant();
+
+        $basket = UserService::instance()->getUserOrGuest()
+            ->baskets()
+            ->where('product_variant_id', $productVariant->id)
+            ->first();
+
+        if (!$basket) {
+            throw new BadRequestHttpException(
+                LangService::instance()
+                    ->setDefault('Product is not in the basket!')
+                    ->getLang('basket_product_not_in_basket')
+            );
+        }
+
+        /*if ($basket->quantity >= $productVariant->stock) {
+            throw new BadRequestHttpException(
+                LangService::instance()
+                    ->setDefault('Cannot add more of this product to the basket, not enough stock!')
+                    ->getLang('basket_not_enough_stock_for_product')
+            );
+        }*/
+
+        $this->checkSets($productVariant, $basket->quantity + 1, $basket->sets ?? []);
+
+        DB::transaction(function () use ($basket) {
+            $basket->increment('quantity');
+        });
+
+        return $basket->quantity;
+    }
+
+    public function decrement(ProductVariant $productVariant): int
+    {
+        $productVariantId = ProductService::instance()->setProductVariant($productVariant)->getActiveProductVariant()->id;
+
+        $basket = UserService::instance()->getUserOrGuest()
+            ->baskets()
+            ->where('product_variant_id', $productVariantId)
+            ->first();
+
+        if (!$basket) {
+            throw new BadRequestHttpException(
+                LangService::instance()
+                    ->setDefault('Product is not in the basket!')
+                    ->getLang('basket_product_not_in_basket')
+            );
+        }
+
+        if ($basket->quantity > 1) {
+            /*if ($basket->quantity >= $productVariant->stock) {
+                throw new BadRequestHttpException(
+                    LangService::instance()
+                        ->setDefault('Cannot add more of this product to the basket, not enough stock!')
+                        ->getLang('basket_not_enough_stock_for_product')
+                );
+            }*/
+
+            $this->checkSets($productVariant, $basket->quantity - 1, $basket->sets ?? []);
+        }
+
+        return DB::transaction(function () use ($basket) {
+            if ($basket->quantity <= 1) {
+                $basket->delete();
+
+                return 0;
+            }
+
+            $basket->decrement('quantity');
+
+            return $basket->quantity;
+        });
+    }
+
+    public function incrementSetItem(ProductVariant $productVariant, ProductVariant $setItem): int
+    {
+        [$basket, $sets, $selectedIndex] = $this->checkSetForQuantityChange($productVariant, $setItem);
+
+        if ($selectedIndex === null) {
+            $newQuantity = 1;
+
+            $sets[] = [
+                'id' => $setItem->id,
+                'quantity' => $newQuantity,
+            ];
+        } else {
+            $newQuantity = $sets[$selectedIndex]['quantity'] + 1;
+
+            $sets[$selectedIndex]['quantity'] = $newQuantity;
+        }
+
+        /*if (($newQuantity * $basket->quantity) > $setItem->stock) {
+            $setItem->loadMissing([
+                'product',
+                'product.translatable',
+            ]);
+
+            throw new BadRequestHttpException(
+                LangService::instance()
+                    ->setDefault('Cannot add more of this product set item to the basket, not enough stock: @product. Stock: @stock. Your quantity: @quantity')
+                    ->getLang('basket_not_enough_stock_for_product_set', [
+                        '@product' => $setItem->product->getLang('title'),
+                        '@stock' => $setItem->stock,
+                        '@quantity' => ($newQuantity * $basket->quantity),
+                    ])
+            );
+        }*/
+
+        $basket->update([
+            'sets' => $sets,
+        ]);
+
+        return $newQuantity;
+    }
+
+    public function decrementSetItem(ProductVariant $productVariant, ProductVariant $setItem): int
+    {
+        [$basket, $sets, $selectedIndex] = $this->checkSetForQuantityChange($productVariant, $setItem);
+
+        if ($selectedIndex === null) {
+            $newQuantity = 0;
+
+            $sets[] = [
+                'id' => $setItem->id,
+                'quantity' => $newQuantity,
+            ];
+        } else {
+            $newQuantity = $sets[$selectedIndex]['quantity'] - 1;
+
+            $sets[$selectedIndex]['quantity'] = $newQuantity;
+        }
+
+        if ($newQuantity < 0) {
+            $setItem->loadMissing([
+                'product',
+                'product.translatable',
+            ]);
+
+            throw new BadRequestHttpException(
+                LangService::instance()
+                    ->setDefault('Cannot have negative quantity of product set item in the basket: @product')
+                    ->getLang('basket_negative_quantity_for_product_set', [
+                        '@product' => $setItem->product->getLang('title'),
+                    ])
+            );
+        }
+
+        /*if (($newQuantity * $basket->quantity) > $setItem->stock) {
+            $setItem->loadMissing([
+                'product',
+                'product.translatable',
+            ]);
+
+            throw new BadRequestHttpException(
+                LangService::instance()
+                    ->setDefault('Cannot add more of this product set item to the basket, not enough stock: @product. Stock: @stock. Your quantity: @quantity')
+                    ->getLang('basket_not_enough_stock_for_product_set', [
+                        '@product' => $setItem->product->getLang('title'),
+                        '@stock' => $setItem->stock,
+                        '@quantity' => ($newQuantity * $basket->quantity),
+                    ])
+            );
+        }*/
+
+        $basket->update([
+            'sets' => $sets,
+        ]);
+
+        return $newQuantity;
+    }
+
+    public function removeSetItem(ProductVariant $productVariant, ProductVariant $setItem): bool
+    {
+        [$basket, $sets, $selectedIndex] = $this->checkSetForQuantityChange($productVariant, $setItem);
+
+        if ($selectedIndex === null) {
+            return false;
+        }
+
+        $sets = array_filter($sets, fn($set) => $set['id'] !== $setItem->id);
+
+        $basket->update([
+            'sets' => array_values($sets),
+        ]);
+
+        return true;
+    }
+
+    private function checkSetForQuantityChange(ProductVariant $productVariant, ProductVariant $setItem): array
+    {
+        /** @var Basket $basket */
+        $basket = UserService::instance()->getUserOrGuest()
+            ->baskets()
+            ->where('product_variant_id', $productVariant->id)
+            ->first();
+
+        if (!$basket) {
+            throw new BadRequestHttpException(
+                LangService::instance()
+                    ->setDefault('Product is not in the basket!')
+                    ->getLang('basket_product_not_in_basket')
+            );
+        }
+
+        if (!$basket->isSet()) {
+            throw new BadRequestHttpException(
+                LangService::instance()
+                    ->setDefault('Basket is not a set!')
+                    ->getLang('basket_not_a_set')
+            );
+        }
+
+        ProductService::instance()->checkSetItem($productVariant, $setItem);
+
+        $sets = $basket->sets ?? [];
+
+        if (count($sets) === 0) {
+            $productVariant->loadMissing([
+                'sets' => function ($builder) {
+                    $builder->active();
+                    $builder->with([
+                        'product',
+                        'product.translatable',
+                    ]);
+                }
+            ]);
+
+            foreach ($productVariant->sets as $set) {
+                $sets[] = [
+                    'id' => $set->id,
+                    'quantity' => $set->pivot->quantity,
+                ];
+            }
+        }
+
+        $selectedIndex = null;
+        foreach ($sets as $index => $set) {
+            if ($set['id'] === $setItem->id) {
+                $selectedIndex = $index;
+                break;
+            }
+        }
+
+        return [$basket, $sets, $selectedIndex];
+    }
+
+    public function remove(ProductVariant $productVariant): bool
+    {
+        $productVariantId = ProductService::instance()->setProductVariant($productVariant)->getActiveProductVariant()->id;
+
+        return DB::transaction(function () use ($productVariantId) {
+            $basket = UserService::instance()->getUserOrGuest()
+                ->baskets()
+                ->where('product_variant_id', $productVariantId)
+                ->first();
+
+            if (!$basket) {
+                return false;
+            }
+
+            $basket->delete();
+
+            return true;
+        });
+    }
+
+    public function load(array $validated): array
+    {
+        $relations = ProductService::instance()->getVariantRelationsForSite('', true);
+
+        $products = UserService::instance()->getUserOrGuest()
+            ->basketProductVariants()
+            ->active()
+            ->when(count($relations['with']) > 0, fn($q) => $q->with($relations['with']))
+            ->when(count($relations['exists']) > 0, fn($q) => $q->withExists($relations['exists']))
+            ->when(count($relations['counts']) > 0, fn($q) => $q->withCount($relations['counts']))
+            ->with([
+                'sets' => function ($query) use ($relations) {
+                    $query->active();
+                    $query->when(count($relations['with']) > 0, fn($q) => $q->with($relations['with']));
+                    $query->when(count($relations['exists']) > 0, fn($q) => $q->withExists($relations['exists']));
+                    $query->when(count($relations['counts']) > 0, fn($q) => $q->withCount($relations['counts']));
+                }
+            ])
+            ->get();
+
+        foreach ($products as $product) {
+            $this->calculateBasketQuantity($product);
+        }
+
+        return [$products, $this->calculateBasketData($products)];
+    }
+
+    public function calculateBasketData(?Collection $productVariants = null): array
+    {
+        if ($productVariants === null) {
+            $productVariants = $this->loadProducts();
+        }
+
+        $totalPriceInBasket = $productVariants->sum('price_in_basket');
+        $totalPriceFinalInBasket = $productVariants->sum('price_final_in_basket');
+
+        return [
+            'total_price_in_basket' => round($totalPriceInBasket, 2),
+            'total_price_final_in_basket' => round($totalPriceFinalInBasket, 2),
+            'total_discount_in_basket' => round($totalPriceInBasket - $totalPriceFinalInBasket, 2),
+            'shipping' => 0,
+            'total_basket_quantity' => $productVariants->sum('basket_quantity'),
+        ];
+    }
+
+    public function loadProducts(?User $user = null): Collection
+    {
+        if ($user === null) {
+            $user = UserService::instance()->getUserOrGuest();
+        }
+
+        $productVariants = $user
+            ->basketProductVariants()
+            ->active()
+            ->with([
+                'sets' => function ($query) {
+                    $query->active();
+                }
+            ])
+            ->get();
+
+        foreach ($productVariants as $productVariant) {
+            $this->calculateBasketQuantity($productVariant);
+        }
+
+        return $productVariants;
+    }
+
+    private function calculateBasketQuantity(ProductVariant $productVariant, ?int $quantity = null, ?array $sets = null): void
+    {
+        $productVariant->basket_quantity = $quantity === null ? ($productVariant->pivot->quantity ?? 0) : $quantity;
+
+        if ($productVariant->isSet()) {
+            if ($sets === null) {
+                $pivotSets = collect(json_decode($productVariant->pivot?->sets ?? [], true));
+            } else {
+                $pivotSets = collect($sets);
+            }
+
+            $productVariant->sets = $productVariant->sets->map(function ($set) use ($pivotSets) {
+                $set->basket_quantity = $pivotSets->where('id', $set->id)->first()['quantity'] ?? 0;
+
+                return $set;
+            });
+        }
+    }
+
+    public function moveToUser(User|Guest $fromUser, User|Guest $toUser): void
+    {
+        if ($fromUser->baskets()->exists()) {
+            $toUser->baskets()
+                ->update([
+                    'deletable_id' => $toUser->id,
+                    'deletable_type' => $toUser->getMorphClass(),
+                    'is_deleted' => DB::raw("CONCAT('deleted_', id)"),
+                    'deleted_at' => Carbon::now(),
+                ]);
+
+            $fromUser->baskets()
+                ->update([
+                    'userable_id' => $toUser->id,
+                    'userable_type' => $toUser->getMorphClass(),
+                ]);
+        }
+    }
+
+    private function checkSets(ProductVariant $productVariant, int $quantity, array $sets = []): array
+    {
+        if ($productVariant->isSet()) {
+            $productVariant->loadMissing([
+                'sets' => function ($builder) {
+                    $builder->active();
+                    $builder->with([
+                        'product',
+                        'product.translatable',
+                    ]);
+                }
+            ]);
+
+            $setsArrayCount = count($sets);
+
+            if ($setsArrayCount > $productVariant->sets->count()) {
+                LoggerService::instance()->log('Invalid product sets provided for productVariant ID: ' . $productVariant->id . ', provided sets count: ' . $setsArrayCount . ', available sets count: ' . $productVariant->sets->count(), [], true);
+
+                throw new BadRequestHttpException(
+                    LangService::instance()
+                        ->setDefault('Invalid product sets provided!')
+                        ->getLang('basket_invalid_product_sets_provided')
+                );
+            }
+
+            if ($setsArrayCount === 0) {
+                foreach ($productVariant->sets as $set) {
+                    $sets[] = [
+                        'id' => $set->id,
+                        'quantity' => $set->pivot->quantity,
+                    ];
+                }
+            }
+
+            foreach ($sets as $index => $set) {
+                $sets[$index]['id'] = (int)$set['id'];
+                $sets[$index]['quantity'] = (int)$set['quantity'];
+
+                /** @var ProductVariant $setItem */
+                $setItem = $productVariant->sets->where('id', $set['id'])->first();
+
+                if (!$setItem) {
+                    LoggerService::instance()->log('Invalid product set ID: ' . $set['id'] . ' provided for productVariant ID: ' . $productVariant->id, [], true);
+
+                    throw new BadRequestHttpException(
+                        LangService::instance()
+                            ->setDefault('Invalid product sets provided!')
+                            ->getLang('basket_invalid_product_sets_provided')
+                    );
+                }
+
+                /*if (($set['quantity'] * $quantity) > $setItem->stock) {
+                    LoggerService::instance()->log('Not enough stock for product set ID: ' . $setItem->id . ', requested quantity: ' . ($set['quantity'] * $quantity) . ', available stock: ' . $setItem->stock, [], true);
+
+                    throw new BadRequestHttpException(
+                        LangService::instance()
+                            ->setDefault('Cannot add this product set to the basket, not enough stock: @product. Stock: @stock. Your quantity: @quantity')
+                            ->getLang('basket_not_enough_stock_for_product_set', [
+                                '@product' => $setItem->product?->getLang('title') ?? '',
+                                '@stock' => $setItem->stock,
+                                '@quantity' => ($set['quantity'] * $quantity),
+                            ])
+                    );
+                }*/
+            }
+        }
+
+        return [$productVariant, $sets];
+    }
+
+    public function clearBasket(?User $user = null): void
+    {
+        if ($user === null) {
+            $user = UserService::instance()->getUserOrGuest();
+        }
+
+        $user->baskets()
+            ->update([
+                'deletable_id' => $user->id,
+                'deletable_type' => $user->getMorphClass(),
+                'is_deleted' => DB::raw("CONCAT('deleted_', id)"),
+                'deleted_at' => Carbon::now(),
+            ]);
+    }
+}
