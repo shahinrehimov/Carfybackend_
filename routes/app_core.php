@@ -6,7 +6,8 @@ use App\Http\Controllers\App\Auth\ForgotPasswordController;
 use App\Http\Controllers\App\Auth\GoogleController;
 use App\Http\Controllers\App\Auth\LoginController;
 use App\Http\Controllers\App\Auth\LogoutController;
-use App\Http\Controllers\App\Auth\RegisterController;
+use App\Http\Controllers\App\Auth\RegisterWithEmailController;
+use App\Http\Controllers\App\Auth\RegisterWithPhoneController;
 use App\Http\Controllers\App\BasketController;
 use App\Http\Controllers\App\CategoryController;
 use App\Http\Controllers\App\GroupController;
@@ -22,7 +23,7 @@ use App\Http\Controllers\App\SliderController;
 use App\Http\Controllers\App\WishlistController;
 use App\Http\Controllers\LocalTranslationsController;
 use App\Http\Middleware\CheckActiveUserMiddleware;
-use App\Http\Middleware\CheckEmailVerificationMiddleware;
+use App\Http\Middleware\CheckUserVerifiedMiddleware;
 use App\Http\Middleware\GuestMiddleware;
 use App\Http\Middleware\RouteLogMiddleware;
 use Illuminate\Support\Facades\Route;
@@ -97,14 +98,35 @@ return static function () {
                 Route::post('decrement/{productVariant}/set/{setItem}', [BasketController::class, 'decrementSetItem']);
             });
 
-            // auth
-            Route::post('login', [LoginController::class, 'login'])->withoutMiddleware(RouteLogMiddleware::class);
-            Route::post('third-party-login', [LoginController::class, 'loginFromThirdPartyProvider'])->withoutMiddleware(RouteLogMiddleware::class);
-            Route::post('register', [RegisterController::class, 'register'])->withoutMiddleware(RouteLogMiddleware::class);
-            Route::post('verify-otp/{userId}', [EmailVerificationController::class, 'verifyOtp']);
+            // register
+            Route::group(['prefix' => 'register'], static function () {
+                Route::group(['prefix' => 'with-email'], static function () {
+                    Route::get('check-email', [RegisterWithEmailController::class, 'checkEmail']);
+                    Route::post('submit', [RegisterWithEmailController::class, 'register'])->withoutMiddleware(RouteLogMiddleware::class);
+                    Route::post('verify-otp/{userUuid}', [EmailVerificationController::class, 'verifyOtp']);
+                });
+
+                Route::group(['prefix' => 'with-phone'], static function () {
+                    Route::post('send-otp', [RegisterWithPhoneController::class, 'sendOtp'])->middleware(['throttle:2,1']);
+                    Route::post('check-otp', [RegisterWithPhoneController::class, 'checkOtp']);
+                    Route::post('submit', [RegisterWithPhoneController::class, 'register']);
+                });
+            });
 
             // google auth
             Route::get('auth/google', [GoogleController::class, 'redirect']);
+
+            // login
+            Route::group(['prefix' => 'login'], static function () {
+                Route::post('with-email', [LoginController::class, 'loginWithEmail'])->withoutMiddleware(RouteLogMiddleware::class);
+
+                Route::group(['prefix' => 'with-phone'], static function () {
+                    Route::post('send-otp', [LoginController::class, 'sendPhoneOtp'])->middleware(['throttle:2,1']);
+                    Route::post('submit', [LoginController::class, 'loginWithPhone']);
+                });
+
+                Route::post('with-third-party', [LoginController::class, 'loginFromThirdPartyProvider'])->withoutMiddleware(RouteLogMiddleware::class);
+            });
 
             Route::post('forgot-password', [ForgotPasswordController::class, 'forgotPassword'])->middleware(['throttle:3,1']);
 
@@ -113,7 +135,7 @@ return static function () {
             Route::group([
                 'middleware' => [
                     'auth:user',
-                    CheckEmailVerificationMiddleware::class,
+                    CheckUserVerifiedMiddleware::class,
                     CheckActiveUserMiddleware::class,
                 ],
             ], static function () {
@@ -135,14 +157,14 @@ return static function () {
                 });
 
                 Route::post('send-verification-email', [EmailVerificationController::class, 'sendVerificationEmail'])
-                    ->withoutMiddleware(CheckEmailVerificationMiddleware::class)
+                    ->withoutMiddleware(CheckUserVerifiedMiddleware::class)
                     ->middleware(['throttle:3,1']);
 
                 Route::post('logout', [LogoutController::class, 'logout'])
-                    ->withoutMiddleware(CheckEmailVerificationMiddleware::class)
+                    ->withoutMiddleware(CheckUserVerifiedMiddleware::class)
                     ->withoutMiddleware(CheckActiveUserMiddleware::class);
                 Route::post('logout-all', [LogoutController::class, 'logoutAll'])
-                    ->withoutMiddleware(CheckEmailVerificationMiddleware::class)
+                    ->withoutMiddleware(CheckUserVerifiedMiddleware::class)
                     ->withoutMiddleware(CheckActiveUserMiddleware::class);
 
                 Route::group(['prefix' => 'orders'], static function () {

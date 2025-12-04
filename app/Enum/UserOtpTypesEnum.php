@@ -8,6 +8,7 @@ enum UserOtpTypesEnum: string
 {
     case REGISTER = 'register';
     case CHANGE_PASSWORD = 'change_password';
+    case LOGIN = 'login';
 
     public static function getList(): array
     {

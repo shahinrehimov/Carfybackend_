@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\App\Auth;
 
+use App\Enum\UserRegisterTypesEnum;
 use App\Models\User;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -24,7 +25,7 @@ class ForgotPasswordRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'email' => ['required', 'email', 'max:150', Rule::exists(User::class, 'email')->where('is_active', true)->whereNull('deleted_at')],
+            'email' => ['required', 'email', 'max:150', Rule::exists(User::class, 'email')->where('is_active', true)->where('register_type', UserRegisterTypesEnum::EMAIL->value)->whereNull('deleted_at')],
         ];
     }
 }

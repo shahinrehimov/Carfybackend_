@@ -4,7 +4,7 @@ namespace App\Http\Requests\App\Auth;
 
 use Illuminate\Foundation\Http\FormRequest;
 
-class LoginRequest extends FormRequest
+class SendPhoneOtpRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -22,9 +22,7 @@ class LoginRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'device_type' => ['required', 'string', 'in:android,ios,web'],
-            'email' => ['required', 'email', 'max:150'],
-            'password' => ['required'],
+            'phone' => ['required', 'string', 'size:12', 'regex:/^994\d{9}$/'],
         ];
     }
 }

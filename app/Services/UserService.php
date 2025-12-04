@@ -4,11 +4,14 @@ namespace App\Services;
 
 use App\Enum\UserOtpProvidersEnum;
 use App\Enum\UserOtpTypesEnum;
+use App\Enum\UserRegisterTypesEnum;
 use App\Models\Guest;
 use App\Models\ThirdPartyProviderLoginToken;
 use App\Models\User;
 use App\Models\UserOtpCode;
 use Carbon\Carbon;
+use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
@@ -58,6 +61,14 @@ class UserService
             }
         }
 
+        if ($user->register_type !== UserRegisterTypesEnum::EMAIL->value) {
+            throw new BadRequestHttpException(
+                LangService::instance()
+                    ->setDefault('Invalid register type')
+                    ->getLang('change_password_invalid_register_type')
+            );
+        }
+
         if (Hash::check($validated['password'], $user->password)) {
             throw new BadRequestHttpException(
                 LangService::instance()
@@ -93,13 +104,55 @@ class UserService
         });
     }
 
-    public function registerUser(array $validated, bool $checkEmail = true): User
+    public function registerWithEmail(FormRequest $request): User
+    {
+        $validated = $request->validated();
+
+        $validated['register_type'] = UserRegisterTypesEnum::EMAIL->value;
+
+        $user = $this->registerUser($validated);
+
+        UserService::instance()->sendEmailVerificationNotification($user);
+
+        return $user;
+    }
+
+    public function registerWithPhone(FormRequest $request): User
+    {
+        $validated = $request->validated();
+
+        $this->checkOtpConfirmationToken($validated['phone_confirmation_token'], UserOtpTypesEnum::REGISTER, $validated['otp'], null, UserOtpProvidersEnum::SMS, $validated['phone']);
+
+        $validated['register_type'] = UserRegisterTypesEnum::PHONE->value;
+        $validated['phone_unique_key'] = md5($validated['phone']);
+        $validated['phone_verified_at'] = Carbon::now();
+
+        $_this = $this;
+
+        return DB::transaction(function () use ($validated, $_this) {
+            $user = $_this->registerUser($validated);
+
+            $_this->removeFakePhones($user);
+
+            return $user;
+        });
+    }
+
+    public function registerUser(array $validated, bool $checkEmail = true, bool $removeFake = false): User
     {
         if ($checkEmail) {
-            $this->checkEmail($validated['email']);
+            $this->checkEmail($validated['email'], null, $removeFake);
         }
 
         return DB::transaction(function () use ($validated) {
+            $validated['uuid'] = Str::uuid();
+
+            $validated['email_old'] = $validated['email'] ?? null;
+            $validated['phone_old'] = $validated['phone'] ?? null;
+
+            $validated['email_unique_key'] = $validated['email_unique_key'] ?? md5(Str::uuid());
+            $validated['phone_unique_key'] = $validated['phone_unique_key'] ?? md5(Str::uuid());
+
             return User::query()->create($validated);
         });
     }
@@ -117,17 +170,69 @@ class UserService
         });
     }
 
-    public function checkEmail(string $email, int $userId = null): void
+    public function checkPhoneForLogin(string $phone): User
+    {
+        $user = User::query()
+            ->where('register_type', UserRegisterTypesEnum::PHONE->value)
+            ->where('phone', $phone)
+            ->whereNotNull('phone_verified_at')
+            ->first();
+
+        if (!$user) {
+            throw new HttpResponseException(response()->json([
+                'message' => LangService::instance()
+                    ->setDefault('Invalid phone!')
+                    ->getLang('login_invalid_phone'),
+            ], 401));
+        }
+
+        return $user;
+    }
+
+    public function checkPhone(string $phone, ?int $userId = null, bool $removeFake = false): void
+    {
+        $checkPhone = User::query()
+            ->when($userId, function ($query) use ($userId) {
+                $query->where('id', '!=', $userId);
+            })
+            ->where('phone', $phone)
+            ->orderByDesc('id')
+            ->first();
+
+        if ($checkPhone) {
+            if ($checkPhone->phone_verified_at !== null) {
+                throw new BadRequestHttpException(
+                    LangService::instance()
+                        ->setDefault('Phone already used')
+                        ->getLang('phone_already_used')
+                );
+            }
+
+            if ($removeFake) {
+                LoggerService::instance()->log('User deleted because phone fake. ID: ' . $checkPhone->id, [], true);
+
+                DB::transaction(function () use ($checkPhone) {
+                    $checkPhone->update([
+                        'phone' => null,
+                        'phone_unique_key' => md5(Str::uuid()),
+                    ]);
+                });
+            }
+        }
+    }
+
+    public function checkEmail(string $email, ?int $userId = null, bool $removeFake = false): void
     {
         $checkEmail = User::query()
             ->when($userId, function ($query) use ($userId) {
                 $query->where('id', '!=', $userId);
             })
             ->where('email', $email)
+            ->orderByDesc('id')
             ->first();
 
         if ($checkEmail) {
-            if ($checkEmail->email_verified === 'yes' || !$checkEmail->created_at->addMinutes(10)->isPast()) {
+            if ($checkEmail->email_verified_at !== null || !$checkEmail->created_at->addMinutes(10)->isPast()) {
                 throw new BadRequestHttpException(
                     LangService::instance()
                         ->setDefault('Email already used')
@@ -135,11 +240,16 @@ class UserService
                 );
             }
 
-            LoggerService::instance()->log('User deleted because email fake. ID: ' . $checkEmail->id, [], true);
+            if ($removeFake) {
+                LoggerService::instance()->log('User deleted because email fake. ID: ' . $checkEmail->id, [], true);
 
-            DB::transaction(function () use ($checkEmail) {
-                $checkEmail->delete();
-            });
+                DB::transaction(function () use ($checkEmail) {
+                    $checkEmail->update([
+                        'email' => null,
+                        'email_unique_key' => md5(Str::uuid()),
+                    ]);
+                });
+            }
         }
     }
 
@@ -154,7 +264,7 @@ class UserService
         }
 
         if (User::EMAIL_VERIFICATION_TYPE === 'otp') {
-            $user->sendEmailVerificationNotificationOtp($this->generateOtp($user, UserOtpTypesEnum::REGISTER));
+            $user->sendEmailVerificationNotificationOtp($this->generateOtp(UserOtpTypesEnum::REGISTER, UserOtpProvidersEnum::EMAIL, $user));
         } else {
             // link
             $user->sendEmailVerificationNotification();
@@ -180,30 +290,74 @@ class UserService
         }
 
         if (User::EMAIL_VERIFICATION_TYPE === 'otp') {
-            $user->sendChangePasswordNotificationOtp($this->generateOtp($user, UserOtpTypesEnum::CHANGE_PASSWORD));
+            $user->sendChangePasswordNotificationOtp($this->generateOtp(UserOtpTypesEnum::CHANGE_PASSWORD, UserOtpProvidersEnum::EMAIL, $user));
         }
     }
 
-    public function generateOtp(User $user, UserOtpTypesEnum $type): int
+    public function generateOtp(UserOtpTypesEnum $type, UserOtpProvidersEnum $provider, ?User $user = null, ?string $receiver = null): int
     {
         $otp = config('app.otp_debug_mode') ? 1907 : rand(1000, 9999);
 
-        $user->otpCodes()->create([
-            'code' => $otp,
-            'type' => $type->value,
-            'provider' => UserOtpProvidersEnum::EMAIL->value, // TODO:: email or sms
-        ]);
+        if ($user) {
+            $user->otpCodes()
+                ->create([
+                    'receiver' => $provider->value === UserOtpProvidersEnum::SMS->value ? $user->phone : $user->email,
+                    'code' => $otp,
+                    'type' => $type->value,
+                    'provider' => $provider->value,
+                ]);
+        } else if ($receiver) {
+            UserOtpCode::query()->create([
+                'receiver' => $receiver,
+                'code' => $otp,
+                'type' => $type->value,
+                'provider' => $provider->value,
+            ]);
+        } else {
+            throw new BadRequestHttpException(
+                LangService::instance()
+                    ->setDefault('Receiver not found')
+                    ->getLang('otp_receiver_not_found')
+            );
+        }
 
         return $otp;
     }
 
-    public function checkOtp(User $user, UserOtpTypesEnum $type, int $otp): void
+    public function checkOtp(UserOtpTypesEnum $type, int $otp, ?User $user = null, ?UserOtpProvidersEnum $providerEnum = null, ?string $receiver = null): string
     {
-        $checkOtp = $user->otpCodes()
-            ->where('type', $type->value)
-            ->where('created_at', '>=', Carbon::now()->subMinutes(UserOtpCode::EXPIRED_MINUTE))
-            ->orderByDesc('id')
-            ->first();
+        if ($providerEnum === null) {
+            $provider = match ($user->register_type) {
+                UserRegisterTypesEnum::PHONE->value => UserOtpProvidersEnum::SMS->value,
+                default => UserOtpProvidersEnum::EMAIL->value,
+            };
+        } else {
+            $provider = $providerEnum->value;
+        }
+
+        if ($user) {
+            $checkOtp = $user->otpCodes()
+                ->where('type', $type->value)
+                ->where('provider', $provider)
+                ->where('created_at', '>=', Carbon::now()->subMinutes(UserOtpCode::EXPIRED_MINUTE))
+                ->orderByDesc('id')
+                ->first();
+        } else if ($receiver) {
+            $checkOtp = UserOtpCode::query()
+                ->whereNull('user_id')
+                ->where('receiver', $receiver)
+                ->where('type', $type->value)
+                ->where('provider', $provider)
+                ->where('created_at', '>=', Carbon::now()->subMinutes(UserOtpCode::EXPIRED_MINUTE))
+                ->orderByDesc('id')
+                ->first();
+        } else {
+            throw new BadRequestHttpException(
+                LangService::instance()
+                    ->setDefault('Receiver not found')
+                    ->getLang('otp_receiver_not_found')
+            );
+        }
 
         if (!$checkOtp) {
             throw new BadRequestHttpException(
@@ -239,7 +393,80 @@ class UserService
             );
         }
 
-        $checkOtp->update(['used_at' => Carbon::now()]);
+        $confirmationToken = sha1(md5(sha1(Str::uuid())));
+
+        $checkOtp->update([
+            'used_at' => Carbon::now(),
+            'confirmation_token' => $confirmationToken,
+        ]);
+
+        return $confirmationToken;
+    }
+
+    public function checkOtpConfirmationToken(string $confirmationToken, UserOtpTypesEnum $type, int $otp, ?User $user = null, ?UserOtpProvidersEnum $providerEnum = null, ?string $receiver = null): void
+    {
+        if ($providerEnum === null) {
+            $provider = match ($user->register_type) {
+                UserRegisterTypesEnum::PHONE->value => UserOtpProvidersEnum::SMS->value,
+                default => UserOtpProvidersEnum::EMAIL->value,
+            };
+        } else {
+            $provider = $providerEnum->value;
+        }
+
+        if ($user) {
+            $checkOtp = $user->otpCodes()
+                ->where('confirmation_token', $confirmationToken)
+                ->where('type', $type->value)
+                ->where('provider', $provider)
+                ->whereNotNull('used_at')
+                ->orderByDesc('id')
+                ->first();
+        } else if ($receiver) {
+            $checkOtp = UserOtpCode::query()
+                ->where('confirmation_token', $confirmationToken)
+                ->whereNull('user_id')
+                ->where('receiver', $receiver)
+                ->where('type', $type->value)
+                ->where('provider', $provider)
+                ->whereNotNull('used_at')
+                ->orderByDesc('id')
+                ->first();
+        } else {
+            throw new BadRequestHttpException(
+                LangService::instance()
+                    ->setDefault('Receiver not found')
+                    ->getLang('otp_receiver_not_found')
+            );
+        }
+
+        if (!$checkOtp) {
+            throw new BadRequestHttpException(
+                LangService::instance()
+                    ->setDefault('OTP confirmation not found')
+                    ->getLang('otp_confirmation_not_found')
+            );
+        }
+
+        if ($checkOtp->confirmation_token_used_at) {
+            throw new BadRequestHttpException(
+                LangService::instance()
+                    ->setDefault('OTP confirmation already used')
+                    ->getLang('otp_confirmation_already_used')
+            );
+        }
+
+        if ($checkOtp->used_at->addHour()->isPast()) {
+            throw new BadRequestHttpException(
+                LangService::instance()
+                    ->setDefault('OTP confirmation expired')
+                    ->getLang('otp_confirmation_expired')
+            );
+        }
+
+        $checkOtp->update([
+            'confirmation_token_used_at' => Carbon::now(),
+        ]);
     }
 
     public function getUser(): User
@@ -370,5 +597,41 @@ class UserService
         $checkToken->update(['used_at' => Carbon::now()]);
 
         return UserService::instance()->createToken($user, $validated['device_type']);
+    }
+
+    public function removeFakeEmails(User $user): void
+    {
+        $emails = User::query()
+            ->where('email', $user->email)
+            ->whereNull('email_verified_at')
+            ->where('id', '!=', $user->id)
+            ->get();
+
+        foreach ($emails as $email) {
+            $email->update([
+                'email' => null,
+                'email_unique_key' => md5(Str::uuid()),
+            ]);
+        }
+
+        LoggerService::instance()->log('Removed fake emails: ' . $user->email, [], true);
+    }
+
+    public function removeFakePhones(User $user): void
+    {
+        $emails = User::query()
+            ->where('phone', $user->phone)
+            ->whereNull('phone_verified_at')
+            ->where('id', '!=', $user->id)
+            ->get();
+
+        foreach ($emails as $email) {
+            $email->update([
+                'phone' => null,
+                'phone_unique_key' => md5(Str::uuid()),
+            ]);
+        }
+
+        LoggerService::instance()->log('Removed fake phones: ' . $user->phone, [], true);
     }
 }

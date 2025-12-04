@@ -8,6 +8,10 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
+/**
+ * @property mixed $user_id
+ * @property mixed $provider_user_id
+ */
 class ThirdPartyProviderLoginToken extends Model
 {
     use SoftDeletes, ActionBy, ActionUser;

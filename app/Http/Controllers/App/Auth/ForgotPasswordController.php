@@ -22,7 +22,7 @@ class ForgotPasswordController extends Controller
 
         if ($status == Password::RESET_LINK_SENT) {
             return response()->json([
-                'step' => 'reset_password',
+                'step' => 'reset_password_link',
                 'message' => LangService::instance()
                     ->setDefault('Password reset link has been sent to your email')
                     ->getLang('forgot_password_sent_reset_link'),

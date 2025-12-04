@@ -60,7 +60,8 @@ class GoogleService
                 'surname' => $gUser->getName() ?? Str::before($gUser->getEmail(), '@'), // TODO:: get surname
                 'email' => $gUser->getEmail(),
                 'email_verified_at' => Carbon::now(),
-                'email_verified' => 'yes',
+                'email_unique_key' => md5($gUser->getEmail()),
+                'phone_unique_key' => md5(Str::uuid()),
                 'google_id' => $gUser->getId(),
                 'google_avatar' => $gUser->getAvatar(),
             ], false);
@@ -75,10 +76,11 @@ class GoogleService
 
         if (!$user->isEmailVerified()) {
             $data['email_verified_at'] = Carbon::now();
-            $data['email_verified'] = 'yes';
         }
 
         $user->update($data);
+
+        UserService::instance()->removeFakeEmails($user);
 
         return $user;
     }

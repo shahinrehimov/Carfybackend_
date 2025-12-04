@@ -3,14 +3,11 @@
 namespace App\Http\Requests\App\Auth;
 
 use App\Enum\GenderEnum;
+use App\Models\User;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
-use Illuminate\Validation\Rules\Password;
 
-/**
- * @property mixed $city_id
- */
-class RegisterRequest extends FormRequest
+class RegisterWithPhoneRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -31,18 +28,12 @@ class RegisterRequest extends FormRequest
             'device_type' => ['required', 'string', 'in:android,ios,web'],
             'name' => ['required', 'string', 'max:150'],
             'surname' => ['required', 'string', 'max:150'],
-            'email' => ['required', 'email', 'max:150'],
-            'gender' => ['required', 'string', Rule::in(GenderEnum::cases())],
-            'birth_date' => ['required', 'date', 'before:today'],
-            'password' => [
-                'required',
-                'confirmed',
-                Password::min(8)
-                    ->mixedCase()
-                    ->letters()
-                    ->numbers()
-                    ->symbols()
-            ],
+            'phone' => ['required', 'string', 'size:12', 'regex:/^994\d{9}$/'],
+            'phone_confirmation_token' => ['required', 'string', 'max:100'],
+            'otp' => ['required', 'integer', 'digits:4'],
+            'email' => ['required', 'email', 'max:150', Rule::unique(User::class, 'email')->whereNull('deleted_at')],
+            'gender' => ['nullable', 'string', Rule::in(GenderEnum::cases())],
+            'birth_date' => ['nullable', 'date', 'before:today'],
         ];
     }
 }

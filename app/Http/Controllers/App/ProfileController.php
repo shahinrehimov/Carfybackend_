@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers\App;
 
+use App\Enum\UserOtpProvidersEnum;
 use App\Enum\UserOtpTypesEnum;
+use App\Enum\UserRegisterTypesEnum;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\App\Auth\ChangePasswordRequest;
 use App\Http\Requests\App\Auth\ChangePasswordVerifyOtpRequest;
@@ -14,6 +16,7 @@ use App\Services\LangService;
 use App\Services\UserService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
+use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 
 class ProfileController extends Controller
 {
@@ -31,7 +34,7 @@ class ProfileController extends Controller
         });
 
         return response()->json([
-            'data' => UserResource::make($user),
+            'user' => UserResource::make($user),
             'message' => LangService::instance()
                 ->setDefault('Profile updated successfully')
                 ->getLang('profile_updated_successfully'),
@@ -40,6 +43,14 @@ class ProfileController extends Controller
 
     public function changePassword(ChangePasswordRequest $request): GeneralResource
     {
+        if (UserService::instance()->getUser()->register_type !== UserRegisterTypesEnum::EMAIL->value) {
+            throw new BadRequestHttpException(
+                LangService::instance()
+                    ->setDefault('Invalid register type')
+                    ->getLang('change_password_invalid_register_type')
+            );
+        }
+
         if (User::EMAIL_VERIFICATION_TYPE === 'otp') {
             UserService::instance()->sendChangePasswordNotification(UserService::instance()->getUser(), $request->validated());
 
@@ -62,6 +73,16 @@ class ProfileController extends Controller
 
     public function changePasswordVerifyOtp(ChangePasswordVerifyOtpRequest $request): GeneralResource
     {
+        $user = UserService::instance()->getUser();
+
+        if ($user->register_type !== UserRegisterTypesEnum::EMAIL->value) {
+            throw new BadRequestHttpException(
+                LangService::instance()
+                    ->setDefault('Invalid register type')
+                    ->getLang('change_password_invalid_register_type')
+            );
+        }
+
         if (User::EMAIL_VERIFICATION_TYPE !== 'otp') {
             return GeneralResource::make([
                 'message' => LangService::instance()
@@ -72,7 +93,7 @@ class ProfileController extends Controller
 
         $validated = $request->validated();
 
-        UserService::instance()->checkOtp(UserService::instance()->getUser(), UserOtpTypesEnum::CHANGE_PASSWORD, $validated['otp']);
+        UserService::instance()->checkOtp(UserOtpTypesEnum::CHANGE_PASSWORD, $validated['otp'], $user, UserOtpProvidersEnum::EMAIL);
 
         UserService::instance()->changePassword($validated);
 

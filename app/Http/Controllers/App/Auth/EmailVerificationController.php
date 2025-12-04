@@ -5,6 +5,7 @@ namespace App\Http\Controllers\App\Auth;
 use App\Enum\UserOtpTypesEnum;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\App\Auth\VerifyOtpRequest;
+use App\Http\Resources\App\Auth\UserResource;
 use App\Models\User;
 use App\Services\LangService;
 use App\Services\UserService;
@@ -23,8 +24,10 @@ class EmailVerificationController extends Controller
         UserService::instance()->sendEmailVerificationNotification($user);
 
         return response()->json([
+            'step' => User::EMAIL_VERIFICATION_TYPE === 'otp' ? 'otp_email' : 'verify_email',
+            'user' => UserResource::make($user),
             'message' => LangService::instance()
-                ->setDefault('Email verification link sent successfully')
+                ->setDefault('Verification email sent successfully!')
                 ->getLang('email_verification_notification_sent')
         ]);
     }
@@ -52,12 +55,12 @@ class EmailVerificationController extends Controller
         return redirect(config('app.frontend_url') . '/email/verify/success');
     }
 
-    public function verifyOtp(VerifyOtpRequest $request, int $userId): JsonResponse
+    public function verifyOtp(VerifyOtpRequest $request, string $userUuid): JsonResponse
     {
         $validated = $request->validated();
 
         $user = User::query()
-            ->where('id', $userId)
+            ->where('uuid', $userUuid)
             ->where('email', $validated['email'])
             ->active()
             ->first();
@@ -78,7 +81,7 @@ class EmailVerificationController extends Controller
             ], 400);
         }
 
-        UserService::instance()->checkOtp($user, UserOtpTypesEnum::REGISTER, $validated['otp']);
+        UserService::instance()->checkOtp(UserOtpTypesEnum::REGISTER, $validated['otp'], $user);
 
         if ($user->markEmailAsVerified()) {
             event(new Verified($user));

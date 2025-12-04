@@ -7,6 +7,7 @@ use App\Notifications\CustomChangePasswordNotificationOTP;
 use App\Notifications\CustomVerifyEmailNotification;
 use App\Notifications\CustomVerifyEmailNotificationOTP;
 use App\Notifications\ResetPasswordNotification;
+use App\Services\UserService;
 use App\Traits\ActionBy;
 use App\Traits\ActionUser;
 use Dyrynda\Database\Support\CascadeSoftDeletes;
@@ -18,6 +19,7 @@ use Illuminate\Database\Eloquent\Relations\MorphToMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Facades\DB;
 use Laravel\Sanctum\HasApiTokens;
 
 /**
@@ -32,20 +34,30 @@ use Laravel\Sanctum\HasApiTokens;
  * @property mixed $google_id
  * @property mixed $email_verified
  * @property mixed $created_at
+ * @property mixed $register_type
+ * @property mixed $phone_verified_at
+ * @property mixed $phone
  */
 class User extends Authenticatable implements MustVerifyEmail
 {
     use HasApiTokens, Notifiable, SoftDeletes, ActionBy, ActionUser, CascadeSoftDeletes;
 
     protected $fillable = [
+        'uuid',
+        'register_type', // UserRegisterTypesEnum
         'name',
         'surname',
-        'email',
-        'gender',
+        'gender', // GenderEnum
         'birth_date',
-        'password',
+        'email',
+        'email_old',
         'email_verified_at',
-        'email_verified',
+        'email_unique_key', // if email exists and verified then md5(email) else md5(uuid)
+        'phone',
+        'phone_old',
+        'phone_verified_at',
+        'phone_unique_key', // if phone exists and verified then md5(phone) else md5(uuid)
+        'password',
         'is_active',
         'google_id',
         'google_avatar',
@@ -56,6 +68,7 @@ class User extends Authenticatable implements MustVerifyEmail
         'password' => 'hashed',
         'birth_date' => 'date',
         'email_verified_at' => 'datetime',
+        'phone_verified_at' => 'datetime',
         'full_name' => FullNameCast::class,
     ];
 
@@ -96,10 +109,20 @@ class User extends Authenticatable implements MustVerifyEmail
 
     public function markEmailAsVerified(): bool
     {
-        return $this->forceFill([
-            'email_verified_at' => $this->freshTimestamp(),
-            'email_verified' => 'yes',
-        ])->save();
+        $_this = $this;
+
+        return DB::transaction(function () use($_this) {
+            $res = $_this
+                ->forceFill([
+                    'email_verified_at' => $_this->freshTimestamp(),
+                    'email_unique_key' => md5($_this->email),
+                ])
+                ->save();
+
+            UserService::instance()->removeFakeEmails($_this);
+
+            return $res;
+        });
     }
 
     public function scopeActive(Builder $builder): void

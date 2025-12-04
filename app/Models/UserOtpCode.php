@@ -13,12 +13,15 @@ class UserOtpCode extends Model
     use SoftDeletes, ActionBy, ActionUser;
 
     protected $fillable = [
-        'user_id',
+        'user_id', // nullable
+        'receiver', // phone or email. use when user_id is null
         'provider', // UserOtpProvidersEnum
         'type', // UserOtpTypesEnum
         'code',
         'attempts',
         'used_at',
+        'confirmation_token',
+        'confirmation_token_used_at',
     ];
 
     public const MAX_ATTEMPTS = 3;
@@ -26,6 +29,7 @@ class UserOtpCode extends Model
 
     protected $casts = [
         'used_at' => 'datetime',
+        'confirmation_token_used_at' => 'datetime',
         'attempts' => 'integer',
         'code' => 'integer',
     ];

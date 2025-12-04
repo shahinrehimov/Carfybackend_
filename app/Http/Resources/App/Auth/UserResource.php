@@ -8,13 +8,16 @@ use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\Str;
 
 /**
- * @property mixed $id
  * @property mixed $token
  * @property mixed $gender
  * @property mixed $name
  * @property mixed $surname
  * @property mixed $email
  * @property mixed $birth_date
+ * @property mixed $uuid
+ * @property mixed $phone
+ * @property mixed $email_verified_at
+ * @property mixed $phone_verified_at
  */
 class UserResource extends JsonResource
 {
@@ -26,8 +29,9 @@ class UserResource extends JsonResource
     public function toArray(Request $request): array
     {
         return [
-            'id' => $this->id,
+            'uuid' => $this->uuid,
             'email' => $this->email,
+            'phone' => $this->phone,
             'name' => $this->name,
             'surname' => $this->surname,
             'gender' => $this->gender,
@@ -35,6 +39,8 @@ class UserResource extends JsonResource
                 ->setDefault(Str::title($this->gender))
                 ->getLang('gender_' . $this->gender),
             'birth_date' => $this->birth_date?->toDateString(),
+            'email_is_verified' => (bool) $this->email_verified_at,
+            'phone_is_verified' => (bool) $this->phone_verified_at,
         ];
     }
 
