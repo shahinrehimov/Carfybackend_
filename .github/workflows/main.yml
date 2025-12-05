@@ -24,5 +24,5 @@ jobs:
               git clone --depth=1 -b main https://github.com/gurularavel/carfy_backend.git .
             else
               echo "Repo exists, pulling latest changes..."
-              git pull origin main
+              git pull origin master
             fi
