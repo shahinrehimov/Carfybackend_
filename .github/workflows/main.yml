@@ -19,10 +19,12 @@ jobs:
           port: 222
           script: |
             cd /usr/www/users/kvadrv/projects/carfy
+
             if [ ! -d ".git" ]; then
               echo "Repo not found, cloning fresh..."
-              git clone --depth=1 -b main https://github.com/gurularavel/carfy_backend.git .
+              git clone --depth=1 -b master https://github.com/gurularavel/carfy_backend.git .
             else
-              echo "Repo exists, pulling latest changes..."
-              git pull origin master
+              echo "Repo exists, resetting to remote HEAD..."
+              git fetch --all
+              git reset --hard origin/master
             fi
