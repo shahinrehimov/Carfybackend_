@@ -35,6 +35,8 @@ class GeneralAccessMiddleware
 
         LangService::instance()->setGroup($langGroup->value);
 
+        app()->setLocale(LangService::instance()->getCurrentLang());
+
         if (ApiToken::query()->where('token', $token)->where('name', $name)->where('is_active', true)->first()) {
             return $next($request);
         }
