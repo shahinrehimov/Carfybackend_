@@ -10,6 +10,7 @@ Route::get('versions', static function () {
 $coreAppRoutes = require __DIR__ . '/app_core.php';
 
 require __DIR__ . '/control.php';
+require __DIR__ . '/sellers.php';
 
 require __DIR__ . '/app.php';
 require __DIR__ . '/site.php';

@@ -21,6 +21,7 @@ class RouteLogMiddleware
     {
         RouteLog::query()
             ->create([
+                'company_id' => null, // TODO replace with actual company ID
                 'url' => url()->current(),
                 'url_full' => explode('?', url()->full())[1] ?? '',
                 'ip' => $request->ip(),

@@ -26,6 +26,14 @@ class ApiTokenSeeder extends Seeder
         ]);
 
         DB::table('api_tokens')->insert([
+            'name' => 'sellers',
+            'token' => config('app.debug') ? $token : Str::random(50),
+            'is_active' => true,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        DB::table('api_tokens')->insert([
             'name' => 'site',
             'token' => config('app.debug') ? $token : Str::random(50),
             'is_active' => true,

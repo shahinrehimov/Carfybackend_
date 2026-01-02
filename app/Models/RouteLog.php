@@ -11,5 +11,5 @@ class RouteLog extends Model
 {
     use SoftDeletes, ActionBy, ActionUser;
 
-    protected $fillable = ['url', 'url_full', 'ip', 'method', 'action', 'requests'];
+    protected $fillable = ['url', 'url_full', 'ip', 'method', 'action', 'requests', 'company_id'];
 }

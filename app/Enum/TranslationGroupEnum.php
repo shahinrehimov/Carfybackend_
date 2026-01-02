@@ -8,6 +8,7 @@ enum TranslationGroupEnum: string
 {
     case ALL = 'all';
     case ADMIN = 'admin';
+    case SELLERS = 'sellers';
     case SITE = 'site';
     case APP = 'app';
 
