@@ -27,6 +27,8 @@ use App\Http\Controllers\Admin\SliderController;
 use App\Http\Controllers\Admin\SocialController;
 use App\Http\Controllers\Admin\TranslationController;
 use App\Http\Controllers\Admin\UserController;
+use App\Http\Controllers\Admin\CompanyController;
+use App\Http\Controllers\Admin\CompanyAdminController;
 use App\Http\Controllers\LocalTranslationsController;
 use App\Http\Middleware\RouteLogMiddleware;
 use Illuminate\Support\Facades\Route;
@@ -269,6 +271,32 @@ Route::middleware(['general_access:admin', RouteLogMiddleware::class])->prefix('
                 Route::get('show/{address}', [AddressController::class, 'show']);
                 Route::delete('delete/{address}', [AddressController::class, 'destroy']);
             });
+        });
+
+        Route::group(['prefix' => 'companies'], static function () {
+            Route::get('load', [CompanyController::class, 'index']);
+            Route::get('list', [CompanyController::class, 'list']);
+            Route::get('show/{company}', [CompanyController::class, 'show']);
+            Route::post('add', [CompanyController::class, 'store']);
+            Route::post('update/{company}', [CompanyController::class, 'update']);
+            Route::delete('delete/{company}', [CompanyController::class, 'destroy']);
+            Route::post('verify/{company}', [CompanyController::class, 'verify']);
+            Route::post('change-active-status/{company}', [CompanyController::class, 'changeActiveStatus']);
+
+            Route::group(['prefix' => '{company}/admins'], static function () {
+                Route::get('load', [CompanyAdminController::class, 'index']);
+                Route::get('list', [CompanyAdminController::class, 'list']);
+                Route::get('show/{companyAdmin}', [CompanyAdminController::class, 'show']);
+                Route::post('add', [CompanyAdminController::class, 'store']);
+                Route::post('update/{companyAdmin}', [CompanyAdminController::class, 'update']);
+                Route::delete('delete/{companyAdmin}', [CompanyAdminController::class, 'destroy']);
+                Route::post('change-active-status/{companyAdmin}', [CompanyAdminController::class, 'changeActiveStatus']);
+            });
+        });
+
+        Route::group(['prefix' => 'company-admins'], static function () {
+            Route::get('load', [CompanyAdminController::class, 'index']);
+            Route::get('list', [CompanyAdminController::class, 'list']);
         });
 
         Route::group(['prefix' => 'product-reviews'], static function () {

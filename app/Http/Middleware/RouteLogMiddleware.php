@@ -19,9 +19,16 @@ class RouteLogMiddleware
      */
     public function handle(Request $request, Closure $next): mixed
     {
+        $companyId = null;
+
+        // Get company_id from authenticated company admin
+        if (\App\Services\CompanyAdminService::instance()->checkUser()) {
+            $companyId = \App\Services\CompanyAdminService::instance()->getUser()->company_id;
+        }
+
         RouteLog::query()
             ->create([
-                'company_id' => null, // TODO replace with actual company ID
+                'company_id' => $companyId,
                 'url' => url()->current(),
                 'url_full' => explode('?', url()->full())[1] ?? '',
                 'ip' => $request->ip(),

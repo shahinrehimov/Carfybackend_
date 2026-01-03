@@ -1,0 +1,49 @@
+<?php
+
+namespace App\Http\Resources\Admin\Companies;
+
+use Illuminate\Http\Request;
+use Illuminate\Http\Resources\Json\JsonResource;
+
+/**
+ * @property mixed $id
+ * @property mixed $uuid
+ * @property mixed $voen
+ * @property mixed $phone
+ * @property mixed $email
+ * @property mixed $latitude
+ * @property mixed $longitude
+ * @property mixed $website
+ * @property mixed $root_admin_email
+ * @property mixed $verified_at
+ * @property mixed $translations
+ * @property mixed $logo
+ * @property mixed $banner
+ * @method isActive()
+ */
+class CompanyResource extends JsonResource
+{
+    public function toArray(Request $request): array
+    {
+        return [
+            'id' => $this->id,
+            'uuid' => $this->uuid,
+            'voen' => $this->voen,
+            'phone' => $this->phone,
+            'email' => $this->email,
+            'latitude' => $this->latitude,
+            'longitude' => $this->longitude,
+            'website' => $this->website,
+            'root_admin_email' => $this->root_admin_email,
+            'verified_at' => $this->verified_at,
+            'is_active' => $this->isActive(),
+            'logo' => $this->whenLoaded('media', function () {
+                return $this->logo;
+            }),
+            'banner' => $this->whenLoaded('media', function () {
+                return $this->banner;
+            }),
+            'translations' => $this->translations,
+        ];
+    }
+}

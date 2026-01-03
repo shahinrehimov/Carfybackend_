@@ -16,11 +16,10 @@ return new class extends Migration
             $table->id();
             $table->uuid();
             // files: logo, banner
-            // translation fields: name, address
+            // translation fields: title, info, address
             $table->string('voen', 50);
             $table->string('phone', 30);
             $table->string('email', 150);
-            $table->string('address', 500);
             $table->string('latitude', 100);
             $table->string('longitude', 100);
             $table->string('website', 150)->nullable();

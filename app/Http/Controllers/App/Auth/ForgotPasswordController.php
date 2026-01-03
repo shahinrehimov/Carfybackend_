@@ -16,7 +16,7 @@ class ForgotPasswordController extends Controller
     {
         $validated = $request->validated();
 
-        $status = Password::sendResetLink([
+        $status = Password::broker('users')->sendResetLink([
             'email' => $validated['email'],
         ]);
 
@@ -39,7 +39,7 @@ class ForgotPasswordController extends Controller
 
     public function resetPassword(ResetPasswordRequest $request): JsonResponse
     {
-        $status = Password::reset(
+        $status = Password::broker('users')->reset(
             $request->only('email', 'password', 'password_confirmation', 'token'),
             function ($user, $password) {
                 UserService::instance()->changePassword(['password' => $password], $user);

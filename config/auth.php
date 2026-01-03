@@ -45,6 +45,10 @@ return [
             'driver' => 'sanctum',
             'provider' => 'admins',
         ],
+        'company_admin' => [
+            'driver' => 'sanctum',
+            'provider' => 'company_admins',
+        ],
     ],
 
     /*
@@ -73,6 +77,10 @@ return [
             'driver' => 'eloquent',
             'model' => App\Models\Admin::class,
         ],
+        'company_admins' => [
+            'driver' => 'eloquent',
+            'model' => App\Models\CompanyAdmin::class,
+        ],
     ],
 
     /*
@@ -97,13 +105,19 @@ return [
     'passwords' => [
         'users' => [
             'provider' => 'users',
-            'table' => env('AUTH_PASSWORD_RESET_TOKEN_TABLE', 'password_reset_tokens'),
+            'table' => 'password_reset_tokens_users',
             'expire' => 60,
             'throttle' => 60,
         ],
         'admins' => [
             'provider' => 'admins',
-            'table' => env('AUTH_PASSWORD_RESET_TOKEN_TABLE', 'password_reset_tokens'),
+            'table' => 'password_reset_tokens_admins',
+            'expire' => 60,
+            'throttle' => 60,
+        ],
+        'company_admins' => [
+            'provider' => 'company_admins',
+            'table' => 'password_reset_tokens_company_admins',
             'expire' => 60,
             'throttle' => 60,
         ],

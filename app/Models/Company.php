@@ -30,7 +30,6 @@ class Company extends Model implements TranslatableInterface, HasMedia
         'voen',
         'phone',
         'email',
-        'address',
         'latitude',
         'longitude',
         'website',
@@ -41,6 +40,8 @@ class Company extends Model implements TranslatableInterface, HasMedia
 
     protected array $translatableFields = [
         'title',
+        'info',
+        'address',
     ];
 
     protected $casts = [
