@@ -445,10 +445,23 @@ class ProductVariantRepository
             return;
         }
 
+        if ($guest) {
+            $deletableId = null;
+            $deletableType = null;
+        } else {
+            $deletableId = CompanyAdminService::instance()->checkUser()
+                ? CompanyAdminService::instance()->getUser()->id
+                : (AdminService::instance()->checkUser() ? AdminService::instance()->getUser()->id : null);
+
+            $deletableType = CompanyAdminService::instance()->checkUser()
+                ? CompanyAdminService::instance()->getUser()->getMorphClass()
+                : (AdminService::instance()->checkUser() ? AdminService::instance()->getUser()->getMorphClass() : null);
+        }
+
         $productVariant->options()
             ->update([
-                'deletable_id' => $guest ? null : AdminService::instance()->getUser()->id,
-                'deletable_type' => $guest ? null : AdminService::instance()->getUser()->getMorphClass(),
+                'deletable_id' => $deletableId,
+                'deletable_type' => $deletableType,
                 'is_deleted' => DB::raw("CONCAT('deleted_', id)"),
                 'deleted_at' => Carbon::now(),
             ]);
