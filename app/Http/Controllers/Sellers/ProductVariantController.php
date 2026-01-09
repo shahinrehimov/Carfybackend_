@@ -1,15 +1,15 @@
 <?php
 
-namespace App\Http\Controllers\Admin;
+namespace App\Http\Controllers\Sellers;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\Admin\ProductVariants\ProductVariantSearchRequest;
-use App\Http\Requests\Admin\ProductVariants\ProductVariantStoreRequest;
-use App\Http\Requests\Admin\ProductVariants\ProductVariantUpdateRequest;
-use App\Http\Resources\Admin\ProductVariants\ProductVariantResource;
-use App\Http\Resources\Admin\ProductVariants\ProductVariantsListResource;
-use App\Http\Resources\Admin\ProductVariants\ProductVariantsResource;
+use App\Http\Requests\Sellers\ProductVariants\ProductVariantSearchRequest;
+use App\Http\Requests\Sellers\ProductVariants\ProductVariantStoreRequest;
+use App\Http\Requests\Sellers\ProductVariants\ProductVariantUpdateRequest;
 use App\Http\Resources\GeneralResource;
+use App\Http\Resources\Sellers\ProductVariants\ProductVariantResource;
+use App\Http\Resources\Sellers\ProductVariants\ProductVariantsListResource;
+use App\Http\Resources\Sellers\ProductVariants\ProductVariantsResource;
 use App\Models\Product;
 use App\Models\ProductVariant;
 use App\Repositories\ProductVariantRepository;

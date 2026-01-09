@@ -1,11 +1,11 @@
 <?php
 
-namespace App\Http\Resources\Admin\Products;
+namespace App\Http\Resources\Sellers\Products;
 
 use App\Http\Resources\Admin\Brands\BrandsListResource;
 use App\Http\Resources\Admin\Categories\CategoriesListResource;
 use App\Http\Resources\Admin\Groups\GroupsListResource;
-use App\Http\Resources\Admin\ProductVariants\ProductVariantsListResource;
+use App\Http\Resources\Sellers\ProductVariants\ProductVariantsListResource;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 

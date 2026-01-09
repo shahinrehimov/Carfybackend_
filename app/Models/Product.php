@@ -41,6 +41,7 @@ use Spatie\MediaLibrary\InteractsWithMedia;
  * @property mixed $price_final_in_basket
  * @property array|mixed $ratings
  * @property mixed $variants
+ * @property mixed $company_id
  */
 
 class Product extends Model implements TranslatableInterface, HasMedia
@@ -48,6 +49,7 @@ class Product extends Model implements TranslatableInterface, HasMedia
     use SoftDeletes, ActionBy, ActionUser, SlugTrait, Translatable, InteractsWithMedia, CascadeSoftDeletes;
 
     protected $fillable = [
+        'company_id', // nullable
         'uuid',
         'slug',
         'is_set',
@@ -112,6 +114,11 @@ class Product extends Model implements TranslatableInterface, HasMedia
     public function isSet()
     {
         return $this->is_set ?? false;
+    }
+
+    public function company(): BelongsTo
+    {
+        return $this->belongsTo(Company::class);
     }
 
     public function mainCategory(): BelongsTo

@@ -9,17 +9,17 @@ use App\Http\Controllers\Admin\Auth\LogoutController;
 use App\Http\Controllers\Admin\BrandController;
 use App\Http\Controllers\Admin\CategoryController;
 use App\Http\Controllers\Admin\CityController;
+use App\Http\Controllers\Admin\CompanyAdminController;
+use App\Http\Controllers\Admin\CompanyController;
 use App\Http\Controllers\Admin\CountryController;
 use App\Http\Controllers\Admin\DiscountTypeController;
 use App\Http\Controllers\Admin\GroupController;
 use App\Http\Controllers\Admin\LanguageController;
 use App\Http\Controllers\Admin\MetaController;
 use App\Http\Controllers\Admin\OrderController;
-use App\Http\Controllers\Admin\ProductController;
 use App\Http\Controllers\Admin\ProductOptionController;
 use App\Http\Controllers\Admin\ProductOptionItemController;
 use App\Http\Controllers\Admin\ProductReviewController;
-use App\Http\Controllers\Admin\ProductVariantController;
 use App\Http\Controllers\Admin\ProfileController;
 use App\Http\Controllers\Admin\RoleController;
 use App\Http\Controllers\Admin\SettingController;
@@ -27,8 +27,6 @@ use App\Http\Controllers\Admin\SliderController;
 use App\Http\Controllers\Admin\SocialController;
 use App\Http\Controllers\Admin\TranslationController;
 use App\Http\Controllers\Admin\UserController;
-use App\Http\Controllers\Admin\CompanyController;
-use App\Http\Controllers\Admin\CompanyAdminController;
 use App\Http\Controllers\LocalTranslationsController;
 use App\Http\Middleware\RouteLogMiddleware;
 use Illuminate\Support\Facades\Route;
@@ -176,30 +174,6 @@ Route::middleware(['general_access:admin', RouteLogMiddleware::class])->prefix('
 
         Route::group(['prefix' => 'discount-types'], static function () {
             Route::get('list', [DiscountTypeController::class, 'list']);
-        });
-
-        Route::group(['prefix' => 'products'], static function () {
-            Route::get('load', [ProductController::class, 'index']);
-            Route::get('list', [ProductController::class, 'list']);
-            Route::get('show/{product}', [ProductController::class, 'show']);
-            Route::post('add', [ProductController::class, 'store']);
-            Route::post('update/{product}', [ProductController::class, 'update']);
-            Route::delete('delete/{product}', [ProductController::class, 'destroy']);
-            Route::delete('delete-hover-image/{product}', [ProductController::class, 'deleteHoverImage']);
-            Route::delete('images/delete/{product}/{mediaId}', [ProductController::class, 'destroyImage']);
-            Route::post('change-active-status/{product}', [ProductController::class, 'changeActiveStatus']);
-        });
-
-        Route::group(['prefix' => 'product-variants'], static function () {
-            Route::get('load', [ProductVariantController::class, 'index']);
-            Route::get('list', [ProductVariantController::class, 'list']);
-            Route::get('show/{productVariant}', [ProductVariantController::class, 'show']);
-            Route::post('add/{product}', [ProductVariantController::class, 'store']);
-            Route::post('update/{productVariant}', [ProductVariantController::class, 'update']);
-            Route::delete('delete/{productVariant}', [ProductVariantController::class, 'destroy']);
-            Route::delete('delete-hover-image/{productVariant}', [ProductVariantController::class, 'deleteHoverImage']);
-            Route::delete('images/delete/{productVariant}/{mediaId}', [ProductVariantController::class, 'destroyImage']);
-            Route::post('change-active-status/{productVariant}', [ProductVariantController::class, 'changeActiveStatus']);
         });
 
         Route::group(['prefix' => 'groups'], static function () {

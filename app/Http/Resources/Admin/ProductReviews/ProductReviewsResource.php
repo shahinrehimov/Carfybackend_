@@ -3,8 +3,8 @@
 namespace App\Http\Resources\Admin\ProductReviews;
 
 use App\Http\Resources\Admin\Admins\AdminsListResource;
-use App\Http\Resources\Admin\ProductVariants\ProductVariantsListResource;
 use App\Http\Resources\Admin\Users\UsersListResource;
+use App\Http\Resources\Sellers\ProductVariants\ProductVariantsListResource;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 

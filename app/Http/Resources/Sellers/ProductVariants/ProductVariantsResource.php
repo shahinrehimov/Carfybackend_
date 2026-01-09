@@ -1,13 +1,13 @@
 <?php
 
-namespace App\Http\Resources\Admin\Products;
+namespace App\Http\Resources\Sellers\ProductVariants;
 
-use App\Http\Resources\Admin\Brands\BrandsListResource;
-use App\Http\Resources\Admin\Categories\CategoriesListResource;
 use App\Http\Resources\Admin\Groups\GroupsListResource;
-use App\Http\Resources\Admin\ProductVariants\ProductVariantsResource;
+use App\Http\Resources\Sellers\Products\ProductsResource;
+use App\Services\LangService;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
+use Illuminate\Support\Str;
 
 /**
  * @property mixed $created_at
@@ -25,8 +25,9 @@ use Illuminate\Http\Resources\Json\JsonResource;
  * @method getLang(string $string)
  * @method isActive()
  * @method isSet()
+ * @method isDefault()
  */
-class ProductsResource extends JsonResource
+class ProductVariantsResource extends JsonResource
 {
     /**
      * Transform the resource into an array.
@@ -41,21 +42,27 @@ class ProductsResource extends JsonResource
             'id' => $this->id,
             'uuid' => $this->uuid,
             'slug' => $this->slug,
-            'title' => $this->getLang('title'),
             'main_image' => $this->whenLoaded('media', function () {
                 return $this->main_image;
             }),
             'hover_image' => $this->whenLoaded('media', function () {
                 return $this->hover_image;
             }),
+            'product' => ProductsResource::make($this->whenLoaded('product')),
             'is_set' => $this->isSet(),
             'sets_count' => $this->whenCounted('sets'),
-            'brand' => BrandsListResource::make($this->whenLoaded('brand')),
-            'main_category' => CategoriesListResource::make($this->whenLoaded('mainCategory')),
-            'categories' => CategoriesListResource::collection($this->whenLoaded('categories')),
             'groups' => GroupsListResource::collection($this->whenLoaded('groups')),
-            'variants_count' => $this->whenCounted('variants'),
-            'variants' => ProductVariantsResource::collection($this->whenLoaded('variants')),
+            'stock' => $this->stock,
+            'price' => $this->price,
+            'price_final' => $this->price_final,
+            'discount_type' => $this->discount_type,
+            'discount_type_title' => $this->discount_type
+                ? LangService::instance()
+                    ->setDefault(Str::title($this->discount_type))
+                    ->getLang('discount_types_' . $this->discount_type)
+                : null,
+            'discount' => $this->discount,
+            'is_default' => $this->isDefault(),
             'is_active' => $this->isActive(),
             'created_user' => $this->whenLoaded('creatable', function () {
                 return $this->creatable?->username;

@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Http\Resources\Sellers\Auth\UserResource;
+use App\Models\Company;
 use App\Models\CompanyAdmin;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\DB;
@@ -107,5 +108,14 @@ class CompanyAdminService
 
             return $_this->getUser();
         });
+    }
+
+    public function getCompany(): Company
+    {
+        $this->getUser()->loadMissing([
+            'company',
+        ]);
+
+        return $this->getUser()->company;
     }
 }

@@ -24,6 +24,7 @@ use Spatie\MediaLibrary\InteractsWithMedia;
  * @property mixed $password_must_change
  * @property mixed $password
  * @property mixed $is_root
+ * @property mixed $company
  */
 class CompanyAdmin extends Authenticatable implements HasMedia
 {

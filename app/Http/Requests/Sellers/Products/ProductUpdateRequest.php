@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Requests\Admin\Products;
+namespace App\Http\Requests\Sellers\Products;
 
 use App\Models\Brand;
 use App\Models\Category;

@@ -84,4 +84,14 @@ class Company extends Model implements TranslatableInterface, HasMedia
     {
         return $this->hasMany(CompanyWorkingHour::class);
     }
+
+    public function products(): HasMany
+    {
+        return $this->hasMany(Product::class);
+    }
+
+    public function productVariants(): HasMany
+    {
+        return $this->hasMany(ProductVariant::class);
+    }
 }

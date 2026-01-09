@@ -4,6 +4,8 @@ use App\Http\Controllers\Sellers\Auth\ForgotPasswordController;
 use App\Http\Controllers\Sellers\Auth\LoginController;
 use App\Http\Controllers\Sellers\Auth\LogoutController;
 use App\Http\Controllers\Sellers\Auth\RegisterController;
+use App\Http\Controllers\Sellers\ProductController;
+use App\Http\Controllers\Sellers\ProductVariantController;
 use App\Http\Controllers\Sellers\ProfileController;
 use App\Http\Middleware\CompanyAdminMiddleware;
 use App\Http\Middleware\CompanyVerifiedMiddleware;
@@ -38,8 +40,29 @@ Route::middleware(['general_access:sellers', RouteLogMiddleware::class])->prefix
 
         // Routes that require company verification
         Route::group(['middleware' => [CompanyVerifiedMiddleware::class]], static function () {
-            // Future routes for verified companies will go here
-            // Example: products, orders, etc.
+            Route::group(['prefix' => 'products'], static function () {
+                Route::get('load', [ProductController::class, 'index']);
+                Route::get('list', [ProductController::class, 'list']);
+                Route::get('show/{product}', [ProductController::class, 'show']);
+                Route::post('add', [ProductController::class, 'store']);
+                Route::post('update/{product}', [ProductController::class, 'update']);
+                Route::delete('delete/{product}', [ProductController::class, 'destroy']);
+                Route::delete('delete-hover-image/{product}', [ProductController::class, 'deleteHoverImage']);
+                Route::delete('images/delete/{product}/{mediaId}', [ProductController::class, 'destroyImage']);
+                Route::post('change-active-status/{product}', [ProductController::class, 'changeActiveStatus']);
+            });
+
+            Route::group(['prefix' => 'product-variants'], static function () {
+                Route::get('load', [ProductVariantController::class, 'index']);
+                Route::get('list', [ProductVariantController::class, 'list']);
+                Route::get('show/{productVariant}', [ProductVariantController::class, 'show']);
+                Route::post('add/{product}', [ProductVariantController::class, 'store']);
+                Route::post('update/{productVariant}', [ProductVariantController::class, 'update']);
+                Route::delete('delete/{productVariant}', [ProductVariantController::class, 'destroy']);
+                Route::delete('delete-hover-image/{productVariant}', [ProductVariantController::class, 'deleteHoverImage']);
+                Route::delete('images/delete/{productVariant}/{mediaId}', [ProductVariantController::class, 'destroyImage']);
+                Route::post('change-active-status/{productVariant}', [ProductVariantController::class, 'changeActiveStatus']);
+            });
         });
     });
 });

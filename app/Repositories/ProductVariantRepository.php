@@ -10,6 +10,7 @@ use App\Models\ProductOption;
 use App\Models\ProductVariant;
 use App\Models\ProductVariantProductOption;
 use App\Services\AdminService;
+use App\Services\CompanyAdminService;
 use App\Services\FileUpload;
 use App\Services\LangService;
 use App\Services\ProductService;
@@ -20,6 +21,7 @@ use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 
 class ProductVariantRepository
@@ -68,6 +70,10 @@ class ProductVariantRepository
 
         if ($validated['set_id'] ?? null) {
             $set = ProductVariant::query()
+                ->when(CompanyAdminService::instance()->checkUser(), function (Builder $query) {
+                    // for sellers
+                    $query->where('company_id', CompanyAdminService::instance()->getUser()->company_id);
+                })
                 ->where('id', $validated['set_id'])
                 ->where('is_set', true)
                 ->first();
@@ -89,6 +95,11 @@ class ProductVariantRepository
             ->when(count($relations['counts']) > 0, fn($q) => $q->withCount($relations['counts']))
             ->when($isAdmin, function ($builder) use ($validated) {
                 // load for a control panel
+                if (CompanyAdminService::instance()->checkUser()) {
+                    // for sellers
+                    $builder->where('company_id', CompanyAdminService::instance()->getUser()->company_id);
+                }
+
                 $builder
                     ->with([
                         'creatable',
@@ -217,6 +228,10 @@ class ProductVariantRepository
     {
         if ($validated['set_id'] ?? null) {
             $set = ProductVariant::query()
+                ->when(CompanyAdminService::instance()->checkUser(), function (Builder $builder) {
+                    // for sellers
+                    $builder->where('company_id', CompanyAdminService::instance()->getUser()->company_id);
+                })
                 ->where('id', $validated['set_id'])
                 ->where('is_set', true)
                 ->first();
@@ -227,6 +242,10 @@ class ProductVariantRepository
         }
 
         return $query
+            ->when(CompanyAdminService::instance()->checkUser(), function (Builder $builder) {
+                // for sellers
+                $builder->where('company_id', CompanyAdminService::instance()->getUser()->company_id);
+            })
             ->active()
             ->with([
                 'product',
@@ -256,8 +275,23 @@ class ProductVariantRepository
             ->paginate($validated['limit'] ?? 10);
     }
 
+    public function checkCompanyForSellers(ProductVariant $productVariant): void
+    {
+        if (CompanyAdminService::instance()->checkUser()) {
+            if ($productVariant->company_id !== CompanyAdminService::instance()->getUser()->company_id) {
+                throw new AccessDeniedHttpException(
+                    LangService::instance()
+                        ->setDefault('You do not have permission to access this product variant!')
+                        ->getLang('you_do_not_have_permission_to_access_this_product_variant')
+                );
+            }
+        }
+    }
+
     public function show(ProductVariant $productVariant): ProductVariant
     {
+        $this->checkCompanyForSellers($productVariant);
+
         $productVariant->load([
             'media',
             'sets',
@@ -323,7 +357,11 @@ class ProductVariantRepository
             $data['discount_type'] = $validated['discount_type'] ?? null;
             $data['discount_start_at'] = $validated['discount_start_at'] ?? null;
             $data['discount_end_at'] = $validated['discount_end_at'] ?? null;
-            $data['is_set'] = (bool) ($validated['is_set'] ?? false);
+            $data['is_set'] = (bool)($validated['is_set'] ?? false);
+
+            if (CompanyAdminService::instance()->checkUser()) {
+                $data['company_id'] = CompanyAdminService::instance()->getUser()->company_id;
+            }
 
             /** @var ProductVariant $productVariant */
             $productVariant = $product->variants()->create($data);
@@ -344,6 +382,8 @@ class ProductVariantRepository
 
     public function update(ProductVariant $productVariant, FormRequest $request, bool $withoutImages = false): ProductVariant
     {
+        $this->checkCompanyForSellers($productVariant);
+
         $_this = $this;
 
         return DB::transaction(static function () use ($_this, $productVariant, $request, $withoutImages) {
@@ -378,6 +418,8 @@ class ProductVariantRepository
 
     public function syncSets(ProductVariant $productVariant, array $sets, bool $detach = false): void
     {
+        $this->checkCompanyForSellers($productVariant);
+
         if ($productVariant->isSet()) {
             if (!$productVariant->isDefault()) {
                 throw new BadRequestHttpException(
@@ -397,6 +439,8 @@ class ProductVariantRepository
 
     public function setOptions(ProductVariant $productVariant, array $options, $guest = false): void
     {
+        $this->checkCompanyForSellers($productVariant);
+
         if (empty($options)) {
             return;
         }
@@ -487,6 +531,8 @@ class ProductVariantRepository
 
     public function destroy(ProductVariant $productVariant): void
     {
+        $this->checkCompanyForSellers($productVariant);
+
         DB::transaction(static function () use ($productVariant) {
             $productVariant->delete();
         });
@@ -494,6 +540,8 @@ class ProductVariantRepository
 
     public function deleteHoverImage(ProductVariant $productVariant): void
     {
+        $this->checkCompanyForSellers($productVariant);
+
         DB::transaction(static function () use ($productVariant) {
             $productVariant->clearMediaCollection('product_variants_hover');
         });
@@ -501,6 +549,8 @@ class ProductVariantRepository
 
     public function deleteImage(ProductVariant $productVariant, int $mediaId): void
     {
+        $this->checkCompanyForSellers($productVariant);
+
         DB::transaction(static function () use ($productVariant, $mediaId) {
             $productVariant->deleteMedia($mediaId);
         });
@@ -508,6 +558,8 @@ class ProductVariantRepository
 
     public function changeActiveStatus(ProductVariant $productVariant): void
     {
+        $this->checkCompanyForSellers($productVariant);
+
         DB::transaction(function () use ($productVariant) {
             $productVariant->is_active = !$productVariant->is_active;
             $productVariant->save();
@@ -516,8 +568,14 @@ class ProductVariantRepository
 
     public function getDefaultVariantByProduct(Product $product): ProductVariant
     {
+        (new ProductRepository())->checkCompanyForSellers($product);
+
         $productVariant = $product->variants()
             ->where('is_default', true)
+            ->when(CompanyAdminService::instance()->checkUser(), function (Builder $builder) {
+                // for sellers
+                $builder->where('company_id', CompanyAdminService::instance()->getUser()->company_id);
+            })
             ->active()
             ->first();
 

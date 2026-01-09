@@ -5,6 +5,7 @@ namespace App\Repositories;
 use App\Models\Brand;
 use App\Models\Category;
 use App\Models\Product;
+use App\Services\CompanyAdminService;
 use App\Services\FileUpload;
 use App\Services\LangService;
 use App\Services\ProductService;
@@ -14,6 +15,7 @@ use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 
 class ProductRepository
 {
@@ -64,6 +66,11 @@ class ProductRepository
             ->when(count($relations['counts']) > 0, fn($q) => $q->withCount($relations['counts']))
             ->when($isAdmin, function (Builder $builder) use ($validated) {
                 // load for a control panel
+                if (CompanyAdminService::instance()->checkUser()) {
+                    // for sellers
+                    $builder->where('company_id', CompanyAdminService::instance()->getUser()->company_id);
+                }
+
                 $builder
                     ->with([
                         'creatable',
@@ -176,6 +183,10 @@ class ProductRepository
             ->with([
                 'translatable',
             ])
+            ->when(CompanyAdminService::instance()->checkUser(), function (Builder $builder) {
+                // for sellers
+                $builder->where('company_id', CompanyAdminService::instance()->getUser()->company_id);
+            })
             ->when($validated['is_set'] ?? null, function ($builder) use ($validated) {
                 if ($validated['is_set'] === 'yes') {
                     $builder->isSet();
@@ -197,8 +208,23 @@ class ProductRepository
             ->paginate($validated['limit'] ?? 10);
     }
 
+    public function checkCompanyForSellers(Product $product): void
+    {
+        if (CompanyAdminService::instance()->checkUser()) {
+            if ($product->company_id !== CompanyAdminService::instance()->getUser()->company_id) {
+                throw new AccessDeniedHttpException(
+                    LangService::instance()
+                        ->setDefault('You do not have permission to access this product!')
+                        ->getLang('you_do_not_have_permission_to_access_this_product')
+                );
+            }
+        }
+    }
+
     public function show(Product $product): Product
     {
+        $this->checkCompanyForSellers($product);
+
         $product
             ->load([
                 'media',
@@ -265,6 +291,10 @@ class ProductRepository
 
             $validated['uuid'] = Str::uuid();
 
+            if (CompanyAdminService::instance()->checkUser()) {
+                $validated['company_id'] = CompanyAdminService::instance()->getUser()->company_id;
+            }
+
             $product = Product::createWithLangs($validated);
 
             $_this->syncCategories($product, $categories);
@@ -282,6 +312,8 @@ class ProductRepository
 
     public function update(Product $product, FormRequest $request): Product
     {
+        $this->checkCompanyForSellers($product);
+
         $_this = $this;
 
         return DB::transaction(static function () use ($_this, $product, $request) {
@@ -314,6 +346,8 @@ class ProductRepository
 
     public function destroy(Product $product): void
     {
+        $this->checkCompanyForSellers($product);
+
         DB::transaction(static function () use ($product) {
             $product->delete();
         });
@@ -321,6 +355,8 @@ class ProductRepository
 
     public function deleteHoverImage(Product $product): void
     {
+        $this->checkCompanyForSellers($product);
+
         DB::transaction(static function () use ($product) {
             $product->clearMediaCollection('products_hover');
         });
@@ -328,6 +364,8 @@ class ProductRepository
 
     public function deleteImage(Product $product, int $mediaId): void
     {
+        $this->checkCompanyForSellers($product);
+
         DB::transaction(static function () use ($product, $mediaId) {
             $product->deleteMedia($mediaId);
         });
@@ -335,6 +373,8 @@ class ProductRepository
 
     public function changeActiveStatus(Product $product): void
     {
+        $this->checkCompanyForSellers($product);
+
         DB::transaction(function () use ($product) {
             $product->is_active = !$product->is_active;
             $product->save();
@@ -343,6 +383,8 @@ class ProductRepository
 
     public function syncCategories(Product $product, array $categories): void
     {
+        $this->checkCompanyForSellers($product);
+
         if (!in_array($product->main_category_id, $categories)) {
             $categories[] = $product->main_category_id;
         }

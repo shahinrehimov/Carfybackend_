@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Resources\Admin\ProductVariants;
+namespace App\Http\Resources\Sellers\ProductVariants;
 
 use App\Http\Resources\Admin\ProductOptions\ProductOptionsListResource;
 use App\Models\ProductOption;

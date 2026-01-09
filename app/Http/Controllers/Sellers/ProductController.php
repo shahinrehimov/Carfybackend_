@@ -1,15 +1,15 @@
 <?php
 
-namespace App\Http\Controllers\Admin;
+namespace App\Http\Controllers\Sellers;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\Admin\Products\ProductSearchRequest;
-use App\Http\Requests\Admin\Products\ProductStoreRequest;
-use App\Http\Requests\Admin\Products\ProductUpdateRequest;
-use App\Http\Resources\Admin\Products\ProductsListResource;
-use App\Http\Resources\Admin\Products\ProductsResource;
-use App\Http\Resources\Admin\Products\ProductResource;
+use App\Http\Requests\Sellers\Products\ProductSearchRequest;
+use App\Http\Requests\Sellers\Products\ProductStoreRequest;
+use App\Http\Requests\Sellers\Products\ProductUpdateRequest;
 use App\Http\Resources\GeneralResource;
+use App\Http\Resources\Sellers\Products\ProductResource;
+use App\Http\Resources\Sellers\Products\ProductsListResource;
+use App\Http\Resources\Sellers\Products\ProductsResource;
 use App\Models\Product;
 use App\Repositories\ProductRepository;
 use App\Services\LangService;

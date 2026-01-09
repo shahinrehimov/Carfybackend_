@@ -1,12 +1,9 @@
 <?php
 
-namespace App\Http\Requests\Admin\Products;
+namespace App\Http\Requests\Sellers\ProductVariants;
 
 use App\Enum\DiscountTypeEnum;
-use App\Models\Brand;
-use App\Models\Category;
 use App\Models\ProductOption;
-use App\Models\ProductVariant;
 use App\Rules\FirstTranslationRequired;
 use App\Rules\NestedDistinctRule;
 use App\Rules\ProductOptionsRule;
@@ -19,7 +16,7 @@ use Illuminate\Validation\Rules\File;
  * @property mixed $has_discount
  * @property mixed $is_set
  */
-class ProductStoreRequest extends FormRequest
+class ProductVariantStoreRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -40,37 +37,15 @@ class ProductStoreRequest extends FormRequest
     {
         return [
             'main_image' => [
-                'required',
+                'filled',
                 File::image()->max(10 * 1024),
             ],
             'hover_image' => [
                 'filled',
                 File::image()->max(10 * 1024),
             ],
-            'images' => ['required', 'array', 'min:1'],
+            'images' => ['filled', 'array', 'min:1'],
             'images.*' => ['required', File::image()->max(10 * 1024)],
-
-            'slug' => ['nullable', 'string', 'max:10000'],
-
-            'brand_id' => ['required', 'integer', Rule::exists(Brand::class, 'id')->where('is_active', true)->whereNull('deleted_at')],
-            'main_category_id' => ['required', 'integer', Rule::in($this->categories ?? []), Rule::exists(Category::class, 'id')->where('is_active', true)->whereNull('deleted_at')],
-            'categories' => ['required', 'array', 'min:1'],
-            'categories.*' => ['required', 'integer', Rule::exists(Category::class, 'id')->where('is_active', true)->whereNull('deleted_at')],
-
-            'translations' => ['required', 'array', 'size:' . count(LangService::instance()->getLanguages())],
-            'translations.*.language_id' => ['required', 'integer', 'distinct', Rule::in(data_get(LangService::instance()->getLanguages(), '*.id'))],
-            'translations.*.title' => [new FirstTranslationRequired('title'), 'string', 'max:1000'],
-            'translations.*.description_short' => [new FirstTranslationRequired('description_short'), 'string', 'max:10000'],
-            'translations.*.description' => ['nullable', 'string', 'max:50000'],
-            'translations.*.delivery' => ['nullable', 'string', 'max:50000'],
-            'translations.*.note' => ['nullable', 'string', 'max:50000'],
-
-            // default variant
-
-            'is_set' => ['required', 'boolean'],
-            'sets' => ['filled', Rule::requiredIf(fn() => $this->is_set), Rule::excludeIf(fn() => !$this->is_set), 'array', 'min:1'],
-            'sets.*.product_variant_id' => ['required', 'integer', Rule::exists(ProductVariant::class, 'id')->where('is_active', true)->where('is_set', 0)->whereNull('deleted_at')],
-            'sets.*.quantity' => ['required', 'integer', 'min:1'],
 
             'stock' => ['nullable', 'integer', 'min:0'],
             'price' => ['nullable', /*Rule::requiredIf(fn() => !$this->is_set),*/ Rule::excludeIf(fn() => $this->is_set), 'numeric', 'min:0'],

@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Requests\Admin\ProductVariants;
+namespace App\Http\Requests\Sellers\ProductVariants;
 
 use App\Enum\DiscountTypeEnum;
 use App\Models\ProductOption;

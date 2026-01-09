@@ -1,9 +1,9 @@
 <?php
 
-namespace App\Http\Resources\Admin\ProductVariants;
+namespace App\Http\Resources\Sellers\ProductVariants;
 
 use App\Http\Resources\Admin\Groups\GroupsListResource;
-use App\Http\Resources\Admin\Products\ProductsListResource;
+use App\Http\Resources\Sellers\Products\ProductsListResource;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 

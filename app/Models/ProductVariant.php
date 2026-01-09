@@ -46,6 +46,7 @@ use Spatie\MediaLibrary\InteractsWithMedia;
  * @property array|mixed $ratings
  * @property Collection|mixed $related_products
  * @property mixed $options
+ * @property mixed $company_id
  */
 
 class ProductVariant extends Model implements HasMedia
@@ -53,6 +54,7 @@ class ProductVariant extends Model implements HasMedia
     use SoftDeletes, ActionBy, ActionUser, SlugTrait, InteractsWithMedia, CascadeSoftDeletes;
 
     protected $fillable = [
+        'company_id', // nullable
         'uuid',
         'is_set',
         'is_default',
@@ -186,6 +188,11 @@ class ProductVariant extends Model implements HasMedia
     public function isSet()
     {
         return $this->is_set ?? false;
+    }
+
+    public function company(): BelongsTo
+    {
+        return $this->belongsTo(Company::class);
     }
 
     public function sets(): BelongsToMany
