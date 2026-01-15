@@ -2,9 +2,11 @@
 
 namespace App\Repositories;
 
+use App\Enum\ProductVariantApprovalStatusEnum;
 use App\Models\Brand;
 use App\Models\Category;
 use App\Models\Product;
+use App\Services\AdminService;
 use App\Services\CompanyAdminService;
 use App\Services\FileUpload;
 use App\Services\LangService;
@@ -69,6 +71,15 @@ class ProductRepository
                 if (CompanyAdminService::instance()->checkUser()) {
                     // for sellers
                     $builder->where('company_id', CompanyAdminService::instance()->getUser()->company_id);
+                }
+
+                if (AdminService::instance()->checkUser()) {
+                    // for admins
+                    $builder->withCount([
+                        'variants as pending_variants_count' => function (Builder $query) {
+                            $query->where('approval_status', ProductVariantApprovalStatusEnum::PENDING->value);
+                        }
+                    ]);
                 }
 
                 $builder

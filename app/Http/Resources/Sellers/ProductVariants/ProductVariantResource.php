@@ -4,8 +4,10 @@ namespace App\Http\Resources\Sellers\ProductVariants;
 
 use App\Http\Resources\Admin\Groups\GroupsListResource;
 use App\Http\Resources\Sellers\Products\ProductsListResource;
+use App\Services\LangService;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
+use Illuminate\Support\Str;
 
 /**
  * @property mixed $id
@@ -25,6 +27,8 @@ use Illuminate\Http\Resources\Json\JsonResource;
  * @property mixed $discount
  * @property mixed $discount_start_at
  * @property mixed $discount_end_at
+ * @property mixed $approval_status
+ * @property mixed $approval_status_message
  * @method isActive()
  * @method isSet()
  * @method isDefault()
@@ -68,6 +72,11 @@ class ProductVariantResource extends JsonResource
             'is_default' => $this->isDefault(),
             'is_active' => $this->isActive(),
             'product' => ProductsListResource::make($this->whenLoaded('product')),
+            'approval_status' => $this->approval_status,
+            'approval_status_label' => LangService::instance()
+                ->setDefault(Str::title($this->approval_status))
+                ->getLang('product_variant_approval_status_' . $this->approval_status),
+            'approval_status_message' => $this->approval_status_message,
         ];
     }
 }

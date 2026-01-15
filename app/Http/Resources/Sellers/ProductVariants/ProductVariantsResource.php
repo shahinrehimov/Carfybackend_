@@ -22,6 +22,8 @@ use Illuminate\Support\Str;
  * @property mixed $price_final
  * @property mixed $discount_type
  * @property mixed $discount
+ * @property mixed $approval_status
+ * @property mixed $approval_status_message
  * @method getLang(string $string)
  * @method isActive()
  * @method isSet()
@@ -64,6 +66,11 @@ class ProductVariantsResource extends JsonResource
             'discount' => $this->discount,
             'is_default' => $this->isDefault(),
             'is_active' => $this->isActive(),
+            'approval_status' => $this->approval_status,
+            'approval_status_label' => LangService::instance()
+                ->setDefault(Str::title($this->approval_status))
+                ->getLang('product_variant_approval_status_' . $this->approval_status),
+            'approval_status_message' => $this->approval_status_message,
             'created_user' => $this->whenLoaded('creatable', function () {
                 return $this->creatable?->username;
             }),

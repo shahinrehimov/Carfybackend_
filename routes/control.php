@@ -17,9 +17,11 @@ use App\Http\Controllers\Admin\GroupController;
 use App\Http\Controllers\Admin\LanguageController;
 use App\Http\Controllers\Admin\MetaController;
 use App\Http\Controllers\Admin\OrderController;
+use App\Http\Controllers\Admin\ProductController;
 use App\Http\Controllers\Admin\ProductOptionController;
 use App\Http\Controllers\Admin\ProductOptionItemController;
 use App\Http\Controllers\Admin\ProductReviewController;
+use App\Http\Controllers\Admin\ProductVariantController;
 use App\Http\Controllers\Admin\ProfileController;
 use App\Http\Controllers\Admin\RoleController;
 use App\Http\Controllers\Admin\SettingController;
@@ -298,6 +300,32 @@ Route::middleware(['general_access:admin', RouteLogMiddleware::class])->prefix('
             Route::post('change-active-status/{slider}', [SliderController::class, 'changeActiveStatus']);
             Route::post('change-sorting/{slider}', [SliderController::class, 'changeSorting']);
             Route::post('change-sorting-multiple', [SliderController::class, 'changeSortingMultiple']);
+        });
+
+        Route::group(['prefix' => 'products'], static function () {
+            Route::get('load', [ProductController::class, 'index']);
+            Route::get('list', [ProductController::class, 'list']);
+            Route::get('show/{product}', [ProductController::class, 'show']);
+            Route::delete('delete/{product}', [ProductController::class, 'destroy']);
+            Route::delete('delete-hover-image/{product}', [ProductController::class, 'deleteHoverImage']);
+            Route::delete('images/delete/{product}/{mediaId}', [ProductController::class, 'destroyImage']);
+            Route::post('change-active-status/{product}', [ProductController::class, 'changeActiveStatus']);
+        });
+
+        Route::group(['prefix' => 'product-variants'], static function () {
+            Route::get('load', [ProductVariantController::class, 'index']);
+            Route::get('list', [ProductVariantController::class, 'list']);
+            Route::get('show/{productVariant}', [ProductVariantController::class, 'show']);
+            Route::delete('delete/{productVariant}', [ProductVariantController::class, 'destroy']);
+            Route::delete('delete-hover-image/{productVariant}', [ProductVariantController::class, 'deleteHoverImage']);
+            Route::delete('images/delete/{productVariant}/{mediaId}', [ProductVariantController::class, 'destroyImage']);
+            Route::post('change-active-status/{productVariant}', [ProductVariantController::class, 'changeActiveStatus']);
+
+            Route::group(['prefix' => '{productVariant}/approval-status'], static function () {
+                Route::get('history', [ProductVariantController::class, 'approvalStatusHistory']);
+                Route::post('approve', [ProductVariantController::class, 'approvalStatusApprove']);
+                Route::post('reject', [ProductVariantController::class, 'approvalStatusReject']);
+            });
         });
     });
 });

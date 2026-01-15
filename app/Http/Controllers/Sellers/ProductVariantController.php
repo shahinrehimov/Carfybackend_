@@ -3,10 +3,12 @@
 namespace App\Http\Controllers\Sellers;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\GeneralListRequest;
 use App\Http\Requests\Sellers\ProductVariants\ProductVariantSearchRequest;
 use App\Http\Requests\Sellers\ProductVariants\ProductVariantStoreRequest;
 use App\Http\Requests\Sellers\ProductVariants\ProductVariantUpdateRequest;
 use App\Http\Resources\GeneralResource;
+use App\Http\Resources\Sellers\ProductVariants\ProductVariantApprovalStatusHistoryResource;
 use App\Http\Resources\Sellers\ProductVariants\ProductVariantResource;
 use App\Http\Resources\Sellers\ProductVariants\ProductVariantsListResource;
 use App\Http\Resources\Sellers\ProductVariants\ProductVariantsResource;
@@ -107,6 +109,22 @@ class ProductVariantController extends Controller
     public function changeActiveStatus(ProductVariant $productVariant): JsonResponse
     {
         $this->repo->changeActiveStatus($productVariant);
+
+        return response()->json(GeneralResource::make([
+            'message' => LangService::instance()
+                ->setDefault('Status changed successfully!')
+                ->getLang('admin_status_changed_successfully'),
+        ]));
+    }
+
+    public function approvalStatusHistory(GeneralListRequest $request, ProductVariant $productVariant): AnonymousResourceCollection
+    {
+        return ProductVariantApprovalStatusHistoryResource::collection($this->repo->approvalStatusHistory($productVariant, $request->validated()));
+    }
+
+    public function approvalStatusResend(ProductVariant $productVariant): JsonResponse
+    {
+        $this->repo->approvalStatusResend($productVariant);
 
         return response()->json(GeneralResource::make([
             'message' => LangService::instance()

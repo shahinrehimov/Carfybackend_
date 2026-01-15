@@ -47,6 +47,8 @@ use Spatie\MediaLibrary\InteractsWithMedia;
  * @property Collection|mixed $related_products
  * @property mixed $options
  * @property mixed $company_id
+ * @property mixed $approval_status
+ * @property mixed|null $approval_status_message
  */
 
 class ProductVariant extends Model implements HasMedia
@@ -67,6 +69,8 @@ class ProductVariant extends Model implements HasMedia
         'discount_start_at',
         'discount_end_at',
         'is_active',
+        'approval_status', // ProductVariantApprovalStatusEnum
+        'approval_status_message', // nullable, max 3000
     ];
 
     protected $casts = [
@@ -93,6 +97,7 @@ class ProductVariant extends Model implements HasMedia
         'wishlists',
         'baskets',
         'reviews',
+        'approvalStatuses',
     ];
 
     public function registerMediaCollections(): void
@@ -245,5 +250,10 @@ class ProductVariant extends Model implements HasMedia
     public function reviews(): HasMany
     {
         return $this->hasMany(ProductReview::class);
+    }
+
+    public function approvalStatuses(): HasMany
+    {
+        return $this->hasMany(ProductVariantApprovalStatus::class);
     }
 }

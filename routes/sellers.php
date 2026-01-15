@@ -62,6 +62,11 @@ Route::middleware(['general_access:sellers', RouteLogMiddleware::class])->prefix
                 Route::delete('delete-hover-image/{productVariant}', [ProductVariantController::class, 'deleteHoverImage']);
                 Route::delete('images/delete/{productVariant}/{mediaId}', [ProductVariantController::class, 'destroyImage']);
                 Route::post('change-active-status/{productVariant}', [ProductVariantController::class, 'changeActiveStatus']);
+
+                Route::group(['prefix' => '{productVariant}/approval-status'], static function () {
+                    Route::get('history', [ProductVariantController::class, 'approvalStatusHistory']);
+                    Route::post('resend', [ProductVariantController::class, 'approvalStatusResend']);
+                });
             });
         });
     });
