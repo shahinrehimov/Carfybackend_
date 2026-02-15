@@ -71,15 +71,17 @@ class ProductRepository
                 if (CompanyAdminService::instance()->checkUser()) {
                     // for sellers
                     $builder->where('company_id', CompanyAdminService::instance()->getUser()->company_id);
-                }
-
-                if (AdminService::instance()->checkUser()) {
+                } else if (AdminService::instance()->checkUser()) {
                     // for admins
                     $builder->withCount([
                         'variants as pending_variants_count' => function (Builder $query) {
                             $query->where('approval_status', ProductVariantApprovalStatusEnum::PENDING->value);
                         }
                     ]);
+
+                    if ($validated['company_id'] ?? null) {
+                        $builder->where('company_id', $validated['company_id']);
+                    }
                 }
 
                 $builder

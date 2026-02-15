@@ -5,7 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\GeneralListRequest;
 use App\Http\Requests\Sellers\ProductVariants\ProductVariantApprovalStatusChangeRequest;
-use App\Http\Requests\Sellers\ProductVariants\ProductVariantSearchRequest;
+use App\Http\Requests\Admin\ProductVariants\ProductVariantSearchRequest;
 use App\Http\Requests\Sellers\ProductVariants\ProductVariantStoreRequest;
 use App\Http\Requests\Sellers\ProductVariants\ProductVariantUpdateRequest;
 use App\Http\Resources\GeneralResource;

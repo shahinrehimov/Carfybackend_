@@ -99,6 +99,11 @@ class ProductVariantRepository
                 if (CompanyAdminService::instance()->checkUser()) {
                     // for sellers
                     $builder->where('company_id', CompanyAdminService::instance()->getUser()->company_id);
+                } else if (AdminService::instance()->checkUser()) {
+                    // for admins
+                    if ($validated['company_id'] ?? null) {
+                        $builder->where('company_id', $validated['company_id']);
+                    }
                 }
 
                 $builder
