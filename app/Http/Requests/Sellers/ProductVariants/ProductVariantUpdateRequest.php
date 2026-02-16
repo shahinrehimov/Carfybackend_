@@ -3,6 +3,7 @@
 namespace App\Http\Requests\Sellers\ProductVariants;
 
 use App\Enum\DiscountTypeEnum;
+use App\Models\City;
 use App\Models\ProductOption;
 use App\Models\ProductVariant;
 use App\Rules\NestedDistinctRule;
@@ -49,6 +50,8 @@ class ProductVariantUpdateRequest extends FormRequest
             ],
             'images' => ['filled', 'array', 'min:1'],
             'images.*' => ['required', File::image()->max(10 * 1024)],
+
+            'city_id' => ['required', 'integer', Rule::exists(City::class, 'id')->where('is_active', true)->whereNull('deleted_at')],
 
             'sets' => ['filled', Rule::requiredIf(fn() => $productVariant->isSet()), Rule::excludeIf(fn() => !$productVariant->isSet()), 'array', 'min:1'],
             'sets.*.product_variant_id' => ['required', 'integer', Rule::exists(ProductVariant::class, 'id')->where('is_active', true)->where('is_set', 0)->whereNull('deleted_at')],

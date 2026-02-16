@@ -43,6 +43,8 @@ class City extends Model implements TranslatableInterface
 
     protected array $softDeleteAcceptableRelations = [
         'addresses',
+        'companies',
+        'productVariants',
     ];
 
     public function scopeActive(Builder $builder): void
@@ -68,5 +70,16 @@ class City extends Model implements TranslatableInterface
     public function orders(): HasMany
     {
         return $this->hasMany(Order::class);
+    }
+
+    public function companies(): HasMany
+    {
+        return $this->hasMany(Company::class);
+    }
+
+    public function productVariants(): HasMany
+    {
+        return $this->hasMany(ProductVariant::class);
+
     }
 }

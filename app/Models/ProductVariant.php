@@ -256,4 +256,9 @@ class ProductVariant extends Model implements HasMedia
     {
         return $this->hasMany(ProductVariantApprovalStatus::class);
     }
+
+    public function city(): BelongsTo
+    {
+        return $this->belongsTo(City::class);
+    }
 }

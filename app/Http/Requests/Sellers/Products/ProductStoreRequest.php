@@ -5,6 +5,7 @@ namespace App\Http\Requests\Sellers\Products;
 use App\Enum\DiscountTypeEnum;
 use App\Models\Brand;
 use App\Models\Category;
+use App\Models\City;
 use App\Models\ProductOption;
 use App\Models\ProductVariant;
 use App\Rules\FirstTranslationRequired;
@@ -66,6 +67,8 @@ class ProductStoreRequest extends FormRequest
             'translations.*.note' => ['nullable', 'string', 'max:50000'],
 
             // default variant
+
+            'city_id' => ['required', 'integer', Rule::exists(City::class, 'id')->where('is_active', true)->whereNull('deleted_at')],
 
             'is_set' => ['required', 'boolean'],
             'sets' => ['filled', Rule::requiredIf(fn() => $this->is_set), Rule::excludeIf(fn() => !$this->is_set), 'array', 'min:1'],

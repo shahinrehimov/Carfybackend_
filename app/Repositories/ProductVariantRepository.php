@@ -364,6 +364,7 @@ class ProductVariantRepository
             $data['discount_start_at'] = $validated['discount_start_at'] ?? null;
             $data['discount_end_at'] = $validated['discount_end_at'] ?? null;
             $data['is_set'] = (bool)($validated['is_set'] ?? false);
+            $data['city_id'] = $validated['city_id'];
 
             if (CompanyAdminService::instance()->checkUser()) {
                 $data['company_id'] = CompanyAdminService::instance()->getUser()->company_id;
