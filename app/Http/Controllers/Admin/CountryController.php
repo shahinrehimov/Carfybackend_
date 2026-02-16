@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\Countries\CountryChangeSortMultipleRequest;
 use App\Http\Requests\Admin\Countries\CountryChangeSortRequest;
+use App\Http\Requests\Admin\Countries\CountryListRequest;
 use App\Http\Requests\Admin\Countries\CountryStoreRequest;
 use App\Http\Requests\Admin\Countries\CountryUpdateRequest;
 use App\Http\Requests\GeneralListRequest;
@@ -32,9 +33,11 @@ class CountryController extends Controller
         return CountriesResource::collection($this->repo->load($request->validated()));
     }
 
-    public function list(): AnonymousResourceCollection
+    public function list(CountryListRequest $request): AnonymousResourceCollection
     {
-        return CountriesListResource::collection($this->repo->list());
+        $validated = $request->validated();
+
+        return CountriesListResource::collection($this->repo->list(($validated['with_cities'] ?? 'no') === 'yes'));
     }
 
     public function show(Country $country): CountryResource

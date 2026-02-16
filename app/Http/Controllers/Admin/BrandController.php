@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\Brands\BrandChangeSortMultipleRequest;
 use App\Http\Requests\Admin\Brands\BrandChangeSortRequest;
+use App\Http\Requests\Admin\Brands\BrandListRequest;
 use App\Http\Requests\Admin\Brands\BrandStoreRequest;
 use App\Http\Requests\Admin\Brands\BrandUpdateRequest;
 use App\Http\Requests\GeneralListRequest;
@@ -31,9 +32,11 @@ class BrandController extends Controller
     {
         return BrandsResource::collection($this->repo->load($request->validated()));
     }
-    public function list(): AnonymousResourceCollection
+    public function list(BrandListRequest $request): AnonymousResourceCollection
     {
-        return BrandsListResource::collection($this->repo->list());
+        $validated = $request->validated();
+
+        return BrandsListResource::collection($this->repo->list(($validated['with_models'] ?? 'no') === 'yes'));
     }
 
     public function show(Brand $brand): BrandResource

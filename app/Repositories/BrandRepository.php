@@ -37,13 +37,23 @@ class BrandRepository
             ->paginate($validated['limit'] ?? 10);
     }
 
-    public function list(): Collection
+    public function list(bool $withModels = false): Collection
     {
         return Brand::query()
             ->active()
             ->with([
                 'translatable',
             ])
+            ->when($withModels, function (Builder $builder) {
+                $builder->with([
+                    'brandModels' => function ($query) {
+                        $query->active();
+                        $query->orderBy('sort');
+                        $query->orderBy('id');
+                    },
+                    'brandModels.translatable',
+                ]);
+            })
             ->orderBy('sort')
             ->orderByDesc('id')
             ->get();

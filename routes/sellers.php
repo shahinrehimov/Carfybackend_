@@ -1,5 +1,11 @@
 <?php
 
+use App\Http\Controllers\Admin\BrandController;
+use App\Http\Controllers\Admin\BrandModelController;
+use App\Http\Controllers\Admin\CityController;
+use App\Http\Controllers\Admin\CountryController;
+use App\Http\Controllers\Admin\ProductOptionController;
+use App\Http\Controllers\Admin\ProductOptionItemController;
 use App\Http\Controllers\Sellers\Auth\ForgotPasswordController;
 use App\Http\Controllers\Sellers\Auth\LoginController;
 use App\Http\Controllers\Sellers\Auth\LogoutController;
@@ -66,6 +72,30 @@ Route::middleware(['general_access:sellers', RouteLogMiddleware::class])->prefix
                 Route::group(['prefix' => '{productVariant}/approval-status'], static function () {
                     Route::get('history', [ProductVariantController::class, 'approvalStatusHistory']);
                     Route::post('resend', [ProductVariantController::class, 'approvalStatusResend']);
+                });
+            });
+
+            Route::group(['prefix' => 'countries'], static function () {
+                Route::get('list', [CountryController::class, 'list']);
+
+                Route::group(['prefix' => '{country}/cities'], static function () {
+                    Route::get('list', [CityController::class, 'list']);
+                });
+            });
+
+            Route::group(['prefix' => 'brands'], static function () {
+                Route::get('list', [BrandController::class, 'list']);
+
+                Route::group(['prefix' => '{brand}/models'], static function () {
+                    Route::get('list', [BrandModelController::class, 'list']);
+                });
+            });
+
+            Route::group(['prefix' => 'product-options'], static function () {
+                Route::get('list', [ProductOptionController::class, 'list']);
+
+                Route::group(['prefix' => '{productOption}/items'], static function () {
+                    Route::get('list', [ProductOptionItemController::class, 'list']);
                 });
             });
         });
