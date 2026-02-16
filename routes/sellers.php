@@ -6,6 +6,7 @@ use App\Http\Controllers\Admin\CityController;
 use App\Http\Controllers\Admin\CountryController;
 use App\Http\Controllers\Admin\ProductOptionController;
 use App\Http\Controllers\Admin\ProductOptionItemController;
+use App\Http\Controllers\LocalTranslationsController;
 use App\Http\Controllers\Sellers\Auth\ForgotPasswordController;
 use App\Http\Controllers\Sellers\Auth\LoginController;
 use App\Http\Controllers\Sellers\Auth\LogoutController;
@@ -19,7 +20,6 @@ use App\Http\Middleware\RouteLogMiddleware;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware(['general_access:sellers', RouteLogMiddleware::class])->prefix('sellers')->group(callback: static function () {
-
     // Public routes (no authentication required)
     Route::post('register', [RegisterController::class, 'register'])->withoutMiddleware(RouteLogMiddleware::class);
     Route::post('login', [LoginController::class, 'login'])->withoutMiddleware(RouteLogMiddleware::class);
@@ -28,6 +28,11 @@ Route::middleware(['general_access:sellers', RouteLogMiddleware::class])->prefix
 
     // Authenticated routes
     Route::group(['middleware' => ['auth:company_admin', CompanyAdminMiddleware::class]], static function () {
+        Route::group(['prefix' => 'local-translations'], static function () {
+            Route::get('languages/list', [LocalTranslationsController::class, 'getLanguages'])->withoutMiddleware(['auth:company_admin']);
+            Route::get('{lang}', [LocalTranslationsController::class, 'getTranslations'])->withoutMiddleware(['auth:company_admin']);
+        });
+
         // Profile routes
         Route::group(['prefix' => 'profile'], static function () {
             Route::get('check-logged-in', [ProfileController::class, 'checkLoggedIn']);
