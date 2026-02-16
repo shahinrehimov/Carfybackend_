@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources\Sellers\Products;
 
+use App\Http\Resources\Admin\Brands\BrandsListResource;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -45,6 +46,7 @@ class ProductsListResource extends JsonResource
             'quantity' => $this->whenLoaded('pivot', function () {
                 return $this->pivot->quantity;
             }),
+            'brand' => BrandsListResource::make($this->whenLoaded('brand')),
         ];
     }
 }

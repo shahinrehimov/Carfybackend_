@@ -2,6 +2,8 @@
 
 namespace App\Http\Resources\App\ProductVariants;
 
+use App\Http\Resources\Admin\BrandModels\BrandModelsListResource;
+use App\Http\Resources\Admin\Cities\CitiesListResource;
 use App\Http\Resources\App\Products\ProductResource;
 use App\Services\LangService;
 use Illuminate\Http\Request;
@@ -26,6 +28,7 @@ use Illuminate\Support\Str;
  * @property mixed $in_basket
  * @property mixed $ratings
  * @property mixed $title
+ * @property mixed $year
  * @method getLang(string $string)
  * @method isSet()
  */
@@ -54,6 +57,8 @@ class ProductVariantResource extends JsonResource
             'images' => $this->whenLoaded('media', function () {
                 return $this->images['urls'] ?? [];
             }),
+            'city' => CitiesListResource::make($this->whenLoaded('city')),
+            'brand_model' => BrandModelsListResource::make($this->whenLoaded('brandModel')),
             'product' => ProductResource::make($this->whenLoaded('product')),
             'is_set' => $this->isSet(),
             'sets' => ProductVariantsResource::collection($this->whenLoaded('sets')),
@@ -68,6 +73,7 @@ class ProductVariantResource extends JsonResource
                     ->getLang('discount_types_' . $this->discount_type)
                 : null,
             'discount' => $this->discount,
+            'year' => $this->year,
             'in_wishlist' => $this->in_wishlist ?? false,
             'in_basket' => $this->in_basket ?? false,
             'options' => ProductVariantOptionsResource::collection($this->whenLoaded('options')),

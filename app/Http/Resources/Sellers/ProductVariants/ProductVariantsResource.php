@@ -2,6 +2,8 @@
 
 namespace App\Http\Resources\Sellers\ProductVariants;
 
+use App\Http\Resources\Admin\BrandModels\BrandModelsListResource;
+use App\Http\Resources\Admin\Cities\CitiesListResource;
 use App\Http\Resources\Admin\Groups\GroupsListResource;
 use App\Http\Resources\Sellers\Products\ProductsResource;
 use App\Services\LangService;
@@ -24,6 +26,7 @@ use Illuminate\Support\Str;
  * @property mixed $discount
  * @property mixed $approval_status
  * @property mixed $approval_status_message
+ * @property mixed $year
  * @method getLang(string $string)
  * @method isActive()
  * @method isSet()
@@ -64,6 +67,9 @@ class ProductVariantsResource extends JsonResource
                     ->getLang('discount_types_' . $this->discount_type)
                 : null,
             'discount' => $this->discount,
+            'city' => CitiesListResource::make($this->whenLoaded('city')),
+            'brand_model' => BrandModelsListResource::make($this->whenLoaded('brandModel')),
+            'year' => $this->year,
             'is_default' => $this->isDefault(),
             'is_active' => $this->isActive(),
             'approval_status' => $this->approval_status,

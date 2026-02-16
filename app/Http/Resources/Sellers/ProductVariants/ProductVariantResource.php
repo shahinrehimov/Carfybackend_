@@ -2,6 +2,8 @@
 
 namespace App\Http\Resources\Sellers\ProductVariants;
 
+use App\Http\Resources\Admin\BrandModels\BrandModelsListResource;
+use App\Http\Resources\Admin\Cities\CitiesListResource;
 use App\Http\Resources\Admin\Groups\GroupsListResource;
 use App\Http\Resources\Sellers\Products\ProductsListResource;
 use App\Services\LangService;
@@ -29,6 +31,7 @@ use Illuminate\Support\Str;
  * @property mixed $discount_end_at
  * @property mixed $approval_status
  * @property mixed $approval_status_message
+ * @property mixed $year
  * @method isActive()
  * @method isSet()
  * @method isDefault()
@@ -68,6 +71,9 @@ class ProductVariantResource extends JsonResource
             'discount' => $this->discount,
             'discount_start_at' => $this->discount_start_at?->toDatetimeString(),
             'discount_end_at' => $this->discount_end_at?->toDatetimeString(),
+            'city' => CitiesListResource::make($this->whenLoaded('city')),
+            'brand_model' => BrandModelsListResource::make($this->whenLoaded('brandModel')),
+            'year' => $this->year,
             'translations' => $this->translations,
             'is_default' => $this->isDefault(),
             'is_active' => $this->isActive(),

@@ -111,6 +111,10 @@ class ProductVariantRepository
                         'creatable',
                         'groups',
                         'groups.translatable',
+                        'city',
+                        'city.translatable',
+                        'brandModel',
+                        'brandModel.translatable',
                         'product.creatable',
                         'product.categories',
                         'product.categories.translatable',
@@ -311,10 +315,16 @@ class ProductVariantRepository
             'options.option.items.translatable',
             'groups',
             'groups.translatable',
+            'city',
+            'city.translatable',
+            'brandModel',
+            'brandModel.translatable',
 
             'product',
             'product.translatable',
             'product.media',
+            'product.brand',
+            'product.brand.translatable',
         ]);
 
         return $productVariant;
@@ -329,6 +339,10 @@ class ProductVariantRepository
                 'creatable',
                 'groups',
                 'groups.translatable',
+                'city',
+                'city.translatable',
+                'brandModel',
+                'brandModel.translatable',
                 'product.creatable',
                 'product.categories',
                 'product.categories.translatable',
@@ -673,6 +687,10 @@ class ProductVariantRepository
             'options.option.translatable',
             'options.item',
             'options.item.translatable',
+            'brandModel',
+            'brandModel.translatable',
+            'city',
+            'city.translatable',
         ]);
 
         $productVariant->ratings = ProductService::instance()->setProductVariant($productVariant)->calculateVariantRating();
