@@ -61,6 +61,8 @@ class ProductVariantUpdateRequest extends FormRequest
                     ->where('brand_id', $productVariant->product?->brand_id)
             ],
 
+            'year' => ['required', 'integer', 'min:1900', 'max:' . date('Y')],
+
             'sets' => ['filled', Rule::requiredIf(fn() => $productVariant->isSet()), Rule::excludeIf(fn() => !$productVariant->isSet()), 'array', 'min:1'],
             'sets.*.product_variant_id' => ['required', 'integer', Rule::exists(ProductVariant::class, 'id')->where('is_active', true)->where('is_set', 0)->whereNull('deleted_at')],
             'sets.*.quantity' => ['required', 'integer', 'min:1'],

@@ -58,6 +58,8 @@ class ProductVariantStoreRequest extends FormRequest
                     ->where('brand_id', $this->route('product')?->brand_id)
             ],
 
+            'year' => ['required', 'integer', 'min:1900', 'max:' . date('Y')],
+
             'stock' => ['nullable', 'integer', 'min:0'],
             'price' => ['nullable', /*Rule::requiredIf(fn() => !$this->is_set),*/ Rule::excludeIf(fn() => $this->is_set), 'numeric', 'min:0'],
             'has_discount' => ['required', 'boolean'],

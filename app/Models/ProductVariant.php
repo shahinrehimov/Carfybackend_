@@ -74,6 +74,7 @@ class ProductVariant extends Model implements HasMedia
         'approval_status_message', // nullable, max 3000
         'city_id',
         'brand_model_id',
+        'year',
     ];
 
     protected $casts = [
@@ -90,6 +91,7 @@ class ProductVariant extends Model implements HasMedia
         'main_image' => MainImageCast::class,
         'hover_image' => HoverImageCast::class,
         'images' => ImagesCast::class,
+        'year' => 'integer'
     ];
 
     protected array $cascadeDeletes = [

@@ -79,6 +79,8 @@ class ProductStoreRequest extends FormRequest
                     ->where('brand_id', $this->brand_id)
             ],
 
+            'year' => ['required', 'integer', 'min:1900', 'max:' . date('Y')],
+
             'is_set' => ['required', 'boolean'],
             'sets' => ['filled', Rule::requiredIf(fn() => $this->is_set), Rule::excludeIf(fn() => !$this->is_set), 'array', 'min:1'],
             'sets.*.product_variant_id' => ['required', 'integer', Rule::exists(ProductVariant::class, 'id')->where('is_active', true)->where('is_set', 0)->whereNull('deleted_at')],

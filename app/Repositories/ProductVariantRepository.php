@@ -366,6 +366,7 @@ class ProductVariantRepository
             $data['is_set'] = (bool)($validated['is_set'] ?? false);
             $data['city_id'] = $validated['city_id'];
             $data['brand_model_id'] = $validated['brand_model_id'];
+            $data['year'] = $validated['year'];
 
             if (CompanyAdminService::instance()->checkUser()) {
                 $data['company_id'] = CompanyAdminService::instance()->getUser()->company_id;
