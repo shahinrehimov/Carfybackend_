@@ -4,6 +4,7 @@ namespace App\Http\Requests\Sellers\Products;
 
 use App\Enum\DiscountTypeEnum;
 use App\Models\Brand;
+use App\Models\BrandModel;
 use App\Models\Category;
 use App\Models\City;
 use App\Models\ProductOption;
@@ -19,6 +20,7 @@ use Illuminate\Validation\Rules\File;
 /**
  * @property mixed $has_discount
  * @property mixed $is_set
+ * @property mixed $brand_id
  */
 class ProductStoreRequest extends FormRequest
 {
@@ -69,6 +71,13 @@ class ProductStoreRequest extends FormRequest
             // default variant
 
             'city_id' => ['required', 'integer', Rule::exists(City::class, 'id')->where('is_active', true)->whereNull('deleted_at')],
+
+            'brand_model_id' => ['required', 'integer',
+                Rule::exists(BrandModel::class, 'id')
+                    ->where('is_active', true)
+                    ->whereNull('deleted_at')
+                    ->where('brand_id', $this->brand_id)
+            ],
 
             'is_set' => ['required', 'boolean'],
             'sets' => ['filled', Rule::requiredIf(fn() => $this->is_set), Rule::excludeIf(fn() => !$this->is_set), 'array', 'min:1'],

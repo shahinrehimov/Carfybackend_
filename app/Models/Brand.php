@@ -69,4 +69,9 @@ class Brand extends Model implements TranslatableInterface, HasMedia
     {
         return $this->hasMany(Product::class);
     }
+
+    public function brandModels(): HasMany
+    {
+        return $this->hasMany(BrandModel::class);
+    }
 }

@@ -57,6 +57,7 @@ class ProductVariant extends Model implements HasMedia
 
     protected $fillable = [
         'company_id', // nullable
+        'brand_model_id', // nullable
         'uuid',
         'is_set',
         'is_default',
@@ -71,6 +72,8 @@ class ProductVariant extends Model implements HasMedia
         'is_active',
         'approval_status', // ProductVariantApprovalStatusEnum
         'approval_status_message', // nullable, max 3000
+        'city_id',
+        'brand_model_id',
     ];
 
     protected $casts = [
@@ -260,5 +263,10 @@ class ProductVariant extends Model implements HasMedia
     public function city(): BelongsTo
     {
         return $this->belongsTo(City::class);
+    }
+
+    public function brandModel(): BelongsTo
+    {
+        return $this->belongsTo(BrandModel::class);
     }
 }

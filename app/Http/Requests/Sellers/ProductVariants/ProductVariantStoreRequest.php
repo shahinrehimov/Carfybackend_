@@ -3,6 +3,7 @@
 namespace App\Http\Requests\Sellers\ProductVariants;
 
 use App\Enum\DiscountTypeEnum;
+use App\Models\BrandModel;
 use App\Models\City;
 use App\Models\ProductOption;
 use App\Rules\FirstTranslationRequired;
@@ -47,8 +48,15 @@ class ProductVariantStoreRequest extends FormRequest
             ],
             'images' => ['filled', 'array', 'min:1'],
             'images.*' => ['required', File::image()->max(10 * 1024)],
-            
+
             'city_id' => ['required', 'integer', Rule::exists(City::class, 'id')->where('is_active', true)->whereNull('deleted_at')],
+
+            'brand_model_id' => ['required', 'integer',
+                Rule::exists(BrandModel::class, 'id')
+                    ->where('is_active', true)
+                    ->whereNull('deleted_at')
+                    ->where('brand_id', $this->route('product')?->brand_id)
+            ],
 
             'stock' => ['nullable', 'integer', 'min:0'],
             'price' => ['nullable', /*Rule::requiredIf(fn() => !$this->is_set),*/ Rule::excludeIf(fn() => $this->is_set), 'numeric', 'min:0'],

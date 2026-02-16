@@ -3,6 +3,7 @@
 namespace App\Http\Requests\Sellers\ProductVariants;
 
 use App\Enum\DiscountTypeEnum;
+use App\Models\BrandModel;
 use App\Models\City;
 use App\Models\ProductOption;
 use App\Models\ProductVariant;
@@ -52,6 +53,13 @@ class ProductVariantUpdateRequest extends FormRequest
             'images.*' => ['required', File::image()->max(10 * 1024)],
 
             'city_id' => ['required', 'integer', Rule::exists(City::class, 'id')->where('is_active', true)->whereNull('deleted_at')],
+
+            'brand_model_id' => ['required', 'integer',
+                Rule::exists(BrandModel::class, 'id')
+                    ->where('is_active', true)
+                    ->whereNull('deleted_at')
+                    ->where('brand_id', $productVariant->product?->brand_id)
+            ],
 
             'sets' => ['filled', Rule::requiredIf(fn() => $productVariant->isSet()), Rule::excludeIf(fn() => !$productVariant->isSet()), 'array', 'min:1'],
             'sets.*.product_variant_id' => ['required', 'integer', Rule::exists(ProductVariant::class, 'id')->where('is_active', true)->where('is_set', 0)->whereNull('deleted_at')],

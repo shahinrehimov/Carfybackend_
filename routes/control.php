@@ -7,6 +7,7 @@ use App\Http\Controllers\Admin\AdminController;
 use App\Http\Controllers\Admin\Auth\LoginController;
 use App\Http\Controllers\Admin\Auth\LogoutController;
 use App\Http\Controllers\Admin\BrandController;
+use App\Http\Controllers\Admin\BrandModelController;
 use App\Http\Controllers\Admin\CategoryController;
 use App\Http\Controllers\Admin\CityController;
 use App\Http\Controllers\Admin\CompanyAdminController;
@@ -172,6 +173,18 @@ Route::middleware(['general_access:admin', RouteLogMiddleware::class])->prefix('
             Route::post('change-active-status/{brand}', [BrandController::class, 'changeActiveStatus']);
             Route::post('change-sorting/{brand}', [BrandController::class, 'changeSorting']);
             Route::post('change-sorting-multiple', [BrandController::class, 'changeSortingMultiple']);
+
+            Route::group(['prefix' => '{brand}/models'], static function () {
+                Route::get('load', [BrandModelController::class, 'index']);
+                Route::get('list', [BrandModelController::class, 'list']);
+                Route::get('show/{brandModel}', [BrandModelController::class, 'show']);
+                Route::post('add', [BrandModelController::class, 'store']);
+                Route::post('update/{brandModel}', [BrandModelController::class, 'update']);
+                Route::delete('delete/{brandModel}', [BrandModelController::class, 'destroy']);
+                Route::post('change-active-status/{brandModel}', [BrandModelController::class, 'changeActiveStatus']);
+                Route::post('change-sorting/{brandModel}', [BrandModelController::class, 'changeSorting']);
+                Route::post('change-sorting-multiple', [BrandModelController::class, 'changeSortingMultiple']);
+            });
         });
 
         Route::group(['prefix' => 'discount-types'], static function () {
