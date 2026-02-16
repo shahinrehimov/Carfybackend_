@@ -31,6 +31,7 @@ class ProductOptionStoreRequest extends FormRequest
             'has_items' => ['required', 'boolean'],
             'is_translatable' => ['required', 'boolean'],
             'can_multiple' => ['required', 'boolean'],
+            'is_in_title' => ['required', 'boolean'],
             'sort' => ['filled', 'integer', 'min:0'],
             'translations' => ['required', 'array', 'size:' . count(LangService::instance()->getLanguages())],
             'translations.*.language_id' => ['required', 'integer', 'distinct', Rule::in(data_get(LangService::instance()->getLanguages(), '*.id'))],

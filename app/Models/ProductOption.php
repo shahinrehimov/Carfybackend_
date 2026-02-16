@@ -30,6 +30,7 @@ class ProductOption extends Model implements TranslatableInterface
         'has_items',
         'is_translatable',
         'can_multiple',
+        'is_in_title',
         'sort',
         'is_active',
     ];
@@ -49,6 +50,7 @@ class ProductOption extends Model implements TranslatableInterface
         'has_items' => 'boolean',
         'is_translatable' => 'boolean',
         'can_multiple' => 'boolean',
+        'is_in_title' => 'boolean',
     ];
 
     protected array $cascadeDeletes = [
@@ -81,6 +83,11 @@ class ProductOption extends Model implements TranslatableInterface
         $builder->where('can_multiple', true);
     }
 
+    public function scopeIsInTitle(Builder $builder): void
+    {
+        $builder->where('is_in_title', true);
+    }
+
     public function isActive(): bool
     {
         return $this->is_active ?? true;
@@ -104,6 +111,11 @@ class ProductOption extends Model implements TranslatableInterface
     public function canMultiple(): bool
     {
         return $this->can_multiple ?? false;
+    }
+
+    public function isInTitle(): bool
+    {
+        return $this->is_in_title ?? true;
     }
 
     public function items(): HasMany

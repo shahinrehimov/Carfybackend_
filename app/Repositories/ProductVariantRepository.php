@@ -522,7 +522,9 @@ class ProductVariantRepository
                     ->getRealSlug();
             }
 
-            $productVariantSlugs[] = $data['slug'] ?? null;
+            if ($productOption->isInTitle()) {
+                $productVariantSlugs[] = $data['slug'] ?? null;
+            }
 
             if ($productOption->isTranslatable() && !empty($option['translations']) && is_array($option['translations'])) {
                 $data['translations'] = $option['translations'];

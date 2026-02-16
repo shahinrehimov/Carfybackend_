@@ -40,6 +40,10 @@ class TitleCast implements CastsAttributes
             $item = null;
 
             if ($option) {
+                if (!$option->isInTitle()) {
+                    continue;
+                }
+
                 if ($option->hasItems()) {
                     $item = $optionItem->item;
                     $value = $item?->getLang('title');
