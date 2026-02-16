@@ -30,6 +30,7 @@ class ConditionProductOptionSeeder extends Seeder
             'has_items' => true,
             'is_translatable' => false,
             'can_multiple' => false,
+            'is_in_title' => false,
         ]);
 
         $this->storeOptionItems($option);

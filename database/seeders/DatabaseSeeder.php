@@ -18,6 +18,7 @@ class DatabaseSeeder extends Seeder
             SuperAdminSeeder::class,
             CountriesSeeder::class,
             CitiesSeeder::class,
+            ConditionProductOptionSeeder::class,
         ]);
     }
 }
