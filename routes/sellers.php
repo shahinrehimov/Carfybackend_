@@ -5,6 +5,7 @@ use App\Http\Controllers\Admin\BrandModelController;
 use App\Http\Controllers\Admin\CategoryController;
 use App\Http\Controllers\Admin\CityController;
 use App\Http\Controllers\Admin\CountryController;
+use App\Http\Controllers\Admin\DiscountTypeController;
 use App\Http\Controllers\Admin\ProductOptionController;
 use App\Http\Controllers\Admin\ProductOptionItemController;
 use App\Http\Controllers\LocalTranslationsController;
@@ -115,6 +116,10 @@ Route::middleware(['general_access:sellers', RouteLogMiddleware::class])->prefix
                 Route::group(['prefix' => '{category}/subs'], static function () {
                     Route::get('list', [CategoryController::class, 'listSubs']);
                 });
+            });
+
+            Route::group(['prefix' => 'discount-types'], static function () {
+                Route::get('list', [DiscountTypeController::class, 'list']);
             });
         });
     });
