@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Admin\BrandController;
 use App\Http\Controllers\Admin\BrandModelController;
+use App\Http\Controllers\Admin\CategoryController;
 use App\Http\Controllers\Admin\CityController;
 use App\Http\Controllers\Admin\CountryController;
 use App\Http\Controllers\Admin\ProductOptionController;
@@ -105,6 +106,14 @@ Route::middleware(['general_access:sellers', RouteLogMiddleware::class])->prefix
 
                 Route::group(['prefix' => '{productOption}/items'], static function () {
                     Route::get('list', [ProductOptionItemController::class, 'list']);
+                });
+            });
+
+            Route::group(['prefix' => 'categories'], static function () {
+                Route::get('list', [CategoryController::class, 'list']);
+
+                Route::group(['prefix' => '{category}/subs'], static function () {
+                    Route::get('list', [CategoryController::class, 'listSubs']);
                 });
             });
         });
