@@ -29,8 +29,12 @@ Route::middleware(['general_access:sellers', RouteLogMiddleware::class])->prefix
     // Authenticated routes
     Route::group(['middleware' => ['auth:company_admin', CompanyAdminMiddleware::class]], static function () {
         Route::group(['prefix' => 'local-translations'], static function () {
-            Route::get('languages/list', [LocalTranslationsController::class, 'getLanguages'])->withoutMiddleware(['auth:company_admin']);
-            Route::get('{lang}', [LocalTranslationsController::class, 'getTranslations'])->withoutMiddleware(['auth:company_admin']);
+            Route::get('languages/list', [LocalTranslationsController::class, 'getLanguages'])
+                ->withoutMiddleware(CompanyAdminMiddleware::class)
+                ->withoutMiddleware(['auth:company_admin']);
+            Route::get('{lang}', [LocalTranslationsController::class, 'getTranslations'])
+                ->withoutMiddleware(CompanyAdminMiddleware::class)
+                ->withoutMiddleware(['auth:company_admin']);
         });
 
         // Profile routes
