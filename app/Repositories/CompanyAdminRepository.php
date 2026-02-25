@@ -4,6 +4,7 @@ namespace App\Repositories;
 
 use App\Models\Company;
 use App\Models\CompanyAdmin;
+use App\Services\AdminService;
 use App\Services\FileUpload;
 use App\Services\LangService;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
@@ -117,6 +118,10 @@ class CompanyAdminRepository
                     ->setDefault('Company ID is required!')
                     ->getLang('company_id_required')
             );
+        }
+
+        if (!AdminService::instance()->checkUser() && isset($validated['is_root'])) {
+            unset($validated['is_root']);
         }
 
         return DB::transaction(static function () use ($validated, $request) {
