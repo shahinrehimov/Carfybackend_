@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Admin\Company;
 
+use App\Models\City;
 use App\Rules\FirstTranslationRequired;
 use App\Services\LangService;
 use Illuminate\Foundation\Http\FormRequest;
@@ -21,8 +22,9 @@ class CompanyUpdateRequest extends FormRequest
 
         return [
             'voen' => ['sometimes', 'string', 'max:255', Rule::unique('companies', 'voen')->ignore($company->id)->whereNull('deleted_at')],
-            'phone' => ['sometimes', 'string', 'max:255'],
+            'phone' => ['sometimes', 'string', 'max:255', Rule::unique('companies', 'phone')->ignore($company->id)->whereNull('deleted_at')],
             'email' => ['sometimes', 'email', 'max:255', Rule::unique('companies', 'email')->ignore($company->id)->whereNull('deleted_at')],
+            'city_id' => ['required', 'numeric', Rule::exists(City::class, 'id')->whereNull('deleted_at')->where('is_active', true)],
             'latitude' => ['nullable', 'numeric'],
             'longitude' => ['nullable', 'numeric'],
             'website' => ['nullable', 'url', 'max:255'],
@@ -39,7 +41,7 @@ class CompanyUpdateRequest extends FormRequest
             'logo' => ['nullable', File::image()->max(2048)],
             'banner' => ['nullable', File::image()->max(2048)],
 
-            'root_admin_email' => ['sometimes', 'email', 'max:255'],
+            //'root_admin_email' => ['sometimes', 'email', 'max:255', Rule::unique('companies', 'root_admin_email')->ignore($company->id)->whereNull('deleted_at')],
         ];
     }
 }

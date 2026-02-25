@@ -50,6 +50,7 @@ class CompanyService
                 'voen' => $companyData['voen'],
                 'phone' => $companyData['phone'],
                 'email' => $companyData['email'],
+                'city_id' => $companyData['city_id'],
                 'latitude' => $companyData['latitude'] ?? null,
                 'longitude' => $companyData['longitude'] ?? null,
                 'website' => $companyData['website'] ?? null,
@@ -91,23 +92,15 @@ class CompanyService
     {
         $validated = $request->validated();
 
-        try {
-            $company = $this->createCompanyWithAdmin(
-                companyData: $validated['company'],
-                adminData: $validated['admin'],
-                request: $request,
-                autoVerify: false,
-                passwordMustChange: false
-            );
+        $company = $this->createCompanyWithAdmin(
+            companyData: $validated['company'],
+            adminData: $validated['admin'],
+            request: $request,
+            autoVerify: false,
+            passwordMustChange: false
+        );
 
-            return $company->admins()->root()->active()->first();
-        } catch (\Exception $e) {
-            throw new BadRequestHttpException(
-                LangService::instance()
-                    ->setDefault('Registration failed. Please try again.')
-                    ->getLang('registration_failed')
-            );
-        }
+        return $company->admins()->root()->active()->first();
     }
 
     /**
@@ -127,6 +120,7 @@ class CompanyService
             'voen' => $validated['voen'],
             'phone' => $validated['phone'],
             'email' => $validated['email'],
+            'city_id' => $validated['city_id'],
             'latitude' => $validated['latitude'] ?? null,
             'longitude' => $validated['longitude'] ?? null,
             'website' => $validated['website'] ?? null,

@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources\Admin\Companies;
 
+use App\Http\Resources\Admin\Cities\CitiesListResource;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -19,6 +20,7 @@ use Illuminate\Http\Resources\Json\JsonResource;
  * @property mixed $translations
  * @property mixed $logo
  * @property mixed $banner
+ * @property mixed $city_id
  * @method isActive()
  */
 class CompanyResource extends JsonResource
@@ -31,6 +33,8 @@ class CompanyResource extends JsonResource
             'voen' => $this->voen,
             'phone' => $this->phone,
             'email' => $this->email,
+            'city_id' => $this->city_id,
+            'city' => CitiesListResource::make($this->whenLoaded('city')),
             'latitude' => $this->latitude,
             'longitude' => $this->longitude,
             'website' => $this->website,

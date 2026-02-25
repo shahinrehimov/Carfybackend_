@@ -4,14 +4,12 @@ namespace App\Repositories;
 
 use App\Models\Company;
 use App\Services\FileUpload;
-use App\Services\LangService;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
-use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 
 class CompanyRepository
 {
@@ -21,6 +19,8 @@ class CompanyRepository
             ->with([
                 'creatable',
                 'media',
+                'city',
+                'city.translatable',
             ])
             ->when($validated['search'] ?? null, function (Builder $builder) use ($validated) {
                 $builder->where(function (Builder $builder) use ($validated) {
@@ -60,7 +60,9 @@ class CompanyRepository
     {
         $company->load([
             'media',
-            'admins',
+            //'admins',
+            'city',
+            'city.translatable',
         ]);
     }
 
@@ -114,7 +116,7 @@ class CompanyRepository
                 'latitude' => $validated['latitude'] ?? $company->latitude,
                 'longitude' => $validated['longitude'] ?? $company->longitude,
                 'website' => $validated['website'] ?? $company->website,
-                'root_admin_email' => $validated['root_admin_email'] ?? $company->root_admin_email,
+                //'root_admin_email' => $validated['root_admin_email'] ?? $company->root_admin_email,
                 'is_active' => $validated['is_active'] ?? $company->is_active,
             ];
 
@@ -165,6 +167,8 @@ class CompanyRepository
         return $company->load([
             'media',
             'creatable',
+            'city',
+            'city.translatable',
         ]);
     }
 }

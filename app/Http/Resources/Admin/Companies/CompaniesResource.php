@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources\Admin\Companies;
 
+use App\Http\Resources\Admin\Cities\CitiesListResource;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -38,6 +39,7 @@ class CompaniesResource extends JsonResource
             'logo' => $this->whenLoaded('media', function () {
                 return $this->logo;
             }),
+            'city' => CitiesListResource::make($this->whenLoaded('city')),
             'is_active' => $this->isActive(),
             'is_verified' => !is_null($this->verified_at),
             'created_user' => $this->whenLoaded('creatable', function () {

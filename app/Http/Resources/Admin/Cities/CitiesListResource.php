@@ -8,6 +8,7 @@ use Illuminate\Http\Resources\Json\JsonResource;
 
 /**
  * @property mixed $id
+ * @property mixed $country_id
  * @method getLang(string $string)
  */
 class CitiesListResource extends JsonResource
@@ -24,6 +25,7 @@ class CitiesListResource extends JsonResource
         return [
             'id' => $this->id,
             'title' => $this->getLang('title'),
+            'country_id' => $this->country_id,
             'country' => CountriesListResource::make($this->whenLoaded('country')),
         ];
     }

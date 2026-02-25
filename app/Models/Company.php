@@ -31,6 +31,7 @@ class Company extends Model implements TranslatableInterface, HasMedia
         'voen',
         'phone',
         'email',
+        'city_id',
         'latitude',
         'longitude',
         'website',
