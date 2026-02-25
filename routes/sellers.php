@@ -87,10 +87,16 @@ Route::middleware(['general_access:sellers', RouteLogMiddleware::class])->prefix
             });
 
             Route::group(['prefix' => 'countries'], static function () {
-                Route::get('list', [CountryController::class, 'list']);
+                Route::get('list', [CountryController::class, 'list'])
+                    ->withoutMiddleware(['auth:company_admin'])
+                    ->withoutMiddleware([CompanyAdminMiddleware::class])
+                    ->withoutMiddleware([CompanyVerifiedMiddleware::class]);
 
                 Route::group(['prefix' => '{country}/cities'], static function () {
-                    Route::get('list', [CityController::class, 'list']);
+                    Route::get('list', [CityController::class, 'list'])
+                        ->withoutMiddleware(['auth:company_admin'])
+                        ->withoutMiddleware([CompanyAdminMiddleware::class])
+                        ->withoutMiddleware([CompanyVerifiedMiddleware::class]);
                 });
             });
 
