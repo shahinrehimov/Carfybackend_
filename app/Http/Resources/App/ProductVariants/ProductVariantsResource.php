@@ -23,6 +23,7 @@ use Illuminate\Support\Str;
  * @property mixed $in_basket
  * @property mixed $basket_quantity
  * @property mixed $title
+ * @property mixed $oem_code
  * @method getLang(string $string)
  * @method isSet()
  */
@@ -41,6 +42,7 @@ class ProductVariantsResource extends JsonResource
             'id' => $this->id,
             'uuid' => $this->uuid,
             'slug' => $this->slug,
+            'oem_code' => $this->oem_code,
             'title' => $this->title,
             'hover_image' => $this->whenLoaded('media', function () {
                 return $this->hover_image;

@@ -146,6 +146,9 @@ class ProductVariantRepository
                     $builder->isNotSet();
                 }
             })
+            ->when($validated['oem_code'] ?? null, function (Builder $builder) use ($validated) {
+                $builder->where('oem_code', $validated['oem_code']);
+            })
             ->when(count($brandsIds) > 0, function (Builder $builder) use ($brandsIds) {
                 $builder->whereHas('product', function (Builder $query) use ($brandsIds) {
                     $query->whereIn('products.brand_id', $brandsIds);
@@ -370,6 +373,7 @@ class ProductVariantRepository
             $data = [];
             $data['uuid'] = Str::uuid();
             $data['is_default'] = $isDefault;
+            $data['oem_code'] = $validated['oem_code'] ?? null;
             $data['stock'] = $validated['stock'] ?? 0;
             $data['price'] = $validated['price'] ?? 0;
             $data['has_discount'] = $validated['has_discount'] ?? false;

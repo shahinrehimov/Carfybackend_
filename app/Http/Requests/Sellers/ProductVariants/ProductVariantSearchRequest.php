@@ -32,6 +32,7 @@ class ProductVariantSearchRequest extends GeneralListRequest
                 'is_set' => ['nullable', 'string', 'in:yes,no'],
                 'set_id' => ['nullable', 'integer', Rule::exists(ProductVariant::class, 'id')->where('is_active', true)->where('is_set', true)->whereNull('deleted_at')],
                 'group_id' => ['nullable', 'integer', Rule::exists(Group::class, 'id')->where('is_active', true)->whereNull('deleted_at')],
+                'oem_code' => ['nullable', 'string', 'max:100'],
             ];
     }
 }

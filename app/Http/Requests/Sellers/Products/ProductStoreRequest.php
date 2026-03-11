@@ -79,6 +79,8 @@ class ProductStoreRequest extends FormRequest
                     ->where('brand_id', $this->brand_id)
             ],
 
+            'oem_code' => ['nullable', 'string', 'max:100'],
+
             'year' => ['required', 'integer', 'min:1900', 'max:' . date('Y')],
 
             'is_set' => ['required', 'boolean'],

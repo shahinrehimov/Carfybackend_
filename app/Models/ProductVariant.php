@@ -63,6 +63,7 @@ class ProductVariant extends Model implements HasMedia
         'is_default',
         'slug', // nullable, unique
         'product_id',
+        'oem_code', // nullable
         'stock',
         'price', // in cents, null for sets
         'discount_type', // DiscountTypeEnum

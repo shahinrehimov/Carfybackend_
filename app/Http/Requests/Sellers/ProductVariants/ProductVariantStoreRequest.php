@@ -58,6 +58,8 @@ class ProductVariantStoreRequest extends FormRequest
                     ->where('brand_id', $this->route('product')?->brand_id)
             ],
 
+            'oem_code' => ['nullable', 'string', 'max:100'],
+
             'year' => ['required', 'integer', 'min:1900', 'max:' . date('Y')],
 
             'stock' => ['nullable', 'integer', 'min:0'],

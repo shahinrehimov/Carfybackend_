@@ -12,6 +12,7 @@ use Illuminate\Http\Resources\Json\JsonResource;
  * @property mixed $slug
  * @property mixed $main_image
  * @property mixed $pivot
+ * @property mixed $oem_code
  * @method isSet()
  * @method isDefault()
  */
@@ -30,6 +31,7 @@ class ProductVariantsListResource extends JsonResource
             'id' => $this->id,
             'uuid' => $this->uuid,
             'slug' => $this->slug,
+            'oem_code' => $this->oem_code,
             'product' => ProductsListResource::make($this->whenLoaded('product')),
             'main_image' => $this->whenLoaded('media', function () {
                 return $this->main_image;

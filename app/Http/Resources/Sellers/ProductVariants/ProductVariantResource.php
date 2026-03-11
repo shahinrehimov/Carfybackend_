@@ -32,6 +32,7 @@ use Illuminate\Support\Str;
  * @property mixed $approval_status
  * @property mixed $approval_status_message
  * @property mixed $year
+ * @property mixed $oem_code
  * @method isActive()
  * @method isSet()
  * @method isDefault()
@@ -51,6 +52,7 @@ class ProductVariantResource extends JsonResource
             'id' => $this->id,
             'uuid' => $this->uuid,
             'slug' => $this->slug,
+            'oem_code' => $this->oem_code,
             'main_image' => $this->whenLoaded('media', function () {
                 return $this->main_image;
             }),

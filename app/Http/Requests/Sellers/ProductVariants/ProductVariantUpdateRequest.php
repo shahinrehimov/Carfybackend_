@@ -61,6 +61,8 @@ class ProductVariantUpdateRequest extends FormRequest
                     ->where('brand_id', $productVariant->product?->brand_id)
             ],
 
+            'oem_code' => ['nullable', 'string', 'max:100'],
+
             'year' => ['required', 'integer', 'min:1900', 'max:' . date('Y')],
 
             'sets' => ['filled', Rule::requiredIf(fn() => $productVariant->isSet()), Rule::excludeIf(fn() => !$productVariant->isSet()), 'array', 'min:1'],
