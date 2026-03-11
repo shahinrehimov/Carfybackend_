@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Sellers;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\GeneralListRequest;
+use App\Http\Requests\Sellers\CompanyProductVariants\LoadRequest as CatalogSearchRequest;
 use App\Http\Requests\Sellers\ProductVariants\ProductVariantSearchRequest;
 use App\Http\Requests\Sellers\ProductVariants\ProductVariantStoreRequest;
 use App\Http\Requests\Sellers\ProductVariants\ProductVariantUpdateRequest;
@@ -131,5 +132,10 @@ class ProductVariantController extends Controller
                 ->setDefault('Status changed successfully!')
                 ->getLang('admin_status_changed_successfully'),
         ]));
+    }
+
+    public function searchCatalog(CatalogSearchRequest $request): AnonymousResourceCollection
+    {
+        return ProductVariantsResource::collection($this->repo->searchCatalog($request->validated()));
     }
 }

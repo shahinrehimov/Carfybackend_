@@ -23,6 +23,7 @@ class Basket extends Model
         'userable_id',
         'product_id',
         'product_variant_id',
+        'company_product_variant_id',
         'is_set',
         'quantity',
         'sets', // [id, quantity]
@@ -57,6 +58,11 @@ class Basket extends Model
     public function productVariant(): BelongsTo
     {
         return $this->belongsTo(ProductVariant::class);
+    }
+
+    public function companyProductVariant(): BelongsTo
+    {
+        return $this->belongsTo(CompanyProductVariant::class);
     }
 
     public function user(): MorphTo

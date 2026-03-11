@@ -14,6 +14,7 @@ class ProductVariantApprovalStatus extends Model
 
     protected $fillable = [
         'product_variant_id',
+        'company_product_variant_id',
         'approval_status', // ProductVariantApprovalStatusEnum
         'approval_status_message', // nullable, max 3000
     ];
@@ -21,5 +22,10 @@ class ProductVariantApprovalStatus extends Model
     public function productVariant(): BelongsTo
     {
         return $this->belongsTo(ProductVariant::class);
+    }
+
+    public function companyProductVariant(): BelongsTo
+    {
+        return $this->belongsTo(CompanyProductVariant::class);
     }
 }

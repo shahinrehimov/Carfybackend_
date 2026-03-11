@@ -43,7 +43,8 @@ class Guest extends Model
     {
         return $this->morphToMany(ProductVariant::class, 'userable', Wishlist::class)
             ->whereNull('wishlists.deleted_at')
-            ->orderBy('wishlists.id');
+            ->orderBy('wishlists.id')
+            ->withPivot(['company_product_variant_id']);
     }
 
     public function baskets(): MorphMany
@@ -64,6 +65,6 @@ class Guest extends Model
         return $this->morphToMany(ProductVariant::class, 'userable', Basket::class)
             ->whereNull('baskets.deleted_at')
             ->orderBy('baskets.id')
-            ->withPivot(['quantity', 'sets', 'id']);
+            ->withPivot(['quantity', 'sets', 'id', 'company_product_variant_id']);
     }
 }

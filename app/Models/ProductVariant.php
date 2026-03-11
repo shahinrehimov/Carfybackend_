@@ -74,7 +74,6 @@ class ProductVariant extends Model implements HasMedia
         'approval_status', // ProductVariantApprovalStatusEnum
         'approval_status_message', // nullable, max 3000
         'city_id',
-        'brand_model_id',
         'year',
     ];
 
@@ -117,52 +116,33 @@ class ProductVariant extends Model implements HasMedia
         $now = Carbon::now()->toDateTimeString();
 
         return "
-                ROUND(
-                    CASE
-                        WHEN product_variants.is_set = false THEN
+                COALESCE((
+                    SELECT MIN(
+                        ROUND(
                             CASE
-                                WHEN product_variants.discount IS NULL
-                                    OR product_variants.discount = 0
-                                    OR product_variants.discount_type IS NULL
-                                    OR (product_variants.discount_start_at IS NOT NULL AND product_variants.discount_start_at > '{$now}')
-                                    OR (product_variants.discount_end_at IS NOT NULL AND product_variants.discount_end_at < '{$now}')
-                                THEN product_variants.price / 100.0
+                                WHEN cpv.discount IS NULL
+                                    OR cpv.discount = 0
+                                    OR cpv.discount_type IS NULL
+                                    OR (cpv.discount_start_at IS NOT NULL AND cpv.discount_start_at > '{$now}')
+                                    OR (cpv.discount_end_at IS NOT NULL AND cpv.discount_end_at < '{$now}')
+                                THEN cpv.price / 100.0
                                 ELSE
                                     CASE
-                                        WHEN product_variants.discount_type = 'by_percentage'
-                                        THEN (product_variants.price - (product_variants.price * product_variants.discount / 100.0)) / 100.0
-                                        WHEN product_variants.discount_type = 'by_amount'
-                                        THEN (product_variants.price - product_variants.discount) / 100.0
-                                        ELSE product_variants.price / 100.0
+                                        WHEN cpv.discount_type = 'by_percentage'
+                                        THEN (cpv.price - (cpv.price * cpv.discount / 100.0)) / 100.0
+                                        WHEN cpv.discount_type = 'by_amount'
+                                        THEN (cpv.price - cpv.discount) / 100.0
+                                        ELSE cpv.price / 100.0
                                     END
                             END
-                        ELSE
-                            COALESCE((
-                                SELECT SUM(
-                                    CASE
-                                        WHEN p.discount IS NULL
-                                            OR p.discount = 0
-                                            OR p.discount_type IS NULL
-                                            OR (p.discount_start_at IS NOT NULL AND p.discount_start_at > '{$now}')
-                                            OR (p.discount_end_at IS NOT NULL AND p.discount_end_at < '{$now}')
-                                        THEN (p.price * ps.quantity) / 100.0
-                                        ELSE
-                                            CASE
-                                                WHEN p.discount_type = 'by_percentage'
-                                                THEN ((p.price * ps.quantity) - ((p.price * ps.quantity) * p.discount / 100.0)) / 100.0
-                                                WHEN p.discount_type = 'by_amount'
-                                                THEN ((p.price * ps.quantity) - p.discount) / 100.0
-                                                ELSE (p.price * ps.quantity) / 100.0
-                                            END
-                                    END
-                                )
-                                FROM product_sets ps
-                                JOIN product_variants p ON ps.product_id = p.id
-                                WHERE ps.set_id = product_variants.id
-                                AND p.deleted_at IS NULL
-                            ), 0)
-                    END
-                , 2)
+                        , 2)
+                    )
+                    FROM company_product_variant cpv
+                    WHERE cpv.product_variant_id = product_variants.id
+                    AND cpv.is_active = true
+                    AND cpv.approval_status = 'approved'
+                    AND cpv.deleted_at IS NULL
+                ), 0)
             ";
     }
 
@@ -271,5 +251,17 @@ class ProductVariant extends Model implements HasMedia
     public function brandModel(): BelongsTo
     {
         return $this->belongsTo(BrandModel::class);
+    }
+
+    public function companyListings(): HasMany
+    {
+        return $this->hasMany(CompanyProductVariant::class);
+    }
+
+    public function sellers(): BelongsToMany
+    {
+        return $this->belongsToMany(Company::class, 'company_product_variant')
+            ->withPivot(['uuid', 'stock', 'price', 'discount_type', 'discount', 'discount_start_at', 'discount_end_at', 'city_id', 'is_active', 'approval_status', 'approval_status_message'])
+            ->withTimestamps();
     }
 }

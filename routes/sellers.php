@@ -13,6 +13,7 @@ use App\Http\Controllers\Sellers\Auth\ForgotPasswordController;
 use App\Http\Controllers\Sellers\Auth\LoginController;
 use App\Http\Controllers\Sellers\Auth\LogoutController;
 use App\Http\Controllers\Sellers\Auth\RegisterController;
+use App\Http\Controllers\Sellers\CompanyProductVariantController;
 use App\Http\Controllers\Sellers\ProductController;
 use App\Http\Controllers\Sellers\ProductVariantController;
 use App\Http\Controllers\Sellers\ProfileController;
@@ -72,6 +73,7 @@ Route::middleware(['general_access:sellers', RouteLogMiddleware::class])->prefix
             Route::group(['prefix' => 'product-variants'], static function () {
                 Route::get('load', [ProductVariantController::class, 'index']);
                 Route::get('list', [ProductVariantController::class, 'list']);
+                Route::get('search-catalog', [ProductVariantController::class, 'searchCatalog']);
                 Route::get('show/{productVariant}', [ProductVariantController::class, 'show']);
                 Route::post('add/{product}', [ProductVariantController::class, 'store']);
                 Route::post('update/{productVariant}', [ProductVariantController::class, 'update']);
@@ -83,6 +85,22 @@ Route::middleware(['general_access:sellers', RouteLogMiddleware::class])->prefix
                 Route::group(['prefix' => '{productVariant}/approval-status'], static function () {
                     Route::get('history', [ProductVariantController::class, 'approvalStatusHistory']);
                     Route::post('resend', [ProductVariantController::class, 'approvalStatusResend']);
+                });
+            });
+
+            Route::group(['prefix' => 'company-product-variants'], static function () {
+                Route::get('load', [CompanyProductVariantController::class, 'index']);
+                Route::get('show/{companyProductVariant}', [CompanyProductVariantController::class, 'show']);
+                Route::post('attach/{productVariant}', [CompanyProductVariantController::class, 'attach']);
+                Route::post('update/{companyProductVariant}', [CompanyProductVariantController::class, 'update']);
+                Route::delete('detach/{companyProductVariant}', [CompanyProductVariantController::class, 'detach']);
+                Route::post('change-active-status/{companyProductVariant}', [CompanyProductVariantController::class, 'changeActiveStatus']);
+                Route::post('images/add/{companyProductVariant}', [CompanyProductVariantController::class, 'addImages']);
+                Route::delete('images/delete/{companyProductVariant}/{mediaId}', [CompanyProductVariantController::class, 'deleteImage']);
+
+                Route::group(['prefix' => '{companyProductVariant}/approval-status'], static function () {
+                    Route::get('history', [CompanyProductVariantController::class, 'approvalStatusHistory']);
+                    Route::post('resend', [CompanyProductVariantController::class, 'approvalStatusResend']);
                 });
             });
 

@@ -12,6 +12,7 @@ use App\Http\Controllers\Admin\CategoryController;
 use App\Http\Controllers\Admin\CityController;
 use App\Http\Controllers\Admin\CompanyAdminController;
 use App\Http\Controllers\Admin\CompanyController;
+use App\Http\Controllers\Admin\CompanyProductVariantController;
 use App\Http\Controllers\Admin\CountryController;
 use App\Http\Controllers\Admin\DiscountTypeController;
 use App\Http\Controllers\Admin\GroupController;
@@ -286,6 +287,16 @@ Route::middleware(['general_access:admin', RouteLogMiddleware::class])->prefix('
         Route::group(['prefix' => 'company-admins'], static function () {
             Route::get('load', [CompanyAdminController::class, 'index']);
             Route::get('list', [CompanyAdminController::class, 'list']);
+        });
+
+        Route::group(['prefix' => 'company-product-variants'], static function () {
+            Route::get('load', [CompanyProductVariantController::class, 'index']);
+
+            Route::group(['prefix' => '{companyProductVariant}/approval-status'], static function () {
+                Route::get('history', [CompanyProductVariantController::class, 'approvalStatusHistory']);
+                Route::post('approve', [CompanyProductVariantController::class, 'approvalStatusApprove']);
+                Route::post('reject', [CompanyProductVariantController::class, 'approvalStatusReject']);
+            });
         });
 
         Route::group(['prefix' => 'product-reviews'], static function () {

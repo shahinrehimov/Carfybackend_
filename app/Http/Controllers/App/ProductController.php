@@ -5,10 +5,13 @@ namespace App\Http\Controllers\App;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\App\Products\ProductSearchRequest;
 use App\Http\Requests\App\Products\ProductShowRequest;
+use App\Http\Requests\GeneralListRequest;
 use App\Http\Resources\Admin\Brands\BrandsListResource;
 use App\Http\Resources\Admin\Categories\CategoriesListResource;
+use App\Http\Resources\Admin\Cities\CitiesListResource;
 use App\Http\Resources\App\ProductVariants\ProductVariantResource;
 use App\Http\Resources\App\ProductVariants\ProductVariantsResource;
+use App\Models\ProductVariant;
 use App\Repositories\BrandRepository;
 use App\Repositories\CategoryRepository;
 use App\Repositories\ProductVariantRepository;
@@ -50,5 +53,23 @@ class ProductController extends Controller
     public function showBySlugOnlySubCategory(ProductShowRequest $request, string $subCategorySlug, string $productSlug): ProductVariantResource
     {
         return ProductVariantResource::make($this->repo->showBySlug($productSlug, $subCategorySlug, null, $request->validated()));
+    }
+
+    public function otherSellers(GeneralListRequest $request, ProductVariant $productVariant): JsonResponse
+    {
+        $paginated = $this->repo->otherSellers($productVariant, $request->validated());
+
+        $data = $paginated->through(function ($cpv) {
+            return [
+                'uuid' => $cpv->uuid,
+                'price' => $cpv->price,
+                'price_final' => $cpv->price_final,
+                'stock' => $cpv->stock,
+                'has_discount' => $cpv->price != $cpv->price_final,
+                'city' => $cpv->relationLoaded('city') ? CitiesListResource::make($cpv->city) : null,
+            ];
+        });
+
+        return response()->json($data);
     }
 }

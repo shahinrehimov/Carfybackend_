@@ -20,6 +20,7 @@ class OrderItem extends Model
         'basket_id',
         'product_id',
         'product_variant_id',
+        'company_product_variant_id',
         'amount',
         'amount_final',
         'is_set',
@@ -58,6 +59,11 @@ class OrderItem extends Model
     public function productVariant(): BelongsTo
     {
         return $this->belongsTo(ProductVariant::class);
+    }
+
+    public function companyProductVariant(): BelongsTo
+    {
+        return $this->belongsTo(CompanyProductVariant::class);
     }
 
     public function order(): BelongsTo

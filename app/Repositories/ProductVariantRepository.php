@@ -6,15 +6,20 @@ use App\Enum\ProductSearchStatusEnum;
 use App\Enum\ProductVariantApprovalStatusEnum;
 use App\Models\Brand;
 use App\Models\Category;
+use App\Models\Basket;
 use App\Models\Product;
 use App\Models\ProductOption;
 use App\Models\ProductVariant;
+use App\Models\CompanyProductVariant;
+use App\Models\Wishlist;
 use App\Models\ProductVariantProductOption;
 use App\Services\AdminService;
 use App\Services\CompanyAdminService;
 use App\Services\FileUpload;
 use App\Services\LangService;
 use App\Services\ProductService;
+use App\Services\RouteService;
+use App\Services\UserService;
 use Carbon\Carbon;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
@@ -72,8 +77,10 @@ class ProductVariantRepository
         if ($validated['set_id'] ?? null) {
             $set = ProductVariant::query()
                 ->when(CompanyAdminService::instance()->checkUser(), function (Builder $query) {
-                    // for sellers
-                    $query->where('company_id', CompanyAdminService::instance()->getUser()->company_id);
+                    // for sellers — filter by companyListings
+                    $query->whereHas('companyListings', function (Builder $q) {
+                        $q->where('company_id', CompanyAdminService::instance()->getUser()->company_id);
+                    });
                 })
                 ->where('id', $validated['set_id'])
                 ->where('is_set', true)
@@ -90,15 +97,17 @@ class ProductVariantRepository
 
         $relations = ProductService::instance()->getVariantRelationsForSite('', true);
 
-        return $query
+        $result = $query
             ->when(count($relations['with']) > 0, fn($q) => $q->with($relations['with']))
             ->when(count($relations['exists']) > 0, fn($q) => $q->withExists($relations['exists']))
             ->when(count($relations['counts']) > 0, fn($q) => $q->withCount($relations['counts']))
             ->when($isAdmin, function ($builder) use ($validated) {
                 // load for a control panel
                 if (CompanyAdminService::instance()->checkUser()) {
-                    // for sellers
-                    $builder->where('company_id', CompanyAdminService::instance()->getUser()->company_id);
+                    // for sellers — filter by companyListings
+                    $builder->whereHas('companyListings', function (Builder $q) {
+                        $q->where('company_id', CompanyAdminService::instance()->getUser()->company_id);
+                    });
                 } else if (AdminService::instance()->checkUser()) {
                     // for admins
                     if ($validated['company_id'] ?? null) {
@@ -130,6 +139,12 @@ class ProductVariantRepository
                 $builder->whereHas('product', function ($query) {
                     $query->active();
                 });
+                $builder->withCount([
+                    'companyListings' => function (Builder $q) {
+                        $q->where('is_active', true)
+                            ->where('approval_status', ProductVariantApprovalStatusEnum::APPROVED->value);
+                    },
+                ]);
             })
             ->with([
                 'sets' => function ($query) {
@@ -235,6 +250,12 @@ class ProductVariantRepository
             )
             //->select('products.*')
             ->paginate($validated['limit'] ?? 10);
+
+        if (!$isAdmin) {
+            $this->attachSellerDataToVariants($result);
+        }
+
+        return $result;
     }
 
     public function list(array $validated): LengthAwarePaginator
@@ -242,8 +263,10 @@ class ProductVariantRepository
         if ($validated['set_id'] ?? null) {
             $set = ProductVariant::query()
                 ->when(CompanyAdminService::instance()->checkUser(), function (Builder $builder) {
-                    // for sellers
-                    $builder->where('company_id', CompanyAdminService::instance()->getUser()->company_id);
+                    // for sellers — filter by companyListings
+                    $builder->whereHas('companyListings', function (Builder $q) {
+                        $q->where('company_id', CompanyAdminService::instance()->getUser()->company_id);
+                    });
                 })
                 ->where('id', $validated['set_id'])
                 ->where('is_set', true)
@@ -256,8 +279,10 @@ class ProductVariantRepository
 
         return $query
             ->when(CompanyAdminService::instance()->checkUser(), function (Builder $builder) {
-                // for sellers
-                $builder->where('company_id', CompanyAdminService::instance()->getUser()->company_id);
+                // for sellers — filter by companyListings
+                $builder->whereHas('companyListings', function (Builder $q) {
+                    $q->where('company_id', CompanyAdminService::instance()->getUser()->company_id);
+                });
             })
             ->active()
             ->with([
@@ -291,7 +316,14 @@ class ProductVariantRepository
     public function checkCompanyForSellers(ProductVariant $productVariant): void
     {
         if (CompanyAdminService::instance()->checkUser()) {
-            if ($productVariant->company_id !== CompanyAdminService::instance()->getUser()->company_id) {
+            $companyId = CompanyAdminService::instance()->getUser()->company_id;
+
+            // Check via companyListings (new pivot) or legacy company_id
+            $hasListing = $productVariant->companyListings()
+                ->where('company_id', $companyId)
+                ->exists();
+
+            if (!$hasListing && $productVariant->company_id !== $companyId) {
                 throw new AccessDeniedHttpException(
                     LangService::instance()
                         ->setDefault('You do not have permission to access this product variant!')
@@ -374,15 +406,7 @@ class ProductVariantRepository
             $data['uuid'] = Str::uuid();
             $data['is_default'] = $isDefault;
             $data['oem_code'] = $validated['oem_code'] ?? null;
-            $data['stock'] = $validated['stock'] ?? 0;
-            $data['price'] = $validated['price'] ?? 0;
-            $data['has_discount'] = $validated['has_discount'] ?? false;
-            $data['discount'] = $validated['discount'] ?? null;
-            $data['discount_type'] = $validated['discount_type'] ?? null;
-            $data['discount_start_at'] = $validated['discount_start_at'] ?? null;
-            $data['discount_end_at'] = $validated['discount_end_at'] ?? null;
             $data['is_set'] = (bool)($validated['is_set'] ?? false);
-            $data['city_id'] = $validated['city_id'];
             $data['brand_model_id'] = $validated['brand_model_id'];
             $data['year'] = $validated['year'];
 
@@ -401,6 +425,28 @@ class ProductVariantRepository
                 FileUpload::upload($request, 'main_image', 'product_variants_main', $productVariant);
                 FileUpload::upload($request, 'hover_image', 'product_variants_hover', $productVariant);
                 FileUpload::multipleUpload($request, 'images', 'product_variants_images', $productVariant);
+            }
+
+            // Auto-create CompanyProductVariant for the seller
+            if (CompanyAdminService::instance()->checkUser()) {
+                $cpv = CompanyProductVariant::query()->create([
+                    'company_id' => CompanyAdminService::instance()->getUser()->company_id,
+                    'product_variant_id' => $productVariant->id,
+                    'stock' => $validated['stock'] ?? 0,
+                    'price' => $validated['price'] ?? 0,
+                    'discount_type' => $validated['discount_type'] ?? null,
+                    'discount' => $validated['discount'] ?? 0,
+                    'discount_start_at' => $validated['discount_start_at'] ?? null,
+                    'discount_end_at' => $validated['discount_end_at'] ?? null,
+                    'city_id' => $validated['city_id'] ?? null,
+                    'is_active' => true,
+                    'approval_status' => ProductVariantApprovalStatusEnum::PENDING->value,
+                ]);
+
+                $cpv->approvalStatuses()->create([
+                    'product_variant_id' => $productVariant->id,
+                    'approval_status' => ProductVariantApprovalStatusEnum::PENDING->value,
+                ]);
             }
 
             return $productVariant;
@@ -422,10 +468,16 @@ class ProductVariantRepository
             $options = $validated['options'] ?? [];
             unset($validated['options']);
 
-            $validated['discount'] = $validated['discount'] ?? null;
-            $validated['discount_type'] = $validated['discount_type'] ?? null;
-            $validated['discount_start_at'] = $validated['discount_start_at'] ?? null;
-            $validated['discount_end_at'] = $validated['discount_end_at'] ?? null;
+            // Strip seller-specific fields — these belong to CompanyProductVariant, not PV
+            unset(
+                $validated['stock'],
+                $validated['price'],
+                $validated['discount'],
+                $validated['discount_type'],
+                $validated['discount_start_at'],
+                $validated['discount_end_at'],
+                $validated['city_id']
+            );
 
             $productVariant->update($validated);
 
@@ -615,8 +667,10 @@ class ProductVariantRepository
         $productVariant = $product->variants()
             ->where('is_default', true)
             ->when(CompanyAdminService::instance()->checkUser(), function (Builder $builder) {
-                // for sellers
-                $builder->where('company_id', CompanyAdminService::instance()->getUser()->company_id);
+                // for sellers — filter by companyListings
+                $builder->whereHas('companyListings', function (Builder $q) {
+                    $q->where('company_id', CompanyAdminService::instance()->getUser()->company_id);
+                });
             })
             ->active()
             ->first();
@@ -635,6 +689,7 @@ class ProductVariantRepository
     public function showBySlug(string $productSlug, string $subCategorySlug, ?string $categorySlug = null, array $validated = []): ProductVariant
     {
         $productVariantSlug = $validated['variant'] ?? null;
+        $sellerUuid = $validated['seller'] ?? null;
 
         $productVariant = ProductVariant::query()
             ->active()
@@ -693,8 +748,6 @@ class ProductVariantRepository
             'options.item.translatable',
             'brandModel',
             'brandModel.translatable',
-            'city',
-            'city.translatable',
         ]);
 
         $productVariant->ratings = ProductService::instance()->setProductVariant($productVariant)->calculateVariantRating();
@@ -716,7 +769,78 @@ class ProductVariantRepository
             $productVariant->related_products = $this->loadRelatedProducts($productVariant);
         }
 
+        // Load seller-specific data
+        $sellerListing = $this->resolveSellerListing($productVariant, $sellerUuid);
+
+        if ($sellerListing) {
+            $this->overrideWithSellerData($productVariant, $sellerListing);
+        }
+
+        // CPV-level in_wishlist / in_basket for detail page
+        if ($sellerListing && RouteService::instance()->getName() === 'app') {
+            $user = UserService::instance()->getUserOrGuest();
+
+            $productVariant->in_wishlist = Wishlist::query()
+                ->where('userable_id', $user->id)
+                ->where('userable_type', $user::class)
+                ->whereNull('deleted_at')
+                ->where('company_product_variant_id', $sellerListing->id)
+                ->exists();
+
+            $productVariant->in_basket = Basket::query()
+                ->where('userable_id', $user->id)
+                ->where('userable_type', $user::class)
+                ->whereNull('deleted_at')
+                ->where('company_product_variant_id', $sellerListing->id)
+                ->exists();
+        }
+
+        // Load other sellers count
+        $productVariant->sellers_count = $productVariant->companyListings()
+            ->where('is_active', true)
+            ->where('approval_status', ProductVariantApprovalStatusEnum::APPROVED->value)
+            ->count();
+
+        // Load other sellers if requested
+        if (($validated['other_sellers'] ?? 'no') === 'yes' && $sellerListing) {
+            $otherSellersQuery = $productVariant->companyListings()
+                ->where('id', '!=', $sellerListing->id)
+                ->where('is_active', true)
+                ->where('approval_status', ProductVariantApprovalStatusEnum::APPROVED->value)
+                ->with(['city', 'city.translatable', 'media'])
+                ->orderBy('price');
+
+            $otherSellersTotal = $otherSellersQuery->count();
+            $otherSellers = $otherSellersQuery->limit(50)->get();
+
+            $productVariant->other_sellers = $otherSellers;
+            $productVariant->other_sellers_total = $otherSellersTotal;
+        }
+
         return $productVariant;
+    }
+
+    private function resolveSellerListing(ProductVariant $productVariant, ?string $sellerUuid): ?CompanyProductVariant
+    {
+        $query = $productVariant->companyListings()
+            ->where('is_active', true)
+            ->where('approval_status', ProductVariantApprovalStatusEnum::APPROVED->value)
+            ->with(['city', 'city.translatable', 'media']);
+
+        if ($sellerUuid) {
+            $listing = $query->where('uuid', $sellerUuid)->first();
+            if ($listing) {
+                return $listing;
+            }
+        }
+
+        // Fallback: cheapest active seller
+        return $productVariant->companyListings()
+            ->where('is_active', true)
+            ->where('approval_status', ProductVariantApprovalStatusEnum::APPROVED->value)
+            ->with(['city', 'city.translatable', 'media'])
+            ->orderBy('price')
+            ->first();
     }
 
     public function loadRelatedProducts(ProductVariant $productVariant): Collection
@@ -728,7 +852,7 @@ class ProductVariantRepository
 
         $relations = ProductService::instance()->getVariantRelationsForSite('', true);
 
-        return ProductVariant::query()
+        $relatedVariants = ProductVariant::query()
             ->when(count($relations['with']) > 0, fn($q) => $q->with($relations['with']))
             ->when(count($relations['exists']) > 0, fn($q) => $q->withExists($relations['exists']))
             ->when(count($relations['counts']) > 0, fn($q) => $q->withCount($relations['counts']))
@@ -745,6 +869,30 @@ class ProductVariantRepository
             ->limit(12)
             ->inRandomOrder()
             ->get();
+
+        // Batch load cheapest CPV for related products
+        if ($relatedVariants->isNotEmpty()) {
+            $variantIds = $relatedVariants->pluck('id')->unique()->values();
+
+            $cpvs = CompanyProductVariant::query()
+                ->whereIn('product_variant_id', $variantIds)
+                ->where('is_active', true)
+                ->where('approval_status', ProductVariantApprovalStatusEnum::APPROVED->value)
+                ->with(['city', 'city.translatable', 'media'])
+                ->orderBy('price')
+                ->get()
+                ->groupBy('product_variant_id')
+                ->map->first();
+
+            foreach ($relatedVariants as $variant) {
+                $cpv = $cpvs->get($variant->id);
+                if ($cpv) {
+                    $this->overrideWithSellerData($variant, $cpv);
+                }
+            }
+        }
+
+        return $relatedVariants;
     }
 
     public function approvalStatusHistory(ProductVariant $productVariant, array $validated = []): LengthAwarePaginator
@@ -803,6 +951,72 @@ class ProductVariantRepository
         });
     }
 
+    public function otherSellers(ProductVariant $productVariant, array $validated = []): LengthAwarePaginator
+    {
+        return $productVariant->companyListings()
+            ->where('is_active', true)
+            ->where('approval_status', ProductVariantApprovalStatusEnum::APPROVED->value)
+            ->with(['city', 'city.translatable', 'media'])
+            ->orderBy('price')
+            ->paginate($validated['limit'] ?? 20);
+    }
+
+    public function searchCatalog(array $validated): LengthAwarePaginator
+    {
+        $companyId = CompanyAdminService::instance()->checkUser()
+            ? CompanyAdminService::instance()->getUser()->company_id
+            : null;
+
+        return ProductVariant::query()
+            ->active()
+            ->whereHas('product', function ($q) {
+                $q->active();
+            })
+            ->with([
+                'media',
+                'product',
+                'product.translatable',
+                'product.media',
+                'options',
+                'options.option',
+                'options.option.translatable',
+                'options.item',
+                'options.item.translatable',
+                'brandModel',
+                'brandModel.translatable',
+            ])
+            ->when($companyId, function (Builder $builder) use ($companyId) {
+                $builder->withExists([
+                    'companyListings as already_attached' => function (Builder $q) use ($companyId) {
+                        $q->where('company_id', $companyId);
+                    },
+                ]);
+            })
+            ->when($validated['oem_code'] ?? null, function (Builder $builder) use ($validated) {
+                $builder->where('oem_code', 'ILIKE', '%' . $validated['oem_code'] . '%');
+            })
+            ->when($validated['brand_model_id'] ?? null, function (Builder $builder) use ($validated) {
+                $builder->where('brand_model_id', $validated['brand_model_id']);
+            })
+            ->when($validated['year'] ?? null, function (Builder $builder) use ($validated) {
+                $builder->where('year', $validated['year']);
+            })
+            ->when($validated['product_id'] ?? null, function (Builder $builder) use ($validated) {
+                $builder->where('product_id', $validated['product_id']);
+            })
+            ->when($validated['search'] ?? null, function (Builder $builder) use ($validated) {
+                $builder->where(function (Builder $builder) use ($validated) {
+                    $builder->where('oem_code', 'ILIKE', '%' . $validated['search'] . '%');
+                    $builder->orWhereHas('product.translatable', function (Builder $query) use ($validated) {
+                        $query->where('column', 'title');
+                        $query->where('text', 'ILIKE', '%' . $validated['search'] . '%');
+                    });
+                });
+            })
+            ->orderByDesc('id')
+            ->paginate($validated['limit'] ?? 10);
+    }
+
     public function approvalStatusResend(ProductVariant $productVariant): void
     {
         $this->checkCompanyForSellers($productVariant);
@@ -825,5 +1039,99 @@ class ProductVariantRepository
                 'approval_status_message' => null,
             ]);
         });
+    }
+
+    /**
+     * Attach cheapest seller CPV data to a paginated list of product variants.
+     * Overrides price/stock/discount attrs and sets in_wishlist/in_basket at CPV level.
+     */
+    public function attachSellerDataToVariants(LengthAwarePaginator $paginator): void
+    {
+        $variants = collect($paginator->items());
+
+        if ($variants->isEmpty()) {
+            return;
+        }
+
+        $variantIds = $variants->pluck('id')->unique()->values();
+
+        // Batch load cheapest active approved CPV per variant (1 query)
+        $cpvs = CompanyProductVariant::query()
+            ->whereIn('product_variant_id', $variantIds)
+            ->where('is_active', true)
+            ->where('approval_status', ProductVariantApprovalStatusEnum::APPROVED->value)
+            ->with(['city', 'city.translatable', 'media'])
+            ->orderBy('price')
+            ->get()
+            ->groupBy('product_variant_id')
+            ->map->first();
+
+        // Override each variant's attrs with cheapest CPV data
+        foreach ($variants as $variant) {
+            /** @var CompanyProductVariant|null $cpv */
+            $cpv = $cpvs->get($variant->id);
+
+            if ($cpv) {
+                $variant->seller_listing = $cpv;
+                $variant->setRawAttributes(array_merge(
+                    $variant->getAttributes(),
+                    [
+                        'stock' => $cpv->getRawOriginal('stock'),
+                        'price' => $cpv->getRawOriginal('price'),
+                        'discount_type' => $cpv->getRawOriginal('discount_type'),
+                        'discount' => $cpv->getRawOriginal('discount'),
+                        'discount_start_at' => $cpv->getRawOriginal('discount_start_at'),
+                        'discount_end_at' => $cpv->getRawOriginal('discount_end_at'),
+                    ]
+                ), true);
+            }
+        }
+
+        // CPV-level in_wishlist / in_basket check
+        if (RouteService::instance()->getName() === 'app') {
+            $user = UserService::instance()->getUserOrGuest();
+            $cpvIds = $variants->map(fn($v) => $v->seller_listing?->id)->filter()->unique()->values();
+
+            if ($cpvIds->isNotEmpty()) {
+                $wishlistedCpvIds = Wishlist::query()
+                    ->where('userable_id', $user->id)
+                    ->where('userable_type', $user::class)
+                    ->whereNull('deleted_at')
+                    ->whereIn('company_product_variant_id', $cpvIds)
+                    ->pluck('company_product_variant_id');
+
+                $basketedCpvIds = Basket::query()
+                    ->where('userable_id', $user->id)
+                    ->where('userable_type', $user::class)
+                    ->whereNull('deleted_at')
+                    ->whereIn('company_product_variant_id', $cpvIds)
+                    ->pluck('company_product_variant_id');
+
+                foreach ($variants as $variant) {
+                    $cpvId = $variant->seller_listing?->id;
+                    $variant->in_wishlist = $cpvId ? $wishlistedCpvIds->contains($cpvId) : false;
+                    $variant->in_basket = $cpvId ? $basketedCpvIds->contains($cpvId) : false;
+                }
+            }
+        }
+    }
+
+    /**
+     * Override a single ProductVariant's price/stock attrs with CPV seller data.
+     */
+    public function overrideWithSellerData(ProductVariant $productVariant, CompanyProductVariant $cpv): void
+    {
+        $productVariant->seller_listing = $cpv;
+        $productVariant->setRawAttributes(array_merge(
+            $productVariant->getAttributes(),
+            [
+                'stock' => $cpv->getRawOriginal('stock'),
+                'price' => $cpv->getRawOriginal('price'),
+                'discount_type' => $cpv->getRawOriginal('discount_type'),
+                'discount' => $cpv->getRawOriginal('discount'),
+                'discount_start_at' => $cpv->getRawOriginal('discount_start_at'),
+                'discount_end_at' => $cpv->getRawOriginal('discount_end_at'),
+            ]
+        ), true);
     }
 }

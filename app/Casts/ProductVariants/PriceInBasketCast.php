@@ -15,24 +15,7 @@ class PriceInBasketCast implements CastsAttributes
      */
     public function get(ProductVariant|Model $model, string $key, mixed $value, array $attributes): float
     {
-        if ($model->isSet()) {
-            $model->loadMissing([
-                'sets' => function ($query) {
-                    $query->active();
-                },
-            ]);
-
-            $price = 0;
-            foreach ($model->sets as $set) {
-                /** @var ProductVariant $set */
-
-                $price += $set->price_in_basket;
-            }
-
-            return $price * $model->basket_quantity;
-        }
-
-        return $model->price * $model->basket_quantity;
+        return $model->price * ($model->basket_quantity ?? 0);
     }
 
     /**

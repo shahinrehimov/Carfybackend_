@@ -17,7 +17,7 @@ class DiscountCast implements CastsAttributes
     public function get(ProductVariant|Model $model, string $key, mixed $value, array $attributes): float
     {
         if ($model->discount_type === DiscountTypeEnum::BY_AMOUNT->value) {
-            return round($value / 100, 2);
+            return round(($value ?? 0) / 100, 2);
         }
 
         return $value ?? 0;

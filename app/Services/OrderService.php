@@ -7,6 +7,7 @@ use App\Enum\OrderPaymentStatusEnum;
 use App\Enum\OrderStatusEnum;
 use App\Models\Order;
 use App\Models\OrderStatus;
+use App\Models\CompanyProductVariant;
 use App\Models\ProductVariant;
 use App\Models\User;
 use App\Services\Payment\PaymentService;
@@ -88,12 +89,56 @@ class OrderService
         $order = DB::transaction(function () use ($user, $validated, $productVariants, $address) {
             $items = [];
 
+            // Batch load all CPVs for stock validation (single query)
+            $cpvIds = $productVariants
+                ->map(fn($pv) => $pv->pivot->company_product_variant_id ?? null)
+                ->filter()
+                ->unique()
+                ->values();
+
+            $cpvs = CompanyProductVariant::query()
+                ->whereIn('id', $cpvIds)
+                ->lockForUpdate()
+                ->get()
+                ->keyBy('id');
+
             foreach ($productVariants as $productVariant) {
                 /** @var ProductVariant $productVariant */
+                $cpvId = $productVariant->pivot->company_product_variant_id ?? null;
+
+                if ($cpvId) {
+                    $cpv = $cpvs->get($cpvId);
+
+                    if (!$cpv || !$cpv->is_active) {
+                        throw new BadRequestHttpException(
+                            LangService::instance()
+                                ->setDefault('Product is no longer available: @product')
+                                ->getLang('product_no_longer_available', [
+                                    '@product' => $productVariant->title,
+                                ])
+                        );
+                    }
+
+                    if ($cpv->getRawOriginal('stock') < $productVariant->basket_quantity) {
+                        throw new BadRequestHttpException(
+                            LangService::instance()
+                                ->setDefault('Insufficient stock for product: @product. Available: @stock')
+                                ->getLang('insufficient_stock_for_product', [
+                                    '@product' => $productVariant->title,
+                                    '@stock' => $cpv->stock,
+                                ])
+                        );
+                    }
+
+                    // Decrement stock atomically
+                    $cpv->decrement('stock', $productVariant->basket_quantity);
+                }
+
                 $items[] = [
                     'basket_id' => $productVariant->pivot->id,
                     'product_variant_id' => $productVariant->id,
                     'product_id' => $productVariant->product_id,
+                    'company_product_variant_id' => $cpvId,
                     'amount' => $productVariant->price_in_basket,
                     'amount_final' => $productVariant->price_final_in_basket,
                     'is_set' => $productVariant->isSet(),
@@ -238,6 +283,9 @@ class OrderService
                             $q->withTrashed();
                             $q->when(count($productVariantRelations['with']) > 0, fn($q) => $q->with($productVariantRelations['with']));
                         },
+                        'companyProductVariant' => function ($q) {
+                            $q->with(['city', 'city.translatable']);
+                        },
                     ]);
                 },
             ]);
@@ -259,6 +307,9 @@ class OrderService
                         'productVariant' => function ($q) use ($productVariantRelations) {
                             $q->withTrashed();
                             $q->when(count($productVariantRelations['with']) > 0, fn($q) => $q->with($productVariantRelations['with']));
+                        },
+                        'companyProductVariant' => function ($q) {
+                            $q->with(['city', 'city.translatable']);
                         },
                     ]);
                 },

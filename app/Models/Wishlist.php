@@ -18,6 +18,7 @@ class Wishlist extends Model
         'userable_id',
         'product_id',
         'product_variant_id',
+        'company_product_variant_id',
     ];
 
     public function product(): BelongsTo
@@ -28,6 +29,11 @@ class Wishlist extends Model
     public function productVariant(): BelongsTo
     {
         return $this->belongsTo(ProductVariant::class);
+    }
+
+    public function companyProductVariant(): BelongsTo
+    {
+        return $this->belongsTo(CompanyProductVariant::class);
     }
 
     public function user(): MorphTo

@@ -29,6 +29,17 @@ class OrderItemsListResource extends JsonResource
             'quantity' => $this->quantity,
             'amount' => $this->amount,
             'amount_final' => $this->amount_final,
+            'seller' => $this->whenLoaded('companyProductVariant', function () {
+                $cpv = $this->companyProductVariant;
+                return [
+                    'id' => $cpv->id,
+                    'uuid' => $cpv->uuid,
+                    'city' => $cpv->relationLoaded('city') && $cpv->city ? [
+                        'id' => $cpv->city->id,
+                        'title' => $cpv->city->getLang('title'),
+                    ] : null,
+                ];
+            }),
         ];
     }
 }

@@ -101,4 +101,9 @@ class Company extends Model implements TranslatableInterface, HasMedia
     {
         return $this->belongsTo(City::class);
     }
+
+    public function productVariantListings(): HasMany
+    {
+        return $this->hasMany(CompanyProductVariant::class);
+    }
 }

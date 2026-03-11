@@ -25,6 +25,7 @@ use Illuminate\Support\Str;
  * @property mixed $price_final_in_basket
  * @property mixed $title
  * @property mixed $oem_code
+ * @property mixed $seller_listing
  * @method getLang(string $string)
  * @method isSet()
  */
@@ -39,6 +40,8 @@ class ProductVariantsInBasketResource extends JsonResource
 
     public function toArray(Request $request): array
     {
+        $sellerListing = $this->seller_listing ?? null;
+
         return [
             'id' => $this->id,
             'uuid' => $this->uuid,
@@ -65,6 +68,21 @@ class ProductVariantsInBasketResource extends JsonResource
             'basket_quantity' => $this->whenNotNull($this->basket_quantity),
             'price_in_basket' => $this->price_in_basket,
             'price_final_in_basket' => $this->price_final_in_basket,
+
+            'seller' => $sellerListing ? [
+                'id' => $sellerListing->id,
+                'uuid' => $sellerListing->uuid,
+                'city' => $sellerListing->relationLoaded('city') && $sellerListing->city ? [
+                    'id' => $sellerListing->city->id,
+                    'title' => $sellerListing->city->getLang('title'),
+                ] : null,
+                'images' => $sellerListing->relationLoaded('media')
+                    ? $sellerListing->getMedia('company_product_variant_images')->map(fn($media) => [
+                        'id' => $media->id,
+                        'url' => $media->getUrl(),
+                    ])
+                    : [],
+            ] : null,
 
             'product' => ProductsInBasketResource::make($this->whenLoaded('product')),
 

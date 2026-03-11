@@ -5,7 +5,7 @@ namespace App\Http\Controllers\App;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\GeneralListRequest;
 use App\Http\Resources\App\ProductVariants\ProductVariantsResource;
-use App\Models\ProductVariant;
+use App\Models\CompanyProductVariant;
 use App\Services\LangService;
 use App\Services\WishlistService;
 use Illuminate\Http\JsonResponse;
@@ -18,9 +18,9 @@ class WishlistController extends Controller
         return ProductVariantsResource::collection(WishlistService::instance()->load($request->validated()));
     }
 
-    public function add(ProductVariant $productVariant): JsonResponse
+    public function add(CompanyProductVariant $companyProductVariant): JsonResponse
     {
-        $res = WishlistService::instance()->add($productVariant);
+        $res = WishlistService::instance()->add($companyProductVariant);
 
         return response()->json([
             'message' => $res ?
@@ -30,13 +30,12 @@ class WishlistController extends Controller
                 LangService::instance()
                     ->setDefault('Product is already in wishlist!')
                     ->getLang('product_already_in_wishlist'),
-            'data' => $res ? ProductVariantsResource::make($productVariant) : null,
         ], $res ? 200 : 400);
     }
 
-    public function remove(ProductVariant $productVariant): JsonResponse
+    public function remove(CompanyProductVariant $companyProductVariant): JsonResponse
     {
-        $res = WishlistService::instance()->remove($productVariant);
+        $res = WishlistService::instance()->remove($companyProductVariant);
 
         return response()->json([
             'message' => $res ?

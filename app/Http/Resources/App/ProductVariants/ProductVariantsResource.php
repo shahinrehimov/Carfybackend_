@@ -24,6 +24,7 @@ use Illuminate\Support\Str;
  * @property mixed $basket_quantity
  * @property mixed $title
  * @property mixed $oem_code
+ * @property mixed $seller_listing
  * @method getLang(string $string)
  * @method isSet()
  */
@@ -63,7 +64,17 @@ class ProductVariantsResource extends JsonResource
             'in_basket' => $this->in_basket ?? false,
             'basket_quantity' => $this->whenNotNull($this->basket_quantity),
 
+            'seller' => $this->seller_listing ? [
+                'id' => $this->seller_listing->id,
+                'uuid' => $this->seller_listing->uuid,
+                'city' => $this->seller_listing->relationLoaded('city') && $this->seller_listing->city ? [
+                    'id' => $this->seller_listing->city->id,
+                    'title' => $this->seller_listing->city->getLang('title'),
+                ] : null,
+            ] : null,
+
             'product' => ProductsResource::make($this->whenLoaded('product')),
+            'sellers_count' => $this->whenCounted('companyListings'),
         ];
     }
 }

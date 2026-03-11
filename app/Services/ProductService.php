@@ -162,20 +162,7 @@ class ProductService
             );
         }
 
-        if (RouteService::instance()->getName() === 'app') {
-            $arr['exists'] = [
-                'wishlists as in_wishlist' => function ($query) {
-                    $query->where('userable_id', UserService::instance()->getUserOrGuest()->id)
-                        ->where('userable_type', UserService::instance()->getUserOrGuest()::class);
-                },
-                'baskets as in_basket' => function ($query) {
-                    $query->where('userable_id', UserService::instance()->getUserOrGuest()->id)
-                        ->where('userable_type', UserService::instance()->getUserOrGuest()::class);
-                },
-            ];
-        } else {
-            $arr['exists'] = [];
-        }
+        $arr['exists'] = [];
 
         $arr['counts'] = [];
 

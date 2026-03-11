@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\App\Baskets\BasketAddRequest;
 use App\Http\Requests\GeneralListRequest;
 use App\Http\Resources\App\ProductVariants\ProductVariantsInBasketResource;
+use App\Models\CompanyProductVariant;
 use App\Models\ProductVariant;
 use App\Services\BasketService;
 use App\Services\LangService;
@@ -24,11 +25,11 @@ class BasketController extends Controller
             ]);
     }
 
-    public function add(BasketAddRequest $request, ProductVariant $productVariant): JsonResponse
+    public function add(BasketAddRequest $request, CompanyProductVariant $companyProductVariant): JsonResponse
     {
         $validated = $request->validated();
 
-        $res = BasketService::instance()->add($productVariant, $validated['quantity'], $validated['sets'] ?? []);
+        $res = BasketService::instance()->add($companyProductVariant, $validated['quantity'], $validated['sets'] ?? []);
 
         return response()->json([
             'message' => $res ?
@@ -38,14 +39,13 @@ class BasketController extends Controller
                 LangService::instance()
                     ->setDefault('Product quantity updated in basket!')
                     ->getLang('product_quantity_updated_in_basket'),
-            'data' => ProductVariantsInBasketResource::make($productVariant),
             'basket_data' => BasketService::instance()->calculateBasketData(),
         ]);
     }
 
-    public function remove(ProductVariant $productVariant): JsonResponse
+    public function remove(CompanyProductVariant $companyProductVariant): JsonResponse
     {
-        $res = BasketService::instance()->remove($productVariant);
+        $res = BasketService::instance()->remove($companyProductVariant);
 
         return response()->json([
             'message' => $res ?
@@ -59,9 +59,9 @@ class BasketController extends Controller
         ], $res ? 200 : 400);
     }
 
-    public function increment(ProductVariant $productVariant): JsonResponse
+    public function increment(CompanyProductVariant $companyProductVariant): JsonResponse
     {
-        $quantity = BasketService::instance()->increment($productVariant);
+        $quantity = BasketService::instance()->increment($companyProductVariant);
 
         return response()->json([
             'message' => LangService::instance()
@@ -72,9 +72,9 @@ class BasketController extends Controller
         ]);
     }
 
-    public function decrement(ProductVariant $productVariant): JsonResponse
+    public function decrement(CompanyProductVariant $companyProductVariant): JsonResponse
     {
-        $quantity = BasketService::instance()->decrement($productVariant);
+        $quantity = BasketService::instance()->decrement($companyProductVariant);
 
         return response()->json([
             'message' => LangService::instance()
@@ -85,9 +85,9 @@ class BasketController extends Controller
         ]);
     }
 
-    public function removeSetItem(ProductVariant $productVariant, ProductVariant $setItem): JsonResponse
+    public function removeSetItem(CompanyProductVariant $companyProductVariant, ProductVariant $setItem): JsonResponse
     {
-        $res = BasketService::instance()->removeSetItem($productVariant, $setItem);
+        $res = BasketService::instance()->removeSetItem($companyProductVariant, $setItem);
 
         return response()->json([
             'message' => $res ?
@@ -101,9 +101,9 @@ class BasketController extends Controller
         ], $res ? 200 : 400);
     }
 
-    public function incrementSetItem(ProductVariant $productVariant, ProductVariant $setItem): JsonResponse
+    public function incrementSetItem(CompanyProductVariant $companyProductVariant, ProductVariant $setItem): JsonResponse
     {
-        $quantity = BasketService::instance()->incrementSetItem($productVariant, $setItem);
+        $quantity = BasketService::instance()->incrementSetItem($companyProductVariant, $setItem);
 
         return response()->json([
             'message' => LangService::instance()
@@ -114,9 +114,9 @@ class BasketController extends Controller
         ]);
     }
 
-    public function decrementSetItem(ProductVariant $productVariant, ProductVariant $setItem): JsonResponse
+    public function decrementSetItem(CompanyProductVariant $companyProductVariant, ProductVariant $setItem): JsonResponse
     {
-        $quantity = BasketService::instance()->decrementSetItem($productVariant, $setItem);
+        $quantity = BasketService::instance()->decrementSetItem($companyProductVariant, $setItem);
 
         return response()->json([
             'message' => LangService::instance()

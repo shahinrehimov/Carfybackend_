@@ -59,6 +59,7 @@ return static function () {
                 Route::get('load', [ProductController::class, 'index']);
                 Route::get('show/{parentCategorySlug}/{subCategorySlug}/{productSlug}', [ProductController::class, 'showBySlug']);
                 Route::get('show/{subCategorySlug}/{productSlug}', [ProductController::class, 'showBySlugOnlySubCategory']);
+                Route::get('{productVariant}/other-sellers', [ProductController::class, 'otherSellers']);
 
                 Route::prefix('{productVariant}/reviews')->group(function () {
                     Route::post('store', [ProductReviewController::class, 'store'])->middleware(['throttle:2,1']);
@@ -78,8 +79,8 @@ return static function () {
 
             Route::group(['prefix' => 'wishlist'], static function () {
                 Route::get('load', [WishlistController::class, 'load']);
-                Route::post('add/{productVariant}', [WishlistController::class, 'add']);
-                Route::post('remove/{productVariant}', [WishlistController::class, 'remove']);
+                Route::post('add/{companyProductVariant}', [WishlistController::class, 'add']);
+                Route::post('remove/{companyProductVariant}', [WishlistController::class, 'remove']);
             });
 
             Route::group(['prefix' => 'sliders'], static function () {
@@ -89,13 +90,13 @@ return static function () {
 
             Route::group(['prefix' => 'basket'], static function () {
                 Route::get('load', [BasketController::class, 'load']);
-                Route::post('add/{productVariant}', [BasketController::class, 'add']);
-                Route::post('remove/{productVariant}', [BasketController::class, 'remove']);
-                Route::post('increment/{productVariant}', [BasketController::class, 'increment']);
-                Route::post('decrement/{productVariant}', [BasketController::class, 'decrement']);
-                Route::post('remove/{productVariant}/set/{setItem}', [BasketController::class, 'removeSetItem']);
-                Route::post('increment/{productVariant}/set/{setItem}', [BasketController::class, 'incrementSetItem']);
-                Route::post('decrement/{productVariant}/set/{setItem}', [BasketController::class, 'decrementSetItem']);
+                Route::post('add/{companyProductVariant}', [BasketController::class, 'add']);
+                Route::post('remove/{companyProductVariant}', [BasketController::class, 'remove']);
+                Route::post('increment/{companyProductVariant}', [BasketController::class, 'increment']);
+                Route::post('decrement/{companyProductVariant}', [BasketController::class, 'decrement']);
+                Route::post('remove/{companyProductVariant}/set/{setItem}', [BasketController::class, 'removeSetItem']);
+                Route::post('increment/{companyProductVariant}/set/{setItem}', [BasketController::class, 'incrementSetItem']);
+                Route::post('decrement/{companyProductVariant}/set/{setItem}', [BasketController::class, 'decrementSetItem']);
             });
 
             // register

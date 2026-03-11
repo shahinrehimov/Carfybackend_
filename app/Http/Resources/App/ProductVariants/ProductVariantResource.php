@@ -5,6 +5,7 @@ namespace App\Http\Resources\App\ProductVariants;
 use App\Http\Resources\Admin\BrandModels\BrandModelsListResource;
 use App\Http\Resources\Admin\Cities\CitiesListResource;
 use App\Http\Resources\App\Products\ProductResource;
+use App\Models\CompanyProductVariant;
 use App\Services\LangService;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -81,6 +82,38 @@ class ProductVariantResource extends JsonResource
             'options' => ProductVariantOptionsResource::collection($this->whenLoaded('options')),
             'ratings' => $this->whenNotNull($this->ratings),
             'related_products' => ProductVariantsResource::collection($this->whenNotNull($this->related_products)),
+
+            // Seller data (price/stock/discount already overridden at top level via setRawAttributes)
+            'seller' => $this->when(isset($this->seller_listing), function () {
+                if (!$this->seller_listing) return null;
+                return [
+                    'id' => $this->seller_listing->id,
+                    'uuid' => $this->seller_listing->uuid,
+                    'city' => $this->seller_listing->relationLoaded('city')
+                        ? CitiesListResource::make($this->seller_listing->city)
+                        : null,
+                    'images' => $this->seller_listing->relationLoaded('media')
+                        ? $this->seller_listing->getMedia('company_product_variant_images')->map(fn($media) => [
+                            'id' => $media->id,
+                            'url' => $media->getUrl(),
+                        ])
+                        : [],
+                ];
+            }),
+            'sellers_count' => $this->whenNotNull($this->sellers_count),
+
+            // Other sellers
+            'other_sellers' => $this->when(isset($this->other_sellers), function () {
+                return $this->other_sellers->map(fn(CompanyProductVariant $cpv) => [
+                    'uuid' => $cpv->uuid,
+                    'price' => $cpv->price,
+                    'price_final' => $cpv->price_final,
+                    'stock' => $cpv->stock,
+                    'has_discount' => $cpv->price != $cpv->price_final,
+                    'city' => $cpv->relationLoaded('city') ? CitiesListResource::make($cpv->city) : null,
+                ]);
+            }),
+            'other_sellers_total' => $this->whenNotNull($this->other_sellers_total),
         ];
     }
 }
