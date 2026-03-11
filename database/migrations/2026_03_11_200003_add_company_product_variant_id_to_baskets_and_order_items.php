@@ -25,7 +25,7 @@ return new class extends Migration
                 ->constrained('company_product_variant')
                 ->cascadeOnDelete();
 
-            $table->dropUnique(['userable_type', 'userable_id', 'product_variant_id', 'is_deleted']);
+            $table->dropUnique('baskets_user_product_variant_unique');
             $table->unique(['userable_type', 'userable_id', 'company_product_variant_id', 'is_deleted']);
         });
 
@@ -36,7 +36,7 @@ return new class extends Migration
                 ->constrained('company_product_variant')
                 ->nullOnDelete();
 
-            $table->dropUnique(['order_id', 'product_variant_id', 'is_deleted']);
+            $table->dropUnique('order_items_order_product_variant_unique');
             $table->unique(['order_id', 'company_product_variant_id', 'is_deleted']);
         });
     }
@@ -53,13 +53,13 @@ return new class extends Migration
         Schema::table('baskets', static function (Blueprint $table) {
             $table->dropUnique(['userable_type', 'userable_id', 'company_product_variant_id', 'is_deleted']);
             $table->dropConstrainedForeignIdFor(CompanyProductVariant::class);
-            $table->unique(['userable_type', 'userable_id', 'product_variant_id', 'is_deleted']);
+            $table->unique(['userable_type', 'userable_id', 'product_variant_id', 'is_deleted'], 'baskets_user_product_variant_unique');
         });
 
         Schema::table('order_items', static function (Blueprint $table) {
             $table->dropUnique(['order_id', 'company_product_variant_id', 'is_deleted']);
             $table->dropConstrainedForeignIdFor(CompanyProductVariant::class);
-            $table->unique(['order_id', 'product_variant_id', 'is_deleted']);
+            $table->unique(['order_id', 'product_variant_id', 'is_deleted'], 'order_items_order_product_variant_unique');
         });
     }
 };
