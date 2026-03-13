@@ -85,6 +85,7 @@ class User extends Authenticatable implements MustVerifyEmail
         'baskets',
         'orders',
         'thirdPartyProviderLoginTokens',
+        'userCars',
     ];
 
     public function sendEmailVerificationNotification(): void
@@ -219,5 +220,10 @@ class User extends Authenticatable implements MustVerifyEmail
     public function thirdPartyProviderLoginTokens(): HasMany
     {
         return $this->hasMany(ThirdPartyProviderLoginToken::class);
+    }
+
+    public function userCars(): HasMany
+    {
+        return $this->hasMany(UserCar::class);
     }
 }

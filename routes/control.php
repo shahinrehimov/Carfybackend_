@@ -4,6 +4,10 @@ use App\Enum\RoleEnum;
 use App\Http\Controllers\Admin\AddressController;
 use App\Http\Controllers\Admin\AddressTypeController;
 use App\Http\Controllers\Admin\AdminController;
+use App\Http\Controllers\Admin\CarTypeController;
+use App\Http\Controllers\Admin\EngineVolumeController;
+use App\Http\Controllers\Admin\FuelTypeController;
+use App\Http\Controllers\Admin\TransmissionTypeController;
 use App\Http\Controllers\Admin\Auth\LoginController;
 use App\Http\Controllers\Admin\Auth\LogoutController;
 use App\Http\Controllers\Admin\BrandController;
@@ -30,6 +34,7 @@ use App\Http\Controllers\Admin\SettingController;
 use App\Http\Controllers\Admin\SliderController;
 use App\Http\Controllers\Admin\SocialController;
 use App\Http\Controllers\Admin\TranslationController;
+use App\Http\Controllers\Admin\UserCarController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\LocalTranslationsController;
 use App\Http\Middleware\RouteLogMiddleware;
@@ -224,6 +229,54 @@ Route::middleware(['general_access:admin', RouteLogMiddleware::class])->prefix('
             Route::post('change-sorting-multiple', [AddressTypeController::class, 'changeSortingMultiple']);
         });
 
+        Route::group(['prefix' => 'fuel-types'], static function () {
+            Route::get('load', [FuelTypeController::class, 'index']);
+            Route::get('list', [FuelTypeController::class, 'list']);
+            Route::get('show/{fuelType}', [FuelTypeController::class, 'show']);
+            Route::post('add', [FuelTypeController::class, 'store']);
+            Route::post('update/{fuelType}', [FuelTypeController::class, 'update']);
+            Route::delete('delete/{fuelType}', [FuelTypeController::class, 'destroy']);
+            Route::post('change-active-status/{fuelType}', [FuelTypeController::class, 'changeActiveStatus']);
+            Route::post('change-sorting/{fuelType}', [FuelTypeController::class, 'changeSorting']);
+            Route::post('change-sorting-multiple', [FuelTypeController::class, 'changeSortingMultiple']);
+        });
+
+        Route::group(['prefix' => 'transmission-types'], static function () {
+            Route::get('load', [TransmissionTypeController::class, 'index']);
+            Route::get('list', [TransmissionTypeController::class, 'list']);
+            Route::get('show/{transmissionType}', [TransmissionTypeController::class, 'show']);
+            Route::post('add', [TransmissionTypeController::class, 'store']);
+            Route::post('update/{transmissionType}', [TransmissionTypeController::class, 'update']);
+            Route::delete('delete/{transmissionType}', [TransmissionTypeController::class, 'destroy']);
+            Route::post('change-active-status/{transmissionType}', [TransmissionTypeController::class, 'changeActiveStatus']);
+            Route::post('change-sorting/{transmissionType}', [TransmissionTypeController::class, 'changeSorting']);
+            Route::post('change-sorting-multiple', [TransmissionTypeController::class, 'changeSortingMultiple']);
+        });
+
+        Route::group(['prefix' => 'car-types'], static function () {
+            Route::get('load', [CarTypeController::class, 'index']);
+            Route::get('list', [CarTypeController::class, 'list']);
+            Route::get('show/{carType}', [CarTypeController::class, 'show']);
+            Route::post('add', [CarTypeController::class, 'store']);
+            Route::post('update/{carType}', [CarTypeController::class, 'update']);
+            Route::delete('delete/{carType}', [CarTypeController::class, 'destroy']);
+            Route::post('change-active-status/{carType}', [CarTypeController::class, 'changeActiveStatus']);
+            Route::post('change-sorting/{carType}', [CarTypeController::class, 'changeSorting']);
+            Route::post('change-sorting-multiple', [CarTypeController::class, 'changeSortingMultiple']);
+        });
+
+        Route::group(['prefix' => 'engine-volumes'], static function () {
+            Route::get('load', [EngineVolumeController::class, 'index']);
+            Route::get('list', [EngineVolumeController::class, 'list']);
+            Route::get('show/{engineVolume}', [EngineVolumeController::class, 'show']);
+            Route::post('add', [EngineVolumeController::class, 'store']);
+            Route::post('update/{engineVolume}', [EngineVolumeController::class, 'update']);
+            Route::delete('delete/{engineVolume}', [EngineVolumeController::class, 'destroy']);
+            Route::post('change-active-status/{engineVolume}', [EngineVolumeController::class, 'changeActiveStatus']);
+            Route::post('change-sorting/{engineVolume}', [EngineVolumeController::class, 'changeSorting']);
+            Route::post('change-sorting-multiple', [EngineVolumeController::class, 'changeSortingMultiple']);
+        });
+
         Route::group(['prefix' => 'countries'], static function () {
             Route::get('load', [CountryController::class, 'index']);
             Route::get('list', [CountryController::class, 'list']);
@@ -260,6 +313,12 @@ Route::middleware(['general_access:admin', RouteLogMiddleware::class])->prefix('
                 Route::get('list', [AddressController::class, 'list']);
                 Route::get('show/{address}', [AddressController::class, 'show']);
                 Route::delete('delete/{address}', [AddressController::class, 'destroy']);
+            });
+
+            Route::group(['prefix' => '{user}/cars'], static function () {
+                Route::get('load', [UserCarController::class, 'index']);
+                Route::get('show/{userCar}', [UserCarController::class, 'show']);
+                Route::delete('delete/{userCar}', [UserCarController::class, 'destroy']);
             });
         });
 

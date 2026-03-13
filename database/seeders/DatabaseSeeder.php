@@ -20,6 +20,7 @@ class DatabaseSeeder extends Seeder
             CitiesSeeder::class,
             ConditionProductOptionSeeder::class,
             BrandsSeeder::class,
+            CarLibrariesSeeder::class,
         ]);
     }
 }

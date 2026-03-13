@@ -20,6 +20,7 @@
 /storage/pail
 /vendor
 /postman
+/docs
 Homestead.json
 Homestead.yaml
 Thumbs.db

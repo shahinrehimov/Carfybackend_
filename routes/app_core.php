@@ -1,6 +1,8 @@
 <?php
 
 use App\Http\Controllers\App\AddressController;
+use App\Http\Controllers\App\CarLibraryController;
+use App\Http\Controllers\App\UserCarController;
 use App\Http\Controllers\App\Auth\EmailVerificationController;
 use App\Http\Controllers\App\Auth\ForgotPasswordController;
 use App\Http\Controllers\App\Auth\GoogleController;
@@ -44,6 +46,13 @@ return static function () {
             Route::group(['prefix' => 'services'], static function () {
                 Route::get('list', [ServicesController::class, 'getServicesList']);
                 Route::get('load', [ServicesController::class, 'loadAppServices']);
+            });
+
+            Route::group(['prefix' => 'car-libraries'], static function () {
+                Route::get('fuel-types', [CarLibraryController::class, 'fuelTypes']);
+                Route::get('transmission-types', [CarLibraryController::class, 'transmissionTypes']);
+                Route::get('car-types', [CarLibraryController::class, 'carTypes']);
+                Route::get('engine-volumes', [CarLibraryController::class, 'engineVolumes']);
             });
 
             Route::group(['prefix' => 'categories'], static function () {
@@ -154,6 +163,15 @@ return static function () {
                         Route::post('update/{address}', [AddressController::class, 'update']);
                         Route::delete('delete/{address}', [AddressController::class, 'destroy']);
                         Route::post('set-default/{address}', [AddressController::class, 'setDefault']);
+                    });
+
+                    Route::group(['prefix' => 'cars'], static function () {
+                        Route::get('load', [UserCarController::class, 'index']);
+                        Route::get('show/{userCar}', [UserCarController::class, 'show']);
+                        Route::post('add', [UserCarController::class, 'store']);
+                        Route::post('update/{userCar}', [UserCarController::class, 'update']);
+                        Route::delete('delete/{userCar}', [UserCarController::class, 'destroy']);
+                        Route::delete('delete-photo/{userCar}', [UserCarController::class, 'deletePhoto']);
                     });
                 });
 
