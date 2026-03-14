@@ -36,7 +36,7 @@ class ProductController extends Controller
     {
         return response()->json([
             'categories' => CategoriesListResource::collection((new CategoryRepository)->list(['with_subs' => 'yes'])),
-            'brands' => BrandsListResource::collection((new BrandRepository())->list()),
+            'brands' => BrandsListResource::collection((new BrandRepository())->list(withModels: true)),
             'statuses' => $this->repo->getProductsSearchStatusesList(),
             'price_ranges' => [
                 'min' => 0,

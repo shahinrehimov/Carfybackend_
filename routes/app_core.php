@@ -49,6 +49,8 @@ return static function () {
             });
 
             Route::group(['prefix' => 'car-libraries'], static function () {
+                Route::get('brands', [CarLibraryController::class, 'brands']);
+                Route::get('brands/{brand}/models', [CarLibraryController::class, 'brandModels']);
                 Route::get('fuel-types', [CarLibraryController::class, 'fuelTypes']);
                 Route::get('transmission-types', [CarLibraryController::class, 'transmissionTypes']);
                 Route::get('car-types', [CarLibraryController::class, 'carTypes']);
