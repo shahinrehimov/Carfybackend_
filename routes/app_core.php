@@ -9,6 +9,7 @@ use App\Http\Controllers\App\Auth\GoogleController;
 use App\Http\Controllers\App\Auth\LoginController;
 use App\Http\Controllers\App\Auth\LogoutController;
 use App\Http\Controllers\App\Auth\RegisterWithEmailController;
+use App\Http\Controllers\App\SessionController;
 use App\Http\Controllers\App\Auth\RegisterWithPhoneController;
 use App\Http\Controllers\App\BasketController;
 use App\Http\Controllers\App\CategoryController;
@@ -174,6 +175,11 @@ return static function () {
                         Route::post('update/{userCar}', [UserCarController::class, 'update']);
                         Route::delete('delete/{userCar}', [UserCarController::class, 'destroy']);
                         Route::delete('delete-photo/{userCar}', [UserCarController::class, 'deletePhoto']);
+                    });
+
+                    Route::group(['prefix' => 'sessions'], static function () {
+                        Route::get('load', [SessionController::class, 'index']);
+                        Route::post('{tokenId}/logout', [SessionController::class, 'logoutSession']);
                     });
                 });
 

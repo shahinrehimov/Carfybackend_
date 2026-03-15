@@ -17,6 +17,7 @@ use App\Http\Controllers\Sellers\CompanyProductVariantController;
 use App\Http\Controllers\Sellers\ProductController;
 use App\Http\Controllers\Sellers\ProductVariantController;
 use App\Http\Controllers\Sellers\ProfileController;
+use App\Http\Controllers\Sellers\SessionController;
 use App\Http\Middleware\CompanyAdminMiddleware;
 use App\Http\Middleware\CompanyVerifiedMiddleware;
 use App\Http\Middleware\RouteLogMiddleware;
@@ -48,6 +49,11 @@ Route::middleware(['general_access:sellers', RouteLogMiddleware::class])->prefix
                 ->withoutMiddleware(CompanyAdminMiddleware::class);
             Route::get('me', [ProfileController::class, 'showProfile']);
             Route::post('update', [ProfileController::class, 'updateProfile']);
+
+            Route::group(['prefix' => 'sessions'], static function () {
+                Route::get('load', [SessionController::class, 'index']);
+                Route::post('{tokenId}/logout', [SessionController::class, 'logoutSession']);
+            });
         });
 
         // Logout routes
