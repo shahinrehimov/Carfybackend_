@@ -9,7 +9,6 @@ use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Laravel\Sanctum\PersonalAccessToken;
-use Stevebauman\Location\Facades\Location;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 
 class CompanyAdminService
@@ -30,24 +29,13 @@ class CompanyAdminService
         return self::$instance;
     }
 
-    public function createToken(CompanyAdmin $user, $deviceType): UserResource
+    public function createToken(CompanyAdmin $user, ?string $deviceType = null): UserResource
     {
-        $newToken = $user->createToken($deviceType, ['company_admin']);
+        $deviceName = TokenService::instance()->resolveDeviceName($deviceType);
+        $newToken = $user->createToken($deviceName, ['company_admin']);
         $user->token = $newToken->plainTextToken;
 
-        $ip = request()->ip();
-        $locationData = Location::get();
-        $location = null;
-
-        if ($locationData) {
-            $parts = array_filter([$locationData->cityName, $locationData->countryName]);
-            $location = implode(', ', $parts) ?: null;
-        }
-
-        $newToken->accessToken->update([
-            'ip_address' => $ip,
-            'location'   => $location,
-        ]);
+        TokenService::instance()->fillTokenMeta($newToken);
 
         return new UserResource($user);
     }

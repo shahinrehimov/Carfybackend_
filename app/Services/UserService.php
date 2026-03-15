@@ -16,7 +16,6 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 use Laravel\Sanctum\PersonalAccessToken;
-use Stevebauman\Location\Facades\Location;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\HttpKernel\Exception\UnauthorizedHttpException;
@@ -39,24 +38,13 @@ class UserService
         return self::$instance;
     }
 
-    public function createToken(User $user, string $device_type): User
+    public function createToken(User $user, ?string $device_type = null): User
     {
-        $newToken = $user->createToken($device_type, ['user']);
+        $deviceName = TokenService::instance()->resolveDeviceName($device_type);
+        $newToken = $user->createToken($deviceName, ['user']);
         $user->token = $newToken->plainTextToken;
 
-        $ip = request()->ip();
-        $locationData = Location::get();
-        $location = null;
-
-        if ($locationData) {
-            $parts = array_filter([$locationData->cityName, $locationData->countryName]);
-            $location = implode(', ', $parts) ?: null;
-        }
-
-        $newToken->accessToken->update([
-            'ip_address' => $ip,
-            'location'   => $location,
-        ]);
+        TokenService::instance()->fillTokenMeta($newToken);
 
         $this->getDataFromGuest($user);
 
