@@ -11,6 +11,7 @@ use App\Models\Product;
 use App\Models\ProductOption;
 use App\Models\ProductVariant;
 use App\Models\CompanyProductVariant;
+use App\Models\SellerSearchToken;
 use App\Models\Wishlist;
 use App\Models\ProductVariantProductOption;
 use App\Services\AdminService;
@@ -313,12 +314,14 @@ class ProductVariantRepository
             ->paginate($validated['limit'] ?? 10);
     }
 
+    /**
+     * Read access: allows the variant's creator OR any seller who has attached to it.
+     */
     public function checkCompanyForSellers(ProductVariant $productVariant): void
     {
         if (CompanyAdminService::instance()->checkUser()) {
             $companyId = CompanyAdminService::instance()->getUser()->company_id;
 
-            // Check via companyListings (new pivot) or legacy company_id
             $hasListing = $productVariant->companyListings()
                 ->where('company_id', $companyId)
                 ->exists();
@@ -327,6 +330,24 @@ class ProductVariantRepository
                 throw new AccessDeniedHttpException(
                     LangService::instance()
                         ->setDefault('You do not have permission to access this product variant!')
+                        ->getLang('you_do_not_have_permission_to_access_this_product_variant')
+                );
+            }
+        }
+    }
+
+    /**
+     * Write access: only the seller who originally created (owns) the variant.
+     */
+    public function checkCompanyOwnership(ProductVariant $productVariant): void
+    {
+        if (CompanyAdminService::instance()->checkUser()) {
+            $companyId = CompanyAdminService::instance()->getUser()->company_id;
+
+            if ($productVariant->company_id !== $companyId) {
+                throw new AccessDeniedHttpException(
+                    LangService::instance()
+                        ->setDefault('You do not have permission to modify this product variant!')
                         ->getLang('you_do_not_have_permission_to_access_this_product_variant')
                 );
             }
@@ -394,6 +415,18 @@ class ProductVariantRepository
 
     public function store(Product $product, FormRequest $request, bool $isDefault = false, bool $withoutImages = false): ProductVariant
     {
+        if (CompanyAdminService::instance()->checkUser()) {
+            $token = request()->header('X-Search-Token');
+            if (!$token) {
+                throw new BadRequestHttpException(
+                    LangService::instance()
+                        ->setDefault('Search token is required. Please search the catalog first.')
+                        ->getLang('invalid_search_token')
+                );
+            }
+            $this->consumeSearchToken($token);
+        }
+
         $_this = $this;
 
         return DB::transaction(static function () use ($_this, $product, $request, $isDefault, $withoutImages) {
@@ -455,7 +488,7 @@ class ProductVariantRepository
 
     public function update(ProductVariant $productVariant, FormRequest $request, bool $withoutImages = false): ProductVariant
     {
-        $this->checkCompanyForSellers($productVariant);
+        $this->checkCompanyOwnership($productVariant);
 
         $_this = $this;
 
@@ -625,7 +658,7 @@ class ProductVariantRepository
 
     public function destroy(ProductVariant $productVariant): void
     {
-        $this->checkCompanyForSellers($productVariant);
+        $this->checkCompanyOwnership($productVariant);
 
         DB::transaction(static function () use ($productVariant) {
             $productVariant->delete();
@@ -634,7 +667,7 @@ class ProductVariantRepository
 
     public function deleteHoverImage(ProductVariant $productVariant): void
     {
-        $this->checkCompanyForSellers($productVariant);
+        $this->checkCompanyOwnership($productVariant);
 
         DB::transaction(static function () use ($productVariant) {
             $productVariant->clearMediaCollection('product_variants_hover');
@@ -643,7 +676,7 @@ class ProductVariantRepository
 
     public function deleteImage(ProductVariant $productVariant, int $mediaId): void
     {
-        $this->checkCompanyForSellers($productVariant);
+        $this->checkCompanyOwnership($productVariant);
 
         DB::transaction(static function () use ($productVariant, $mediaId) {
             $productVariant->deleteMedia($mediaId);
@@ -652,7 +685,7 @@ class ProductVariantRepository
 
     public function changeActiveStatus(ProductVariant $productVariant): void
     {
-        $this->checkCompanyForSellers($productVariant);
+        $this->checkCompanyOwnership($productVariant);
 
         DB::transaction(function () use ($productVariant) {
             $productVariant->is_active = !$productVariant->is_active;
@@ -961,6 +994,49 @@ class ProductVariantRepository
             ->paginate($validated['limit'] ?? 20);
     }
 
+    public function generateSearchToken(): string
+    {
+        $user = CompanyAdminService::instance()->getUser();
+
+        SellerSearchToken::query()
+            ->where('company_id', $user->company_id)
+            ->where('admin_id', $user->id)
+            ->delete();
+
+        $token = SellerSearchToken::query()->create([
+            'uuid'       => (string) Str::uuid(),
+            'company_id' => $user->company_id,
+            'admin_id'   => $user->id,
+            'created_at' => now(),
+        ]);
+
+        return $token->uuid;
+    }
+
+    public function consumeSearchToken(string $token): void
+    {
+        $user = CompanyAdminService::instance()->getUser();
+
+        $record = SellerSearchToken::query()
+            ->where('uuid', $token)
+            ->where('company_id', $user->company_id)
+            ->where('admin_id', $user->id)
+            ->first();
+
+        if (!$record) {
+            throw new BadRequestHttpException(
+                LangService::instance()
+                    ->setDefault('Invalid or missing search token. Please search the catalog first.')
+                    ->getLang('invalid_search_token')
+            );
+        }
+
+        SellerSearchToken::query()
+            ->where('company_id', $user->company_id)
+            ->where('admin_id', $user->id)
+            ->delete();
+    }
+
     public function searchCatalog(array $validated): LengthAwarePaginator
     {
         $companyId = CompanyAdminService::instance()->checkUser()
@@ -1019,7 +1095,7 @@ class ProductVariantRepository
 
     public function approvalStatusResend(ProductVariant $productVariant): void
     {
-        $this->checkCompanyForSellers($productVariant);
+        $this->checkCompanyOwnership($productVariant);
 
         if ($productVariant->approval_status !== ProductVariantApprovalStatusEnum::REJECTED->value) {
             throw new BadRequestHttpException(

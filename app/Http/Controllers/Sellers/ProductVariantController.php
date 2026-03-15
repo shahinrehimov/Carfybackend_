@@ -16,6 +16,7 @@ use App\Http\Resources\Sellers\ProductVariants\ProductVariantsResource;
 use App\Models\Product;
 use App\Models\ProductVariant;
 use App\Repositories\ProductVariantRepository;
+use App\Services\CompanyAdminService;
 use App\Services\LangService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
@@ -134,8 +135,18 @@ class ProductVariantController extends Controller
         ]));
     }
 
-    public function searchCatalog(CatalogSearchRequest $request): AnonymousResourceCollection
+    public function searchCatalog(CatalogSearchRequest $request): JsonResponse
     {
-        return ProductVariantsResource::collection($this->repo->searchCatalog($request->validated()));
+        $results = $this->repo->searchCatalog($request->validated());
+        $searchToken = null;
+
+        if (CompanyAdminService::instance()->checkUser()) {
+            $searchToken = $this->repo->generateSearchToken();
+        }
+
+        return response()->json(GeneralResource::make([
+            'search_token' => $searchToken,
+            'data' => ProductVariantsResource::collection($results),
+        ]));
     }
 }

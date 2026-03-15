@@ -5,6 +5,7 @@ namespace App\Repositories;
 use App\Enum\ProductVariantApprovalStatusEnum;
 use App\Models\CompanyProductVariant;
 use App\Models\ProductVariant;
+use App\Models\SellerSearchToken;
 use App\Services\CompanyAdminService;
 use App\Services\FileUpload;
 use App\Services\LangService;
@@ -32,6 +33,36 @@ class CompanyProductVariantRepository
 
     public function attach(ProductVariant $productVariant, FormRequest $request): CompanyProductVariant
     {
+        $user = CompanyAdminService::instance()->getUser();
+        $token = request()->header('X-Search-Token');
+
+        if (!$token) {
+            throw new BadRequestHttpException(
+                LangService::instance()
+                    ->setDefault('Search token is required. Please search the catalog first.')
+                    ->getLang('invalid_search_token')
+            );
+        }
+
+        $record = SellerSearchToken::query()
+            ->where('uuid', $token)
+            ->where('company_id', $user->company_id)
+            ->where('admin_id', $user->id)
+            ->first();
+
+        if (!$record) {
+            throw new BadRequestHttpException(
+                LangService::instance()
+                    ->setDefault('Invalid or missing search token. Please search the catalog first.')
+                    ->getLang('invalid_search_token')
+            );
+        }
+
+        SellerSearchToken::query()
+            ->where('company_id', $user->company_id)
+            ->where('admin_id', $user->id)
+            ->delete();
+
         return DB::transaction(static function () use ($productVariant, $request) {
             $validated = $request->validated();
 
