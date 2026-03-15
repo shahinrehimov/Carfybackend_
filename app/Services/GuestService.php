@@ -26,7 +26,7 @@ class GuestService
         return self::$instance;
     }
 
-    public function storeGuest(string $deviceType): string
+    public function storeGuest(?string $deviceType): string
     {
         if (UserService::instance()->checkUser()) {
             throw new BadRequestHttpException(
@@ -39,7 +39,7 @@ class GuestService
         $identifier = Str::uuid();
 
         Guest::query()->create([
-            'device_type' => $deviceType,
+            'device_type' => TokenService::instance()->resolveDeviceName($deviceType),
             'identifier' => $identifier,
         ]);
 

@@ -15,7 +15,7 @@ class GuestController extends Controller
         $validated = $request->validated();
 
         return response()->json([
-            'identifier' => GuestService::instance()->storeGuest($validated['device_type']),
+            'identifier' => GuestService::instance()->storeGuest($validated['device_type'] ?? null),
             'message' => LangService::instance()
                 ->setDefault('Guest created successfully!')
                 ->getLang('guest_created'),
