@@ -26,7 +26,7 @@ class RegisterWithEmailRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'device_type' => ['required', 'string', 'in:android,ios,web'],
+            'device_type' => ['nullable', 'string', 'max:255'],
             'name' => ['required', 'string', 'max:150'],
             'surname' => ['required', 'string', 'max:150'],
             'phone' => ['required', 'string', 'size:12', 'regex:/^994\d{9}$/', Rule::unique(User::class, 'phone')->whereNull('deleted_at')],

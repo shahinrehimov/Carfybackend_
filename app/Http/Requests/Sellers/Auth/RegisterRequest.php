@@ -56,7 +56,7 @@ class RegisterRequest extends FormRequest
             'admin.name' => ['required', 'string', 'max:255'],
             'admin.surname' => ['required', 'string', 'max:255'],
 
-            'device_type' => ['required', 'string', 'max:255'],
+            'device_type' => ['nullable', 'string', 'max:255'],
         ];
     }
 }

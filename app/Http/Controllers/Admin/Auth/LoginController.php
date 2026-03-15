@@ -37,6 +37,6 @@ class LoginController extends Controller
             ], 401));
         }
 
-        return AdminService::instance()->createToken($user, $fields['device_type']);
+        return AdminService::instance()->createToken($user, $fields['device_type'] ?? null);
     }
 }

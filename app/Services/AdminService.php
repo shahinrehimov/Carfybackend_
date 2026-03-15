@@ -28,9 +28,13 @@ class AdminService
         return self::$instance;
     }
 
-    public function createToken(Admin $user, $deviceType): UserResource
+    public function createToken(Admin $user, ?string $deviceType = null): UserResource
     {
-        $user->token = $user->createToken($deviceType, ['admin'])->plainTextToken;
+        $deviceName = TokenService::instance()->resolveDeviceName($deviceType);
+        $newToken = $user->createToken($deviceName, ['admin']);
+        $user->token = $newToken->plainTextToken;
+
+        TokenService::instance()->fillTokenMeta($newToken);
 
         $user->load([
             'roles',

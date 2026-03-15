@@ -22,7 +22,7 @@ class LoginWithPhoneRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'device_type' => ['required', 'string', 'in:android,ios,web'],
+            'device_type' => ['nullable', 'string', 'max:255'],
             'phone' => ['required', 'string', 'size:12', 'regex:/^994\d{9}$/'],
             'otp' => ['required', 'integer', 'digits:4'],
         ];

@@ -39,7 +39,7 @@ class LoginController extends Controller
             ], 401));
         }
 
-        return UserResource::make(UserService::instance()->createToken($user, $fields['device_type']));
+        return UserResource::make(UserService::instance()->createToken($user, $fields['device_type'] ?? null));
     }
 
     public function sendPhoneOtp(SendPhoneOtpRequest $request): JsonResponse
@@ -74,7 +74,7 @@ class LoginController extends Controller
 
         UserService::instance()->checkOtp(UserOtpTypesEnum::LOGIN, $validated['otp'], $user, UserOtpProvidersEnum::SMS);
 
-        return UserResource::make(UserService::instance()->createToken($user, $validated['device_type']));
+        return UserResource::make(UserService::instance()->createToken($user, $validated['device_type'] ?? null));
     }
 
     public function loginFromThirdPartyProvider(LoginWithThirdPartyProviderRequest $request): UserResource

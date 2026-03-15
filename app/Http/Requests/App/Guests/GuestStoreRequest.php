@@ -22,7 +22,7 @@ class GuestStoreRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'device_type' => ['required', 'string', 'in:android,ios,web'],
+            'device_type' => ['nullable', 'string', 'max:255'],
         ];
     }
 }

@@ -10,6 +10,7 @@ use App\Http\Controllers\Admin\FuelTypeController;
 use App\Http\Controllers\Admin\TransmissionTypeController;
 use App\Http\Controllers\Admin\Auth\LoginController;
 use App\Http\Controllers\Admin\Auth\LogoutController;
+use App\Http\Controllers\Admin\SessionController;
 use App\Http\Controllers\Admin\BrandController;
 use App\Http\Controllers\Admin\BrandModelController;
 use App\Http\Controllers\Admin\CategoryController;
@@ -49,6 +50,11 @@ Route::middleware(['general_access:admin', RouteLogMiddleware::class])->prefix('
             Route::post("change-password", [ProfileController::class, 'changePassword'])->withoutMiddleware(RouteLogMiddleware::class);
             Route::get("me", [ProfileController::class, 'showProfile']);
             Route::post("update", [ProfileController::class, 'updateProfile']);
+
+            Route::group(['prefix' => 'sessions'], static function () {
+                Route::get('load', [SessionController::class, 'index']);
+                Route::post('{tokenId}/logout', [SessionController::class, 'logoutSession']);
+            });
         });
 
         Route::post("logout", [LogoutController::class, 'logout']);

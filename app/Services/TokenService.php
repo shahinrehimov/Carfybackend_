@@ -31,11 +31,17 @@ class TokenService
         $agent->setUserAgent(request()->userAgent());
 
         $parts = array_filter([
-            $agent->platform(),
-            $agent->browser(),
+            $agent->platform() ?: null,
+            $agent->browser() ?: null,
         ]);
 
-        return implode(' / ', $parts) ?: 'Unknown';
+        if ($parts) {
+            return implode(' / ', $parts);
+        }
+
+        $rawUserAgent = request()->userAgent();
+
+        return $rawUserAgent ? mb_substr($rawUserAgent, 0, 100) : 'Unknown';
     }
 
     public function fillTokenMeta(NewAccessToken $newToken): void
