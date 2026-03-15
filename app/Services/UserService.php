@@ -45,7 +45,7 @@ class UserService
         $user->token = $newToken->plainTextToken;
 
         $ip = request()->ip();
-        $locationData = Location::get($ip);
+        $locationData = Location::get();
         $location = null;
 
         if ($locationData) {
