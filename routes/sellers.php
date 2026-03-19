@@ -77,21 +77,13 @@ Route::middleware(['general_access:sellers', RouteLogMiddleware::class])->prefix
             });
 
             Route::group(['prefix' => 'product-variants'], static function () {
-                Route::get('load', [ProductVariantController::class, 'index']);
                 Route::get('list', [ProductVariantController::class, 'list']);
                 Route::get('search-catalog', [ProductVariantController::class, 'searchCatalog']);
-                Route::get('show/{productVariant}', [ProductVariantController::class, 'show']);
                 Route::post('add/{product}', [ProductVariantController::class, 'store']);
                 Route::post('update/{productVariant}', [ProductVariantController::class, 'update']);
                 Route::delete('delete/{productVariant}', [ProductVariantController::class, 'destroy']);
                 Route::delete('delete-hover-image/{productVariant}', [ProductVariantController::class, 'deleteHoverImage']);
                 Route::delete('images/delete/{productVariant}/{mediaId}', [ProductVariantController::class, 'destroyImage']);
-                Route::post('change-active-status/{productVariant}', [ProductVariantController::class, 'changeActiveStatus']);
-
-                Route::group(['prefix' => '{productVariant}/approval-status'], static function () {
-                    Route::get('history', [ProductVariantController::class, 'approvalStatusHistory']);
-                    Route::post('resend', [ProductVariantController::class, 'approvalStatusResend']);
-                });
             });
 
             Route::group(['prefix' => 'company-product-variants'], static function () {

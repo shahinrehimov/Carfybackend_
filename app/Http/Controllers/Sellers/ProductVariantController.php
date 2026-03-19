@@ -3,14 +3,11 @@
 namespace App\Http\Controllers\Sellers;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\GeneralListRequest;
 use App\Http\Requests\Sellers\CompanyProductVariants\LoadRequest as CatalogSearchRequest;
 use App\Http\Requests\Sellers\ProductVariants\ProductVariantSearchRequest;
 use App\Http\Requests\Sellers\ProductVariants\ProductVariantStoreRequest;
 use App\Http\Requests\Sellers\ProductVariants\ProductVariantUpdateRequest;
 use App\Http\Resources\GeneralResource;
-use App\Http\Resources\Sellers\ProductVariants\ProductVariantApprovalStatusHistoryResource;
-use App\Http\Resources\Sellers\ProductVariants\ProductVariantResource;
 use App\Http\Resources\Sellers\ProductVariants\ProductVariantsListResource;
 use App\Http\Resources\Sellers\ProductVariants\ProductVariantsResource;
 use App\Models\Product;
@@ -30,21 +27,9 @@ class ProductVariantController extends Controller
         $this->repo = $repo;
     }
 
-    public function index(ProductVariantSearchRequest $request): AnonymousResourceCollection
-    {
-        return ProductVariantsResource::collection($this->repo->load($request->validated(), true));
-    }
-
     public function list(ProductVariantSearchRequest $request): AnonymousResourceCollection
     {
         return ProductVariantsListResource::collection($this->repo->list($request->validated()));
-    }
-
-    public function show(ProductVariant $productVariant): ProductVariantResource
-    {
-        $productVariant = $this->repo->show($productVariant);
-
-        return ProductVariantResource::make($productVariant);
     }
 
     public function store(ProductVariantStoreRequest $request, Product $product): JsonResponse
@@ -105,33 +90,6 @@ class ProductVariantController extends Controller
             'message' => LangService::instance()
                 ->setDefault('Selected media file deleted successfully!')
                 ->getLang('product_media_deleted_successfully'),
-        ]));
-    }
-
-    public function changeActiveStatus(ProductVariant $productVariant): JsonResponse
-    {
-        $this->repo->changeActiveStatus($productVariant);
-
-        return response()->json(GeneralResource::make([
-            'message' => LangService::instance()
-                ->setDefault('Status changed successfully!')
-                ->getLang('admin_status_changed_successfully'),
-        ]));
-    }
-
-    public function approvalStatusHistory(GeneralListRequest $request, ProductVariant $productVariant): AnonymousResourceCollection
-    {
-        return ProductVariantApprovalStatusHistoryResource::collection($this->repo->approvalStatusHistory($productVariant, $request->validated()));
-    }
-
-    public function approvalStatusResend(ProductVariant $productVariant): JsonResponse
-    {
-        $this->repo->approvalStatusResend($productVariant);
-
-        return response()->json(GeneralResource::make([
-            'message' => LangService::instance()
-                ->setDefault('Status changed successfully!')
-                ->getLang('admin_status_changed_successfully'),
         ]));
     }
 

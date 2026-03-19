@@ -165,6 +165,9 @@ class CompanyProductVariantRepository
                     $q->where('product_id', $validated['product_id']);
                 });
             })
+            ->when($validated['product_variant_id'] ?? null, function (Builder $builder) use ($validated) {
+                $builder->where('product_variant_id', $validated['product_variant_id']);
+            })
             ->when($validated['approval_status'] ?? null, function (Builder $builder) use ($validated) {
                 $builder->where('approval_status', $validated['approval_status']);
             })
@@ -345,6 +348,9 @@ class CompanyProductVariantRepository
             ])
             ->when($validated['company_id'] ?? null, function (Builder $builder) use ($validated) {
                 $builder->where('company_id', $validated['company_id']);
+            })
+            ->when($validated['product_variant_id'] ?? null, function (Builder $builder) use ($validated) {
+                $builder->where('product_variant_id', $validated['product_variant_id']);
             })
             ->when($validated['approval_status'] ?? null, function (Builder $builder) use ($validated) {
                 $builder->where('approval_status', $validated['approval_status']);

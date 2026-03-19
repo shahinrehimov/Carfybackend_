@@ -21,6 +21,7 @@ class LoadRequest extends FormRequest
             'limit' => ['filled', 'integer', 'min:5', 'max:100'],
             'search' => ['nullable', 'string', 'max:500'],
             'product_id' => ['nullable', 'integer'],
+            'product_variant_id' => ['nullable', 'integer'],
             'company_id' => ['nullable', 'integer'],
             'approval_status' => ['nullable', 'string', Rule::in(ProductVariantApprovalStatusEnum::cases())],
         ];

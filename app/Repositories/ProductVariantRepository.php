@@ -928,62 +928,6 @@ class ProductVariantRepository
         return $relatedVariants;
     }
 
-    public function approvalStatusHistory(ProductVariant $productVariant, array $validated = []): LengthAwarePaginator
-    {
-        $this->checkCompanyForSellers($productVariant);
-
-        return $productVariant->approvalStatuses()
-            ->with([
-                'creatable',
-            ])
-            ->orderByDesc('id')
-            ->paginate($validated['limit'] ?? 10);
-    }
-
-    public function approvalStatusApprove(ProductVariant $productVariant): void
-    {
-        if ($productVariant->approval_status === ProductVariantApprovalStatusEnum::APPROVED->value) {
-            throw new BadRequestHttpException(
-                LangService::instance()
-                    ->setDefault('The product variant is already approved!')
-                    ->getLang('product_variant_already_approved')
-            );
-        }
-
-        DB::transaction(function () use ($productVariant) {
-            $productVariant->approval_status = ProductVariantApprovalStatusEnum::APPROVED->value;
-            $productVariant->approval_status_message = null;
-            $productVariant->save();
-
-            $productVariant->approvalStatuses()->create([
-                'approval_status' => ProductVariantApprovalStatusEnum::APPROVED->value,
-                'approval_status_message' => null,
-            ]);
-        });
-    }
-
-    public function approvalStatusReject(ProductVariant $productVariant, array $validated = []): void
-    {
-        if ($productVariant->approval_status === ProductVariantApprovalStatusEnum::REJECTED->value) {
-            throw new BadRequestHttpException(
-                LangService::instance()
-                    ->setDefault('The product variant is already rejected!')
-                    ->getLang('product_variant_already_rejected')
-            );
-        }
-
-        DB::transaction(function () use ($productVariant, $validated) {
-            $productVariant->approval_status = ProductVariantApprovalStatusEnum::REJECTED->value;
-            $productVariant->approval_status_message = $validated['approval_status_message'] ?? null;
-            $productVariant->save();
-
-            $productVariant->approvalStatuses()->create([
-                'approval_status' => ProductVariantApprovalStatusEnum::REJECTED->value,
-                'approval_status_message' => $validated['approval_status_message'] ?? null,
-            ]);
-        });
-    }
-
     public function otherSellers(ProductVariant $productVariant, array $validated = []): LengthAwarePaginator
     {
         return $productVariant->companyListings()
@@ -1091,30 +1035,6 @@ class ProductVariantRepository
             })
             ->orderByDesc('id')
             ->paginate($validated['limit'] ?? 10);
-    }
-
-    public function approvalStatusResend(ProductVariant $productVariant): void
-    {
-        $this->checkCompanyOwnership($productVariant);
-
-        if ($productVariant->approval_status !== ProductVariantApprovalStatusEnum::REJECTED->value) {
-            throw new BadRequestHttpException(
-                LangService::instance()
-                    ->setDefault('Only rejected product variants can be resent for approval!')
-                    ->getLang('only_rejected_product_variants_can_be_resent_for_approval')
-            );
-        }
-
-        DB::transaction(function () use ($productVariant) {
-            $productVariant->approval_status = ProductVariantApprovalStatusEnum::PENDING->value;
-            $productVariant->approval_status_message = null;
-            $productVariant->save();
-
-            $productVariant->approvalStatuses()->create([
-                'approval_status' => ProductVariantApprovalStatusEnum::PENDING->value,
-                'approval_status_message' => null,
-            ]);
-        });
     }
 
     /**
