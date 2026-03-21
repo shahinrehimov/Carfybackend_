@@ -57,7 +57,6 @@ class ProductVariant extends Model implements HasMedia
 
     protected $fillable = [
         'company_id', // nullable
-        'brand_model_id', // nullable
         'uuid',
         'is_set',
         'is_default',
@@ -248,9 +247,9 @@ class ProductVariant extends Model implements HasMedia
         return $this->belongsTo(City::class);
     }
 
-    public function brandModel(): BelongsTo
+    public function brandModels(): BelongsToMany
     {
-        return $this->belongsTo(BrandModel::class);
+        return $this->belongsToMany(BrandModel::class, 'product_variant_brand_models');
     }
 
     public function companyListings(): HasMany

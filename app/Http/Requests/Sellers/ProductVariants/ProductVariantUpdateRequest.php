@@ -49,7 +49,8 @@ class ProductVariantUpdateRequest extends FormRequest
             'images' => ['filled', 'array', 'min:1'],
             'images.*' => ['required', File::image()->max(10 * 1024)],
 
-            'brand_model_id' => ['required', 'integer',
+            'brand_model_ids' => ['required', 'array', 'min:1'],
+            'brand_model_ids.*' => ['required', 'integer',
                 Rule::exists(BrandModel::class, 'id')
                     ->where('is_active', true)
                     ->whereNull('deleted_at')

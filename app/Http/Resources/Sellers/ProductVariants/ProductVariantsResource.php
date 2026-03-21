@@ -106,7 +106,7 @@ class ProductVariantsResource extends JsonResource
                 : null,
             'discount' => $this->discount,
             'city' => CitiesListResource::make($this->whenLoaded('city')),
-            'brand_model' => BrandModelsListResource::make($this->whenLoaded('brandModel')),
+            'brand_models' => BrandModelsListResource::collection($this->whenLoaded('brandModels')),
             'year' => $this->year,
             'is_default' => $this->isDefault(),
             'is_active' => $this->isActive(),

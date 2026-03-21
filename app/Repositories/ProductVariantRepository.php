@@ -124,8 +124,8 @@ class ProductVariantRepository
                         'groups.translatable',
                         'city',
                         'city.translatable',
-                        'brandModel',
-                        'brandModel.translatable',
+                        'brandModels',
+                        'brandModels.translatable',
                         'product.creatable',
                         'product.categories',
                         'product.categories.translatable',
@@ -374,8 +374,8 @@ class ProductVariantRepository
             'groups.translatable',
             'city',
             'city.translatable',
-            'brandModel',
-            'brandModel.translatable',
+            'brandModels',
+            'brandModels.translatable',
 
             'product',
             'product.translatable',
@@ -398,8 +398,8 @@ class ProductVariantRepository
                 'groups.translatable',
                 'city',
                 'city.translatable',
-                'brandModel',
-                'brandModel.translatable',
+                'brandModels',
+                'brandModels.translatable',
                 'product.creatable',
                 'product.categories',
                 'product.categories.translatable',
@@ -441,7 +441,6 @@ class ProductVariantRepository
             $data['is_default'] = $isDefault;
             $data['oem_code'] = $validated['oem_code'] ?? null;
             $data['is_set'] = (bool)($validated['is_set'] ?? false);
-            $data['brand_model_id'] = $validated['brand_model_id'];
             $data['year'] = $validated['year'];
 
             if (CompanyAdminService::instance()->checkUser()) {
@@ -450,6 +449,8 @@ class ProductVariantRepository
 
             /** @var ProductVariant $productVariant */
             $productVariant = $product->variants()->create($data);
+
+            $productVariant->brandModels()->sync($validated['brand_model_ids'] ?? []);
 
             $_this->syncSets($productVariant, $sets);
 
@@ -508,7 +509,14 @@ class ProductVariantRepository
             $options = $validated['options'] ?? [];
             unset($validated['options']);
 
+            $brandModelIds = $validated['brand_model_ids'] ?? null;
+            unset($validated['brand_model_ids']);
+
             $productVariant->update($validated);
+
+            if ($brandModelIds !== null) {
+                $productVariant->brandModels()->sync($brandModelIds);
+            }
 
             $_this->syncSets($productVariant, $sets, true);
 
@@ -549,10 +557,10 @@ class ProductVariantRepository
                 'company_id'         => $companyId,
                 'status'             => 'pending',
                 'data'               => [
-                    'oem_code'       => $validated['oem_code'] ?? null,
-                    'brand_model_id' => $validated['brand_model_id'] ?? null,
-                    'year'           => $validated['year'] ?? null,
-                    'options'        => $validated['options'] ?? [],
+                    'oem_code'        => $validated['oem_code'] ?? null,
+                    'brand_model_ids' => $validated['brand_model_ids'] ?? [],
+                    'year'            => $validated['year'] ?? null,
+                    'options'         => $validated['options'] ?? [],
                 ],
             ]);
 
@@ -574,10 +582,14 @@ class ProductVariantRepository
 
             // Apply scalar fields
             $productVariant->update([
-                'oem_code'       => $data['oem_code'] ?? $productVariant->oem_code,
-                'brand_model_id' => $data['brand_model_id'] ?? $productVariant->brand_model_id,
-                'year'           => $data['year'] ?? $productVariant->year,
+                'oem_code' => $data['oem_code'] ?? $productVariant->oem_code,
+                'year'     => $data['year'] ?? $productVariant->year,
             ]);
+
+            // Apply brand models
+            if (!empty($data['brand_model_ids'])) {
+                $productVariant->brandModels()->sync($data['brand_model_ids']);
+            }
 
             // Apply options
             if (!empty($data['options'])) {
@@ -931,8 +943,8 @@ class ProductVariantRepository
             'options.option.translatable',
             'options.item',
             'options.item.translatable',
-            'brandModel',
-            'brandModel.translatable',
+            'brandModels',
+            'brandModels.translatable',
         ]);
 
         $productVariant->ratings = ProductService::instance()->setProductVariant($productVariant)->calculateVariantRating();
@@ -1147,8 +1159,8 @@ class ProductVariantRepository
                 'options.option.translatable',
                 'options.item',
                 'options.item.translatable',
-                'brandModel',
-                'brandModel.translatable',
+                'brandModels',
+                'brandModels.translatable',
             ])
             ->when($companyId, function (Builder $builder) use ($companyId) {
                 $builder->with([
@@ -1161,7 +1173,9 @@ class ProductVariantRepository
                 $builder->where('oem_code', 'ILIKE', '%' . $validated['oem_code'] . '%');
             })
             ->when($validated['brand_model_id'] ?? null, function (Builder $builder) use ($validated) {
-                $builder->where('brand_model_id', $validated['brand_model_id']);
+                $builder->whereHas('brandModels', function (Builder $q) use ($validated) {
+                    $q->where('brand_models.id', $validated['brand_model_id']);
+                });
             })
             ->when($validated['year'] ?? null, function (Builder $builder) use ($validated) {
                 $builder->where('year', $validated['year']);

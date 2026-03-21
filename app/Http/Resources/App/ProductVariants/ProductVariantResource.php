@@ -61,7 +61,7 @@ class ProductVariantResource extends JsonResource
                 return $this->images['urls'] ?? [];
             }),
             'city' => CitiesListResource::make($this->whenLoaded('city')),
-            'brand_model' => BrandModelsListResource::make($this->whenLoaded('brandModel')),
+            'brand_models' => BrandModelsListResource::collection($this->whenLoaded('brandModels')),
             'product' => ProductResource::make($this->whenLoaded('product')),
             'is_set' => $this->isSet(),
             'sets' => ProductVariantsResource::collection($this->whenLoaded('sets')),

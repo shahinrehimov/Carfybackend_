@@ -11,7 +11,7 @@ use Dyrynda\Database\Support\CascadeSoftDeletes;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 /**
@@ -61,8 +61,8 @@ class BrandModel extends Model implements TranslatableInterface
         return $this->belongsTo(Brand::class);
     }
 
-    public function productVariants(): HasMany
+    public function productVariants(): BelongsToMany
     {
-        return $this->hasMany(ProductVariant::class);
+        return $this->belongsToMany(ProductVariant::class, 'product_variant_brand_models');
     }
 }

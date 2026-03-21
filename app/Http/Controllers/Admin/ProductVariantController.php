@@ -89,7 +89,7 @@ class ProductVariantController extends Controller
     public function revisions(ProductVariant $productVariant): JsonResponse
     {
         $revisions = $productVariant->revisions()
-            ->with(['productVariant', 'productVariant.options', 'productVariant.options.option', 'productVariant.brandModel', 'media', 'company'])
+            ->with(['productVariant', 'productVariant.options', 'productVariant.options.option', 'productVariant.brandModels', 'media', 'company'])
             ->latest()
             ->get()
             ->map(fn(ProductVariantRevision $r) => $this->formatRevision($r));
@@ -130,10 +130,9 @@ class ProductVariantController extends Controller
             'company'            => $revision->company ? ['id' => $revision->company->id, 'title' => $revision->company->getLang('title')] : null,
             'data'               => $revision->data,
             'current'            => [
-                'oem_code'       => $pv->oem_code,
-                'brand_model_id' => $pv->brand_model_id,
-                'brand_model'    => $pv->brandModel ? ['id' => $pv->brandModel->id, 'title' => $pv->brandModel->title] : null,
-                'year'           => $pv->year,
+                'oem_code'    => $pv->oem_code,
+                'brand_models' => $pv->brandModels->map(fn($m) => ['id' => $m->id, 'title' => $m->title])->values(),
+                'year'        => $pv->year,
                 'options'        => $pv->options->map(fn($o) => [
                     'option_id' => $o->product_option_id,
                     'value'     => $o->product_option_item_id ?? $o->value,

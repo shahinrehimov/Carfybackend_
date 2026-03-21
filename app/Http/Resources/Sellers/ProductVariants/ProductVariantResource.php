@@ -74,7 +74,7 @@ class ProductVariantResource extends JsonResource
             'discount_start_at' => $this->discount_start_at?->toDatetimeString(),
             'discount_end_at' => $this->discount_end_at?->toDatetimeString(),
             'city' => CitiesListResource::make($this->whenLoaded('city')),
-            'brand_model' => BrandModelsListResource::make($this->whenLoaded('brandModel')),
+            'brand_models' => BrandModelsListResource::collection($this->whenLoaded('brandModels')),
             'year' => $this->year,
             'translations' => $this->translations,
             'is_default' => $this->isDefault(),

@@ -72,11 +72,11 @@ class ProductStoreRequest extends FormRequest
 
             'city_id' => ['required', 'integer', Rule::exists(City::class, 'id')->where('is_active', true)->whereNull('deleted_at')],
 
-            'brand_model_id' => ['required', 'integer',
+            'brand_model_ids' => ['required', 'array', 'min:1'],
+            'brand_model_ids.*' => ['required', 'integer',
                 Rule::exists(BrandModel::class, 'id')
                     ->where('is_active', true)
                     ->whereNull('deleted_at')
-                    ->where('brand_id', $this->brand_id)
             ],
 
             'oem_code' => ['nullable', 'string', 'max:100'],

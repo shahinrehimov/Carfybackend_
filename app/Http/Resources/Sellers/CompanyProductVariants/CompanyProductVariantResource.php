@@ -56,9 +56,9 @@ class CompanyProductVariantResource extends JsonResource
                     'options' => $variant->relationLoaded('options')
                         ? ProductVariantOptionsResource::collection($variant->options)
                         : [],
-                    'brand_model' => $variant->relationLoaded('brandModel')
-                        ? BrandModelsListResource::make($variant->brandModel)
-                        : null,
+                    'brand_models' => $variant->relationLoaded('brandModels')
+                        ? BrandModelsListResource::collection($variant->brandModels)
+                        : [],
                     'year' => $variant->year,
                     'product' => $variant->relationLoaded('product')
                         ? ProductsListResource::make($variant->product)
