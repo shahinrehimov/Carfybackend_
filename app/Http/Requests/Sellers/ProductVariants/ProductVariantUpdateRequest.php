@@ -2,9 +2,7 @@
 
 namespace App\Http\Requests\Sellers\ProductVariants;
 
-use App\Enum\DiscountTypeEnum;
 use App\Models\BrandModel;
-use App\Models\City;
 use App\Models\ProductOption;
 use App\Models\ProductVariant;
 use App\Rules\NestedDistinctRule;
@@ -15,7 +13,6 @@ use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\File;
 
 /**
- * @property mixed $has_discount
  * @property mixed $is_set
  */
 class ProductVariantUpdateRequest extends FormRequest
@@ -52,9 +49,7 @@ class ProductVariantUpdateRequest extends FormRequest
             'images' => ['filled', 'array', 'min:1'],
             'images.*' => ['required', File::image()->max(10 * 1024)],
 
-            'city_id' => ['nullable', 'integer', Rule::exists(City::class, 'id')->where('is_active', true)->whereNull('deleted_at')],
-
-            'brand_model_id' => ['nullable', 'integer',
+            'brand_model_id' => ['required', 'integer',
                 Rule::exists(BrandModel::class, 'id')
                     ->where('is_active', true)
                     ->whereNull('deleted_at')
@@ -67,14 +62,6 @@ class ProductVariantUpdateRequest extends FormRequest
             'sets' => ['filled', Rule::requiredIf(fn() => $productVariant->isSet()), Rule::excludeIf(fn() => !$productVariant->isSet()), 'array', 'min:1'],
             'sets.*.product_variant_id' => ['required', 'integer', Rule::exists(ProductVariant::class, 'id')->where('is_active', true)->where('is_set', 0)->whereNull('deleted_at')],
             'sets.*.quantity' => ['required', 'integer', 'min:1'],
-
-            'stock' => ['nullable', 'integer', 'min:0'],
-            'price' => ['nullable', /*Rule::requiredIf(fn() => !$this->is_set),*/ Rule::excludeIf(fn() => $productVariant->isSet()), 'numeric', 'min:0'],
-            'has_discount' => ['nullable', 'boolean'],
-            'discount' => ['nullable', Rule::requiredIf(fn() => $this->has_discount), Rule::excludeIf(fn() => !$this->has_discount), 'numeric', 'min:0'],
-            'discount_type' => ['nullable', Rule::requiredIf(fn() => $this->has_discount), Rule::excludeIf(fn() => !$this->has_discount), 'string', Rule::in(DiscountTypeEnum::cases())],
-            'discount_start_at' => ['nullable', Rule::excludeIf(fn() => !$this->has_discount), 'date'],
-            'discount_end_at' => ['nullable', Rule::excludeIf(fn() => !$this->has_discount), 'date', 'after_or_equal:discount_start_at'],
 
             'options' => ['filled', 'array', Rule::requiredIf(fn() => $this->checkRequiredOptions()), new ProductOptionsRule()],
             'options.*.option_id' => ['required', 'integer', Rule::exists(ProductOption::class, 'id')->where('is_active', true)->whereNull('deleted_at')],
