@@ -48,6 +48,7 @@ class ProductVariantsResource extends JsonResource
             'id' => $this->id,
             'uuid' => $this->uuid,
             'slug' => $this->slug,
+            'title' => $this->title,
             'oem_code' => $this->oem_code,
             'already_attached' => $this->whenLoaded(
                 'companyListings',
