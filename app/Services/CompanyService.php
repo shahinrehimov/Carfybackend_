@@ -7,8 +7,10 @@ use App\Models\Company;
 use App\Models\CompanyAdmin;
 use App\Repositories\CompanyAdminRepository;
 use App\Repositories\CompanyRepository;
+use App\Mail\RootAdminCredentialsMail;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 
 class CompanyService
@@ -145,8 +147,12 @@ class CompanyService
             passwordMustChange: true
         );
 
-        // TODO: Send email with credentials to root admin
-        // CompanyAdminService::instance()->sendRootAdminCredentialsNotification($company, $adminData['email'], $generatedPassword);
+        Mail::to($adminData['email'])->send(new RootAdminCredentialsMail(
+            company: $company,
+            username: $adminData['username'],
+            adminEmail: $adminData['email'],
+            password: $generatedPassword,
+        ));
 
         return $company;
     }
