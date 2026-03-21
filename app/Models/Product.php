@@ -16,6 +16,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
@@ -176,5 +177,10 @@ class Product extends Model implements TranslatableInterface, HasMedia
     public function variants(): HasMany
     {
         return $this->hasMany(ProductVariant::class);
+    }
+
+    public function companyListings(): HasManyThrough
+    {
+        return $this->hasManyThrough(CompanyProductVariant::class, ProductVariant::class);
     }
 }

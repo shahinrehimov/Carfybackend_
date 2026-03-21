@@ -80,8 +80,8 @@ class ProductRepository
                 } else if (AdminService::instance()->checkUser()) {
                     // for admins
                     $builder->withCount([
-                        'variants as pending_variants_count' => function (Builder $query) {
-                            $query->where('approval_status', ProductVariantApprovalStatusEnum::PENDING->value);
+                        'companyListings as pending_variants_count' => function (Builder $query) {
+                            $query->where('company_product_variant.approval_status', ProductVariantApprovalStatusEnum::PENDING->value);
                         }
                     ]);
 
@@ -101,7 +101,7 @@ class ProductRepository
                         'mainCategory.parent.translatable',
                     ])
                     ->withCount([
-                        'variants',
+                        'companyListings as variants_count',
                     ]);
             }, function ($builder) {
                 // load for a site
