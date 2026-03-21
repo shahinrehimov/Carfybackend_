@@ -49,6 +49,7 @@ class ProductVariantsResource extends JsonResource
             'uuid' => $this->uuid,
             'slug' => $this->slug,
             'oem_code' => $this->oem_code,
+            'already_attached' => $this->already_attached ?? false,
             'main_image' => $this->whenLoaded('media', function () {
                 return $this->main_image;
             }),
