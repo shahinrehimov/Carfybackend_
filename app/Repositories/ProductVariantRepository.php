@@ -1025,13 +1025,45 @@ class ProductVariantRepository
                 $builder->where('product_id', $validated['product_id']);
             })
             ->when($validated['search'] ?? null, function (Builder $builder) use ($validated) {
-                $builder->where(function (Builder $builder) use ($validated) {
-                    $builder->where('oem_code', 'ILIKE', '%' . $validated['search'] . '%');
-                    $builder->orWhereHas('product.translatable', function (Builder $query) use ($validated) {
-                        $query->where('column', 'title');
-                        $query->where('text', 'ILIKE', '%' . $validated['search'] . '%');
+                $words = preg_split('/\s+/', trim($validated['search']), -1, PREG_SPLIT_NO_EMPTY);
+                foreach ($words as $word) {
+                    $builder->where(function (Builder $b) use ($word) {
+                        // OEM code
+                        $b->where('oem_code', 'ILIKE', '%' . $word . '%');
+
+                        // Product title
+                        $b->orWhereHas('product.translatable', function (Builder $q) use ($word) {
+                            $q->where('column', 'title')
+                              ->where('text', 'ILIKE', '%' . $word . '%');
+                        });
+
+                        // Option item title (has_items=true, is_in_title=true)
+                        $b->orWhereHas('options', function (Builder $q) use ($word) {
+                            $q->whereHas('option', fn($q2) => $q2->where('is_in_title', true)->where('has_items', true))
+                              ->whereHas('item.translatable', function (Builder $q3) use ($word) {
+                                  $q3->where('column', 'title')
+                                     ->where('text', 'ILIKE', '%' . $word . '%');
+                              });
+                        });
+
+                        // Option translatable value (is_translatable=true, is_in_title=true)
+                        $b->orWhereHas('options', function (Builder $q) use ($word) {
+                            $q->whereHas('option', fn($q2) => $q2->where('is_in_title', true)->where('is_translatable', true))
+                              ->whereHas('translatable', function (Builder $q3) use ($word) {
+                                  $q3->where('column', 'translatable_value')
+                                     ->where('text', 'ILIKE', '%' . $word . '%');
+                              });
+                        });
+
+                        // Option raw value (not items, not translatable, is_in_title=true)
+                        $b->orWhereHas('options', function (Builder $q) use ($word) {
+                            $q->whereHas('option', fn($q2) => $q2->where('is_in_title', true)
+                                  ->where('has_items', false)
+                                  ->where('is_translatable', false))
+                              ->where('value', 'ILIKE', '%' . $word . '%');
+                        });
                     });
-                });
+                }
             })
             ->orderByDesc('id')
             ->paginate($validated['limit'] ?? 10);
