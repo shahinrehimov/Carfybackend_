@@ -970,10 +970,7 @@ class ProductVariantRepository
             );
         }
 
-        SellerSearchToken::query()
-            ->where('company_id', $user->company_id)
-            ->where('admin_id', $user->id)
-            ->delete();
+        $record->delete();
     }
 
     public function searchCatalog(array $validated): LengthAwarePaginator

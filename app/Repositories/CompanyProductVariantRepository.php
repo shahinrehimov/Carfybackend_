@@ -58,10 +58,7 @@ class CompanyProductVariantRepository
             );
         }
 
-        SellerSearchToken::query()
-            ->where('company_id', $user->company_id)
-            ->where('admin_id', $user->id)
-            ->delete();
+        $record->delete();
 
         return DB::transaction(static function () use ($productVariant, $request) {
             $validated = $request->validated();
