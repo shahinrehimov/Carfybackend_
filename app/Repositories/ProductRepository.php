@@ -6,6 +6,7 @@ use App\Enum\ProductVariantApprovalStatusEnum;
 use App\Models\Brand;
 use App\Models\Category;
 use App\Models\Product;
+use App\Models\ProductRevision;
 use App\Services\AdminService;
 use App\Services\CompanyAdminService;
 use App\Services\FileUpload;
@@ -85,6 +86,9 @@ class ProductRepository
                         },
                         'variantRevisions as pending_revisions_count' => function (Builder $query) {
                             $query->where('product_variant_revisions.status', 'pending');
+                        },
+                        'revisions as pending_product_revisions_count' => function (Builder $query) {
+                            $query->where('product_revisions.status', 'pending');
                         },
                     ]);
 
@@ -336,6 +340,12 @@ class ProductRepository
     {
         $this->checkCompanyForSellers($product);
 
+        // Sellers submit a revision — changes are applied only after admin approval
+        if (CompanyAdminService::instance()->checkUser()) {
+            $this->createRevision($product, $request);
+            return $product;
+        }
+
         $_this = $this;
 
         return DB::transaction(static function () use ($_this, $product, $request) {
@@ -364,6 +374,104 @@ class ProductRepository
 
             return $product;
         });
+    }
+
+    private function createRevision(Product $product, FormRequest $request): ProductRevision
+    {
+        $companyId = CompanyAdminService::instance()->getUser()->company_id;
+
+        return DB::transaction(function () use ($product, $request, $companyId) {
+            $validated = $request->validated();
+
+            // Delete existing pending revision for this product+company
+            ProductRevision::query()
+                ->where('product_id', $product->id)
+                ->where('company_id', $companyId)
+                ->where('status', 'pending')
+                ->get()
+                ->each(function (ProductRevision $r) {
+                    $r->clearMediaCollection('revision_main_image');
+                    $r->clearMediaCollection('revision_hover_image');
+                    $r->clearMediaCollection('revision_images');
+                    $r->delete();
+                });
+
+            $revision = ProductRevision::query()->create([
+                'product_id'  => $product->id,
+                'company_id'  => $companyId,
+                'status'      => 'pending',
+                'data'        => [
+                    'brand_id'         => $validated['brand_id'] ?? null,
+                    'main_category_id' => $validated['main_category_id'] ?? null,
+                    'categories'       => $validated['categories'] ?? [],
+                    'sets'             => $validated['sets'] ?? [],
+                    'translations'     => $validated['translations'] ?? [],
+                ],
+            ]);
+
+            FileUpload::upload($request, 'main_image', 'revision_main_image', $revision);
+            FileUpload::upload($request, 'hover_image', 'revision_hover_image', $revision);
+            FileUpload::multipleUpload($request, 'images', 'revision_images', $revision);
+
+            return $revision;
+        });
+    }
+
+    public function approveRevision(ProductRevision $revision): void
+    {
+        DB::transaction(function () use ($revision) {
+            $product = $revision->product;
+            $data = $revision->data;
+
+            $updateData = [];
+
+            if (!empty($data['brand_id'])) {
+                $updateData['brand_id'] = $data['brand_id'];
+            }
+
+            if (!empty($data['main_category_id'])) {
+                $updateData['main_category_id'] = $data['main_category_id'];
+            }
+
+            if (!empty($updateData)) {
+                $product->update($updateData);
+            }
+
+            if (!empty($data['translations'])) {
+                $product->updateWithLangs(['translations' => $data['translations']]);
+            }
+
+            if (!empty($data['categories'])) {
+                $this->syncCategories($product, $data['categories']);
+            }
+
+            if ($product->isSet() && !empty($data['sets'])) {
+                $productVariantRepo = new ProductVariantRepository();
+                $defaultProductVariant = $productVariantRepo->getDefaultVariantByProduct($product);
+                $productVariantRepo->syncSets($defaultProductVariant, $data['sets'], true);
+            }
+
+            // Move images from revision to product
+            foreach ($revision->getMedia('revision_main_image') as $media) {
+                $media->move($product, 'products_main');
+            }
+            foreach ($revision->getMedia('revision_hover_image') as $media) {
+                $media->move($product, 'products_hover');
+            }
+            foreach ($revision->getMedia('revision_images') as $media) {
+                $media->move($product, 'products_images');
+            }
+
+            $revision->update(['status' => 'approved']);
+        });
+    }
+
+    public function rejectRevision(ProductRevision $revision, ?string $message): void
+    {
+        $revision->update([
+            'status'            => 'rejected',
+            'rejection_message' => $message,
+        ]);
     }
 
     public function destroy(Product $product): void

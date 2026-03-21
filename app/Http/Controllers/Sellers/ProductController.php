@@ -12,6 +12,7 @@ use App\Http\Resources\Sellers\Products\ProductsListResource;
 use App\Http\Resources\Sellers\Products\ProductsResource;
 use App\Models\Product;
 use App\Repositories\ProductRepository;
+use App\Services\CompanyAdminService;
 use App\Services\LangService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
@@ -57,7 +58,16 @@ class ProductController extends Controller
 
     public function update(ProductUpdateRequest $request, Product $product): JsonResponse
     {
-        $product = $this->repo->update($product, $request);
+        $this->repo->update($product, $request);
+
+        if (CompanyAdminService::instance()->checkUser()) {
+            return response()->json(GeneralResource::make([
+                'message'          => LangService::instance()
+                    ->setDefault('Your changes have been submitted and are pending admin approval.')
+                    ->getLang('revision_pending_approval'),
+                'pending_revision' => true,
+            ]));
+        }
 
         $product = $this->repo->loadRelations($product);
 
@@ -66,6 +76,35 @@ class ProductController extends Controller
                 ->setDefault('Saved successfully!')
                 ->getLang('product_form_saved_successfully'),
             'data' => ProductsResource::make($product),
+        ]));
+    }
+
+    public function pendingRevision(Product $product): JsonResponse
+    {
+        $this->repo->checkCompanyForSellers($product);
+
+        $companyId = CompanyAdminService::instance()->getUser()->company_id;
+
+        $revision = $product->revisions()
+            ->where('company_id', $companyId)
+            ->where('status', 'pending')
+            ->latest()
+            ->first();
+
+        return response()->json(GeneralResource::make([
+            'data' => $revision ? [
+                'id'           => $revision->id,
+                'status'       => $revision->status,
+                'data'         => $revision->data,
+                'images'       => [
+                    'main_image'  => $revision->getFirstMediaUrl('revision_main_image') ?: null,
+                    'hover_image' => $revision->getFirstMediaUrl('revision_hover_image') ?: null,
+                    'images'      => $revision->getMedia('revision_images')
+                        ->map(fn($m) => ['id' => $m->id, 'url' => $m->getUrl()])
+                        ->values(),
+                ],
+                'created_date' => $revision->created_at?->toDateTimeString(),
+            ] : null,
         ]));
     }
 

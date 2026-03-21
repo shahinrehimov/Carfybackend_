@@ -70,6 +70,7 @@ Route::middleware(['general_access:sellers', RouteLogMiddleware::class])->prefix
                 Route::get('show/{product}', [ProductController::class, 'show']);
                 Route::post('add', [ProductController::class, 'store']);
                 Route::post('update/{product}', [ProductController::class, 'update']);
+                Route::get('{product}/pending-revision', [ProductController::class, 'pendingRevision']);
                 Route::delete('delete/{product}', [ProductController::class, 'destroy']);
                 Route::delete('delete-hover-image/{product}', [ProductController::class, 'deleteHoverImage']);
                 Route::delete('images/delete/{product}/{mediaId}', [ProductController::class, 'destroyImage']);

@@ -11,9 +11,11 @@ use App\Http\Resources\Sellers\Products\ProductResource;
 use App\Http\Resources\Sellers\Products\ProductsListResource;
 use App\Http\Resources\Sellers\Products\ProductsResource;
 use App\Models\Product;
+use App\Models\ProductRevision;
 use App\Repositories\ProductRepository;
 use App\Services\LangService;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 
 class ProductController extends Controller
@@ -111,5 +113,65 @@ class ProductController extends Controller
                 ->setDefault('Status changed successfully!')
                 ->getLang('admin_status_changed_successfully'),
         ]));
+    }
+
+    public function revisions(Product $product): JsonResponse
+    {
+        $revisions = $product->revisions()
+            ->with(['company', 'media'])
+            ->latest()
+            ->get()
+            ->map(fn(ProductRevision $r) => $this->formatRevision($r));
+
+        return response()->json(GeneralResource::make(['data' => $revisions]));
+    }
+
+    public function approveRevision(ProductRevision $revision): JsonResponse
+    {
+        $this->repo->approveRevision($revision);
+
+        return response()->json(GeneralResource::make([
+            'message' => LangService::instance()
+                ->setDefault('Revision approved successfully!')
+                ->getLang('revision_approved_successfully'),
+        ]));
+    }
+
+    public function rejectRevision(ProductRevision $revision, Request $request): JsonResponse
+    {
+        $this->repo->rejectRevision($revision, $request->input('message'));
+
+        return response()->json(GeneralResource::make([
+            'message' => LangService::instance()
+                ->setDefault('Revision rejected!')
+                ->getLang('revision_rejected_successfully'),
+        ]));
+    }
+
+    private function formatRevision(ProductRevision $revision): array
+    {
+        $product = $revision->product ?? $revision->load('product')->product;
+
+        return [
+            'id'               => $revision->id,
+            'status'           => $revision->status,
+            'rejection_message' => $revision->rejection_message,
+            'company'          => $revision->company
+                ? ['id' => $revision->company->id, 'title' => $revision->company->getLang('title')]
+                : null,
+            'data'             => $revision->data,
+            'current'          => [
+                'brand_id'         => $product->brand_id,
+                'main_category_id' => $product->main_category_id,
+            ],
+            'images'           => [
+                'main_image'  => $revision->getFirstMediaUrl('revision_main_image') ?: null,
+                'hover_image' => $revision->getFirstMediaUrl('revision_hover_image') ?: null,
+                'images'      => $revision->getMedia('revision_images')
+                    ->map(fn($m) => ['id' => $m->id, 'url' => $m->getUrl()])
+                    ->values(),
+            ],
+            'created_date'     => $revision->created_at?->toDateTimeString(),
+        ];
     }
 }

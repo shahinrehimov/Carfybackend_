@@ -188,4 +188,14 @@ class Product extends Model implements TranslatableInterface, HasMedia
     {
         return $this->hasManyThrough(ProductVariantRevision::class, ProductVariant::class);
     }
+
+    public function revisions(): HasMany
+    {
+        return $this->hasMany(ProductRevision::class);
+    }
+
+    public function pendingRevision(): HasMany
+    {
+        return $this->hasMany(ProductRevision::class)->where('status', 'pending');
+    }
 }
