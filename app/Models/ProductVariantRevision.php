@@ -6,12 +6,13 @@ use App\Traits\ActionBy;
 use App\Traits\ActionUser;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
 
 class ProductVariantRevision extends Model implements HasMedia
 {
-    use ActionBy, ActionUser, InteractsWithMedia;
+    use ActionBy, ActionUser, InteractsWithMedia, SoftDeletes;
 
     protected $fillable = [
         'product_variant_id',
