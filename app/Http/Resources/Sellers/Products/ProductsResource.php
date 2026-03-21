@@ -61,6 +61,7 @@ class ProductsResource extends JsonResource
             'variants_count' => $this->whenCounted('variants'),
             'pending_variants_count' => $this->whenCounted('pending_variants_count'),
             'pending_revisions_count' => $this->whenCounted('pending_revisions_count'),
+            'pending_product_revisions_count' => $this->whenCounted('pending_product_revisions_count'),
             'variants' => ProductVariantsResource::collection($this->whenLoaded('variants')),
             'is_active' => $this->isActive(),
             'created_user' => $this->whenLoaded('creatable', function () {
