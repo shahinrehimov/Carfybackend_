@@ -344,6 +344,11 @@ class CompanyProductVariantRepository
                 'media',
                 'creatable',
             ])
+            ->when($validated['product_id'] ?? null, function (Builder $builder) use ($validated) {
+                $builder->whereHas('productVariant', function (Builder $q) use ($validated) {
+                    $q->where('product_id', $validated['product_id']);
+                });
+            })
             ->when($validated['company_id'] ?? null, function (Builder $builder) use ($validated) {
                 $builder->where('company_id', $validated['company_id']);
             })

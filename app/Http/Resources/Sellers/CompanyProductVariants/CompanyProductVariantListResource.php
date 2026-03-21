@@ -76,6 +76,13 @@ class CompanyProductVariantListResource extends JsonResource
                     ];
                 });
             }),
+            'company' => $this->whenLoaded('company', function () {
+                return [
+                    'id'   => $this->company->id,
+                    'uuid' => $this->company->uuid,
+                    'name' => $this->company->name,
+                ];
+            }),
             'created_date' => $this->created_at?->toDateTimeString(),
         ];
     }
