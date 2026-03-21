@@ -183,4 +183,9 @@ class Product extends Model implements TranslatableInterface, HasMedia
     {
         return $this->hasManyThrough(CompanyProductVariant::class, ProductVariant::class);
     }
+
+    public function variantRevisions(): HasManyThrough
+    {
+        return $this->hasManyThrough(ProductVariantRevision::class, ProductVariant::class);
+    }
 }

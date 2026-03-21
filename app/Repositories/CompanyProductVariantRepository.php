@@ -333,6 +333,7 @@ class CompanyProductVariantRepository
             ->with([
                 'productVariant',
                 'productVariant.media',
+                'productVariant.pendingRevision',
                 'productVariant.product',
                 'productVariant.product.translatable',
                 'productVariant.brandModel',

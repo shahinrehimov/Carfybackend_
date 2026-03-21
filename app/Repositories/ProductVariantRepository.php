@@ -621,7 +621,11 @@ class ProductVariantRepository
 
         $productOptions = ProductOption::query()
             ->whereIn('id', data_get($options, '*.option_id', []))
-            ->with(['items' => fn($q) => $q->active()])
+            ->with([
+                'items' => function ($query) {
+                    $query->active()->with('translatable');
+                },
+            ])
             ->active()
             ->get();
 
@@ -640,18 +644,39 @@ class ProductVariantRepository
 
             if ($productOption->hasItems()) {
                 $data['product_option_item_id'] = (int)$option['value'];
-                $item = $productOption->items->firstWhere('id', $data['product_option_item_id']);
-                if ($item) {
-                    $productVariantSlugs[] = $item->translatable
-                        ->where('language_id', 1)
-                        ->first()?->text ?? $item->id;
+
+                $selectedItem = $productOption->items->firstWhere('id', $data['product_option_item_id']);
+                if (!$selectedItem) {
+                    continue;
                 }
+
+                $data['slug'] = $selectedItem->slug;
+
+                if ($productOption->isInTitle()) {
+                    $productVariantSlugs[] = $data['slug'];
+                }
+
+                ProductVariantProductOption::query()->create($data);
+            } elseif ($productOption->isTranslatable() && !empty($option['translations']) && is_array($option['translations'])) {
+                $data['translations'] = $option['translations'];
+                ProductVariantProductOption::createWithLangs($data, null, false, 'translatable_value');
             } else {
                 $data['value'] = $option['value'];
-                $productVariantSlugs[] = $option['value'];
-            }
+                $data['slug'] = ProductVariantProductOption::instanceSlug()
+                    ->setText($data['value'])
+                    ->make()
+                    ->getRealSlug();
 
-            ProductVariantProductOption::query()->create($data);
+                if ($productOption->isInTitle()) {
+                    $productVariantSlugs[] = $data['slug'];
+                }
+
+                ProductVariantProductOption::query()->create($data);
+            }
+        }
+
+        if (!empty($productVariantSlugs)) {
+            $this->saveSlug($productVariant, implode('-', $productVariantSlugs));
         }
     }
 

@@ -82,7 +82,10 @@ class ProductRepository
                     $builder->withCount([
                         'companyListings as pending_variants_count' => function (Builder $query) {
                             $query->where('company_product_variant.approval_status', ProductVariantApprovalStatusEnum::PENDING->value);
-                        }
+                        },
+                        'variantRevisions as pending_revisions_count' => function (Builder $query) {
+                            $query->where('product_variant_revisions.status', 'pending');
+                        },
                     ]);
 
                     if ($validated['company_id'] ?? null) {

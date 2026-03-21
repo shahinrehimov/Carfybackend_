@@ -60,6 +60,7 @@ class ProductsResource extends JsonResource
             'groups' => GroupsListResource::collection($this->whenLoaded('groups')),
             'variants_count' => $this->whenCounted('variants'),
             'pending_variants_count' => $this->whenCounted('pending_variants_count'),
+            'pending_revisions_count' => $this->whenCounted('pending_revisions_count'),
             'variants' => ProductVariantsResource::collection($this->whenLoaded('variants')),
             'is_active' => $this->isActive(),
             'created_user' => $this->whenLoaded('creatable', function () {

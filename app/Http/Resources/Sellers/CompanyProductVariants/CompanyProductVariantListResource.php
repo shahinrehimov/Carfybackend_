@@ -46,6 +46,9 @@ class CompanyProductVariantListResource extends JsonResource
                         ? BrandModelsListResource::make($variant->brandModel)
                         : null,
                     'year' => $variant->year,
+                    'has_pending_revision' => $variant->relationLoaded('pendingRevision')
+                        ? $variant->pendingRevision->isNotEmpty()
+                        : false,
                     'product' => $variant->relationLoaded('product')
                         ? ProductsResource::make($variant->product)
                         : null,
