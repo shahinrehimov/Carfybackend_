@@ -52,9 +52,9 @@ class ProductVariantUpdateRequest extends FormRequest
             'images' => ['filled', 'array', 'min:1'],
             'images.*' => ['required', File::image()->max(10 * 1024)],
 
-            'city_id' => ['required', 'integer', Rule::exists(City::class, 'id')->where('is_active', true)->whereNull('deleted_at')],
+            'city_id' => ['nullable', 'integer', Rule::exists(City::class, 'id')->where('is_active', true)->whereNull('deleted_at')],
 
-            'brand_model_id' => ['required', 'integer',
+            'brand_model_id' => ['nullable', 'integer',
                 Rule::exists(BrandModel::class, 'id')
                     ->where('is_active', true)
                     ->whereNull('deleted_at')
@@ -70,7 +70,7 @@ class ProductVariantUpdateRequest extends FormRequest
 
             'stock' => ['nullable', 'integer', 'min:0'],
             'price' => ['nullable', /*Rule::requiredIf(fn() => !$this->is_set),*/ Rule::excludeIf(fn() => $productVariant->isSet()), 'numeric', 'min:0'],
-            'has_discount' => ['required', 'boolean'],
+            'has_discount' => ['nullable', 'boolean'],
             'discount' => ['nullable', Rule::requiredIf(fn() => $this->has_discount), Rule::excludeIf(fn() => !$this->has_discount), 'numeric', 'min:0'],
             'discount_type' => ['nullable', Rule::requiredIf(fn() => $this->has_discount), Rule::excludeIf(fn() => !$this->has_discount), 'string', Rule::in(DiscountTypeEnum::cases())],
             'discount_start_at' => ['nullable', Rule::excludeIf(fn() => !$this->has_discount), 'date'],
