@@ -78,9 +78,9 @@ class CompanyProductVariantListResource extends JsonResource
             }),
             'company' => $this->whenLoaded('company', function () {
                 return [
-                    'id'   => $this->company->id,
-                    'uuid' => $this->company->uuid,
-                    'name' => $this->company->name,
+                    'id'    => $this->company->id,
+                    'uuid'  => $this->company->uuid,
+                    'title' => $this->company->getLang('title'),
                 ];
             }),
             'created_date' => $this->created_at?->toDateTimeString(),
