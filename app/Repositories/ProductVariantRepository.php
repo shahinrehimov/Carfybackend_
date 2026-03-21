@@ -1006,8 +1006,8 @@ class ProductVariantRepository
                 'brandModel.translatable',
             ])
             ->when($companyId, function (Builder $builder) use ($companyId) {
-                $builder->withExists([
-                    'companyListings as already_attached' => function (Builder $q) use ($companyId) {
+                $builder->with([
+                    'companyListings' => function ($q) use ($companyId) {
                         $q->where('company_id', $companyId);
                     },
                 ]);

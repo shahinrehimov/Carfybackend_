@@ -49,7 +49,29 @@ class ProductVariantsResource extends JsonResource
             'uuid' => $this->uuid,
             'slug' => $this->slug,
             'oem_code' => $this->oem_code,
-            'already_attached' => $this->already_attached ?? false,
+            'already_attached' => $this->whenLoaded(
+                'companyListings',
+                fn() => $this->companyListings->isNotEmpty(),
+                $this->already_attached ?? false
+            ),
+            'seller_listing' => $this->whenLoaded('companyListings', function () {
+                $cpv = $this->companyListings->first();
+                if (!$cpv) return null;
+                return [
+                    'id'               => $cpv->id,
+                    'uuid'             => $cpv->uuid,
+                    'price'            => $cpv->price,
+                    'price_final'      => $cpv->price_final,
+                    'stock'            => $cpv->stock,
+                    'discount_type'    => $cpv->discount_type,
+                    'discount'         => $cpv->discount,
+                    'discount_start_at'=> $cpv->discount_start_at?->toDateTimeString(),
+                    'discount_end_at'  => $cpv->discount_end_at?->toDateTimeString(),
+                    'city_id'          => $cpv->city_id,
+                    'is_active'        => $cpv->is_active,
+                    'approval_status'  => $cpv->approval_status,
+                ];
+            }),
             'main_image' => $this->whenLoaded('media', function () {
                 return $this->main_image;
             }),
