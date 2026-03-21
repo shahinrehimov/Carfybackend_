@@ -41,6 +41,7 @@ class CompanyProductVariantListResource extends JsonResource
                     'main_image' => $variant->relationLoaded('media') ? $variant->main_image : null,
                     'hover_image' => $variant->relationLoaded('media') ? $variant->hover_image : null,
                     'is_set' => $variant->isSet(),
+                    'is_creator' => $variant->company_id === $this->company_id,
                     'brand_model' => $variant->relationLoaded('brandModel')
                         ? BrandModelsListResource::make($variant->brandModel)
                         : null,

@@ -6,6 +6,7 @@ use App\Http\Resources\Admin\Brands\BrandsListResource;
 use App\Http\Resources\Admin\Categories\CategoriesListResource;
 use App\Http\Resources\Admin\Groups\GroupsListResource;
 use App\Http\Resources\Sellers\ProductVariants\ProductVariantsResource;
+use App\Services\CompanyAdminService;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -49,6 +50,9 @@ class ProductsResource extends JsonResource
                 return $this->hover_image;
             }),
             'is_set' => $this->isSet(),
+            'is_creator' => CompanyAdminService::instance()->checkUser()
+                ? $this->company_id === CompanyAdminService::instance()->getUser()->company_id
+                : null,
             'sets_count' => $this->whenCounted('sets'),
             'brand' => BrandsListResource::make($this->whenLoaded('brand')),
             'main_category' => CategoriesListResource::make($this->whenLoaded('mainCategory')),

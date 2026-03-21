@@ -69,8 +69,14 @@ class ProductRepository
             ->when($isAdmin, function (Builder $builder) use ($validated) {
                 // load for a control panel
                 if (CompanyAdminService::instance()->checkUser()) {
-                    // for sellers
-                    $builder->where('company_id', CompanyAdminService::instance()->getUser()->company_id);
+                    // for sellers — own products + products where seller has attached CPV
+                    $companyId = CompanyAdminService::instance()->getUser()->company_id;
+                    $builder->where(function (Builder $q) use ($companyId) {
+                        $q->where('company_id', $companyId)
+                            ->orWhereHas('variants.companyListings', function (Builder $q2) use ($companyId) {
+                                $q2->where('company_id', $companyId);
+                            });
+                    });
                 } else if (AdminService::instance()->checkUser()) {
                     // for admins
                     $builder->withCount([
