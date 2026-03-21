@@ -9,9 +9,11 @@ use App\Http\Resources\Sellers\ProductVariants\ProductVariantResource;
 use App\Http\Resources\Sellers\ProductVariants\ProductVariantsListResource;
 use App\Http\Resources\Sellers\ProductVariants\ProductVariantsResource;
 use App\Models\ProductVariant;
+use App\Models\ProductVariantRevision;
 use App\Repositories\ProductVariantRepository;
 use App\Services\LangService;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 
 class ProductVariantController extends Controller
@@ -82,5 +84,67 @@ class ProductVariantController extends Controller
                 ->setDefault('Status changed successfully!')
                 ->getLang('admin_status_changed_successfully'),
         ]));
+    }
+
+    public function revisions(ProductVariant $productVariant): JsonResponse
+    {
+        $revisions = $productVariant->revisions()
+            ->with(['productVariant', 'productVariant.options', 'productVariant.options.option', 'productVariant.brandModel', 'media', 'company'])
+            ->latest()
+            ->get()
+            ->map(fn(ProductVariantRevision $r) => $this->formatRevision($r));
+
+        return response()->json(GeneralResource::make(['data' => $revisions]));
+    }
+
+    public function approveRevision(ProductVariantRevision $revision): JsonResponse
+    {
+        $this->repo->approveRevision($revision);
+
+        return response()->json(GeneralResource::make([
+            'message' => LangService::instance()
+                ->setDefault('Revision approved successfully!')
+                ->getLang('revision_approved_successfully'),
+        ]));
+    }
+
+    public function rejectRevision(ProductVariantRevision $revision, Request $request): JsonResponse
+    {
+        $this->repo->rejectRevision($revision, $request->input('message'));
+
+        return response()->json(GeneralResource::make([
+            'message' => LangService::instance()
+                ->setDefault('Revision rejected!')
+                ->getLang('revision_rejected_successfully'),
+        ]));
+    }
+
+    private function formatRevision(ProductVariantRevision $revision): array
+    {
+        $pv = $revision->productVariant;
+
+        return [
+            'id'                 => $revision->id,
+            'status'             => $revision->status,
+            'rejection_message'  => $revision->rejection_message,
+            'company'            => $revision->company ? ['id' => $revision->company->id, 'title' => $revision->company->getLang('title')] : null,
+            'data'               => $revision->data,
+            'current'            => [
+                'oem_code'       => $pv->oem_code,
+                'brand_model_id' => $pv->brand_model_id,
+                'brand_model'    => $pv->brandModel ? ['id' => $pv->brandModel->id, 'title' => $pv->brandModel->title] : null,
+                'year'           => $pv->year,
+                'options'        => $pv->options->map(fn($o) => [
+                    'option_id' => $o->product_option_id,
+                    'value'     => $o->product_option_item_id ?? $o->value,
+                ]),
+            ],
+            'images'             => [
+                'main_image'  => $revision->getFirstMediaUrl('revision_main_image') ?: null,
+                'hover_image' => $revision->getFirstMediaUrl('revision_hover_image') ?: null,
+                'images'      => $revision->getMedia('revision_images')->map(fn($m) => ['id' => $m->id, 'url' => $m->getUrl()])->values(),
+            ],
+            'created_date'       => $revision->created_at?->toDateTimeString(),
+        ];
     }
 }

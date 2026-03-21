@@ -81,6 +81,7 @@ Route::middleware(['general_access:sellers', RouteLogMiddleware::class])->prefix
                 Route::get('search-catalog', [ProductVariantController::class, 'searchCatalog']);
                 Route::post('add/{product}', [ProductVariantController::class, 'store']);
                 Route::post('update/{productVariant}', [ProductVariantController::class, 'update']);
+                Route::get('{productVariant}/pending-revision', [ProductVariantController::class, 'pendingRevision']);
                 Route::delete('delete/{productVariant}', [ProductVariantController::class, 'destroy']);
                 Route::delete('delete-hover-image/{productVariant}', [ProductVariantController::class, 'deleteHoverImage']);
                 Route::delete('images/delete/{productVariant}/{mediaId}', [ProductVariantController::class, 'destroyImage']);

@@ -264,4 +264,14 @@ class ProductVariant extends Model implements HasMedia
             ->withPivot(['uuid', 'stock', 'price', 'discount_type', 'discount', 'discount_start_at', 'discount_end_at', 'city_id', 'is_active', 'approval_status', 'approval_status_message'])
             ->withTimestamps();
     }
+
+    public function revisions(): HasMany
+    {
+        return $this->hasMany(ProductVariantRevision::class);
+    }
+
+    public function pendingRevision(): HasMany
+    {
+        return $this->hasMany(ProductVariantRevision::class)->where('status', 'pending');
+    }
 }

@@ -409,6 +409,9 @@ Route::middleware(['general_access:admin', RouteLogMiddleware::class])->prefix('
             Route::delete('delete-hover-image/{productVariant}', [ProductVariantController::class, 'deleteHoverImage']);
             Route::delete('images/delete/{productVariant}/{mediaId}', [ProductVariantController::class, 'destroyImage']);
             Route::post('change-active-status/{productVariant}', [ProductVariantController::class, 'changeActiveStatus']);
+            Route::get('{productVariant}/revisions', [ProductVariantController::class, 'revisions']);
+            Route::post('revisions/{revision}/approve', [ProductVariantController::class, 'approveRevision']);
+            Route::post('revisions/{revision}/reject', [ProductVariantController::class, 'rejectRevision']);
         });
     });
 });

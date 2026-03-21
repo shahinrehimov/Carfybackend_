@@ -11,6 +11,7 @@ use App\Models\Product;
 use App\Models\ProductOption;
 use App\Models\ProductVariant;
 use App\Models\CompanyProductVariant;
+use App\Models\ProductVariantRevision;
 use App\Models\SellerSearchToken;
 use App\Models\Wishlist;
 use App\Models\ProductVariantProductOption;
@@ -490,6 +491,12 @@ class ProductVariantRepository
     {
         $this->checkCompanyOwnership($productVariant);
 
+        // Sellers submit a revision — changes are applied only after admin approval
+        if (CompanyAdminService::instance()->checkUser()) {
+            $this->createRevision($productVariant, $request, $withoutImages);
+            return $productVariant;
+        }
+
         $_this = $this;
 
         return DB::transaction(static function () use ($_this, $productVariant, $request, $withoutImages) {
@@ -500,17 +507,6 @@ class ProductVariantRepository
 
             $options = $validated['options'] ?? [];
             unset($validated['options']);
-
-            // Strip seller-specific fields — these belong to CompanyProductVariant, not PV
-            unset(
-                $validated['stock'],
-                $validated['price'],
-                $validated['discount'],
-                $validated['discount_type'],
-                $validated['discount_start_at'],
-                $validated['discount_end_at'],
-                $validated['city_id']
-            );
 
             $productVariant->update($validated);
 
@@ -526,6 +522,137 @@ class ProductVariantRepository
 
             return $productVariant;
         });
+    }
+
+    private function createRevision(ProductVariant $productVariant, FormRequest $request, bool $withoutImages = false): ProductVariantRevision
+    {
+        $companyId = CompanyAdminService::instance()->getUser()->company_id;
+
+        return DB::transaction(function () use ($productVariant, $request, $withoutImages, $companyId) {
+            $validated = $request->validated();
+
+            // Delete existing pending revision for this variant+company
+            ProductVariantRevision::query()
+                ->where('product_variant_id', $productVariant->id)
+                ->where('company_id', $companyId)
+                ->where('status', 'pending')
+                ->get()
+                ->each(function (ProductVariantRevision $r) {
+                    $r->clearMediaCollection('revision_main_image');
+                    $r->clearMediaCollection('revision_hover_image');
+                    $r->clearMediaCollection('revision_images');
+                    $r->delete();
+                });
+
+            $revision = ProductVariantRevision::query()->create([
+                'product_variant_id' => $productVariant->id,
+                'company_id'         => $companyId,
+                'status'             => 'pending',
+                'data'               => [
+                    'oem_code'       => $validated['oem_code'] ?? null,
+                    'brand_model_id' => $validated['brand_model_id'] ?? null,
+                    'year'           => $validated['year'] ?? null,
+                    'options'        => $validated['options'] ?? [],
+                ],
+            ]);
+
+            if (!$withoutImages) {
+                FileUpload::upload($request, 'main_image', 'revision_main_image', $revision);
+                FileUpload::upload($request, 'hover_image', 'revision_hover_image', $revision);
+                FileUpload::multipleUpload($request, 'images', 'revision_images', $revision);
+            }
+
+            return $revision;
+        });
+    }
+
+    public function approveRevision(ProductVariantRevision $revision): void
+    {
+        DB::transaction(function () use ($revision) {
+            $productVariant = $revision->productVariant;
+            $data = $revision->data;
+
+            // Apply scalar fields
+            $productVariant->update([
+                'oem_code'       => $data['oem_code'] ?? $productVariant->oem_code,
+                'brand_model_id' => $data['brand_model_id'] ?? $productVariant->brand_model_id,
+                'year'           => $data['year'] ?? $productVariant->year,
+            ]);
+
+            // Apply options
+            if (!empty($data['options'])) {
+                $this->setOptionsFromArray($productVariant, $data['options']);
+            }
+
+            // Move images from revision to product variant
+            foreach ($revision->getMedia('revision_main_image') as $media) {
+                $media->move($productVariant, 'product_variants_main');
+            }
+            foreach ($revision->getMedia('revision_hover_image') as $media) {
+                $media->move($productVariant, 'product_variants_hover');
+            }
+            foreach ($revision->getMedia('revision_images') as $media) {
+                $media->move($productVariant, 'product_variants_images');
+            }
+
+            $revision->update(['status' => 'approved']);
+        });
+    }
+
+    public function rejectRevision(ProductVariantRevision $revision, ?string $message): void
+    {
+        $revision->update([
+            'status'             => 'rejected',
+            'rejection_message'  => $message,
+        ]);
+    }
+
+    private function setOptionsFromArray(ProductVariant $productVariant, array $options): void
+    {
+        if (empty($options)) {
+            return;
+        }
+
+        $productVariant->options()
+            ->update([
+                'is_deleted' => DB::raw("CONCAT('deleted_', id)"),
+                'deleted_at' => Carbon::now(),
+            ]);
+
+        $productOptions = ProductOption::query()
+            ->whereIn('id', data_get($options, '*.option_id', []))
+            ->with(['items' => fn($q) => $q->active()])
+            ->active()
+            ->get();
+
+        $productVariantSlugs = [];
+
+        foreach ($options as $option) {
+            $productOption = $productOptions->firstWhere('id', $option['option_id']);
+            if (!$productOption) {
+                continue;
+            }
+
+            $data = [
+                'product_variant_id' => $productVariant->id,
+                'product_option_id'  => $option['option_id'],
+            ];
+
+            if ($productOption->hasItems()) {
+                $data['product_option_item_id'] = (int)$option['value'];
+                $item = $productOption->items->firstWhere('id', $data['product_option_item_id']);
+                if ($item) {
+                    $productVariantSlugs[] = $item->translatable
+                        ->where('language_id', 1)
+                        ->first()?->text ?? $item->id;
+                }
+            } else {
+                $data['value'] = $option['value'];
+                $productVariantSlugs[] = $option['value'];
+            }
+
+            ProductVariantProductOption::query()->create($data);
+        }
     }
 
     public function syncSets(ProductVariant $productVariant, array $sets, bool $detach = false): void
