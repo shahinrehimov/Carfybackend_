@@ -48,6 +48,7 @@ class CompanyProductVariantRepository
             ->where('uuid', $token)
             ->where('company_id', $user->company_id)
             ->where('admin_id', $user->id)
+            ->where('created_at', '>=', now()->subMinutes(60))
             ->first();
 
         if (!$record) {
