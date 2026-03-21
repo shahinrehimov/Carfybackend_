@@ -82,9 +82,21 @@ class ProductVariantsResource extends JsonResource
             'is_set' => $this->isSet(),
             'sets_count' => $this->whenCounted('sets'),
             'groups' => GroupsListResource::collection($this->whenLoaded('groups')),
-            'stock' => $this->stock,
-            'price' => $this->price,
-            'price_final' => $this->price_final,
+            'stock' => $this->whenLoaded(
+                'companyListings',
+                fn() => $this->companyListings->first()?->stock,
+                $this->stock
+            ),
+            'price' => $this->whenLoaded(
+                'companyListings',
+                fn() => $this->companyListings->first()?->price,
+                $this->price
+            ),
+            'price_final' => $this->whenLoaded(
+                'companyListings',
+                fn() => $this->companyListings->first()?->price_final,
+                $this->price_final
+            ),
             'discount_type' => $this->discount_type,
             'discount_type_title' => $this->discount_type
                 ? LangService::instance()
