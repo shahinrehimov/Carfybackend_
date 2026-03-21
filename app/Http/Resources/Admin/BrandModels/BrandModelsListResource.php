@@ -16,6 +16,7 @@ class BrandModelsListResource extends JsonResource
         return [
             'id' => $this->id,
             'title' => $this->getLang('title'),
+            'brand_id' => $this->brand_id,
         ];
     }
 }
