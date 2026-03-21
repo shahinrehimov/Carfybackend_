@@ -942,11 +942,6 @@ class ProductVariantRepository
     {
         $user = CompanyAdminService::instance()->getUser();
 
-        SellerSearchToken::query()
-            ->where('company_id', $user->company_id)
-            ->where('admin_id', $user->id)
-            ->delete();
-
         $token = SellerSearchToken::query()->create([
             'uuid'       => (string) Str::uuid(),
             'company_id' => $user->company_id,
