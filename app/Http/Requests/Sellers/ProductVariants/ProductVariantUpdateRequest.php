@@ -58,7 +58,6 @@ class ProductVariantUpdateRequest extends FormRequest
                 Rule::exists(BrandModel::class, 'id')
                     ->where('is_active', true)
                     ->whereNull('deleted_at')
-                    ->where('brand_id', $productVariant->product?->brand_id)
             ],
 
             'oem_code' => ['nullable', 'string', 'max:100'],

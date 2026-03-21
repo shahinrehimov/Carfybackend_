@@ -55,7 +55,6 @@ class ProductVariantStoreRequest extends FormRequest
                 Rule::exists(BrandModel::class, 'id')
                     ->where('is_active', true)
                     ->whereNull('deleted_at')
-                    ->where('brand_id', $this->route('product')?->brand_id)
             ],
 
             'oem_code' => ['nullable', 'string', 'max:100'],
