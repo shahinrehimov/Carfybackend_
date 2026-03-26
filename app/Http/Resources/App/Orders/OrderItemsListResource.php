@@ -32,12 +32,15 @@ class OrderItemsListResource extends JsonResource
             'seller' => $this->whenLoaded('companyProductVariant', function () {
                 $cpv = $this->companyProductVariant;
                 return [
-                    'id' => $cpv->id,
-                    'uuid' => $cpv->uuid,
-                    'city' => $cpv->relationLoaded('city') && $cpv->city ? [
-                        'id' => $cpv->city->id,
+                    'uuid'         => $cpv->uuid,
+                    'seller_label' => $cpv->company?->getSellerLabel(),
+                    'city'         => $cpv->relationLoaded('city') && $cpv->city ? [
+                        'id'    => $cpv->city->id,
                         'title' => $cpv->city->getLang('title'),
                     ] : null,
+                    'images'       => $cpv->relationLoaded('media')
+                        ? $cpv->getMedia('company_product_variant_images')->map(fn($m) => ['url' => $m->getUrl()])
+                        : [],
                 ];
             }),
         ];

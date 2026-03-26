@@ -44,6 +44,8 @@ class ProductSearchRequest extends FormRequest
             'statuses.*' => ['nullable', 'string', Rule::in(ProductSearchStatusEnum::cases())],
             'min_price' => ['nullable', 'numeric', 'min:0'],
             'max_price' => ['nullable', 'numeric'],
+            'city_id' => ['nullable', 'integer'],
+            'seller_store_code' => ['nullable', 'string', 'size:5'],
         ];
     }
 }

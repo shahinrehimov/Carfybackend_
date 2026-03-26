@@ -102,7 +102,7 @@ class WishlistService
         }
 
         $cpvs = CompanyProductVariant::query()
-            ->with(['city', 'city.translatable', 'media'])
+            ->with(['city', 'city.translatable', 'media', 'company'])
             ->whereIn('id', $cpvIds)
             ->get()
             ->keyBy('id');

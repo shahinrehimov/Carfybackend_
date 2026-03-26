@@ -41,6 +41,15 @@ class ProductVariantRepository
 
     public function load(array $validated, bool $isAdmin = false): LengthAwarePaginator
     {
+        if ($isAdmin) {
+            return $this->loadForAdmin($validated);
+        }
+
+        return $this->loadForSite($validated);
+    }
+
+    private function loadForAdmin(array $validated): LengthAwarePaginator
+    {
         $brands = $validated['brands'] ?? [];
         $brandsIds = [];
 
@@ -79,7 +88,6 @@ class ProductVariantRepository
         if ($validated['set_id'] ?? null) {
             $set = ProductVariant::query()
                 ->when(CompanyAdminService::instance()->checkUser(), function (Builder $query) {
-                    // for sellers — filter by companyListings
                     $query->whereHas('companyListings', function (Builder $q) {
                         $q->where('company_id', CompanyAdminService::instance()->getUser()->company_id);
                     });
@@ -94,168 +102,205 @@ class ProductVariantRepository
         }
 
         $priceCalculation = ProductVariant::getPriceCalculationQuery();
+        $currentLangId    = LangService::instance()->getCurrentLangId();
+        $relations        = ProductService::instance()->getVariantRelationsForSite('', true);
 
-        $currentLangId = LangService::instance()->getCurrentLangId();
-
-        $relations = ProductService::instance()->getVariantRelationsForSite('', true);
-
-        $result = $query
+        return $query
             ->when(count($relations['with']) > 0, fn($q) => $q->with($relations['with']))
             ->when(count($relations['exists']) > 0, fn($q) => $q->withExists($relations['exists']))
             ->when(count($relations['counts']) > 0, fn($q) => $q->withCount($relations['counts']))
-            ->when($isAdmin, function ($builder) use ($validated) {
-                // load for a control panel
-                if (CompanyAdminService::instance()->checkUser()) {
-                    // for sellers — filter by companyListings
-                    $builder->whereHas('companyListings', function (Builder $q) {
-                        $q->where('company_id', CompanyAdminService::instance()->getUser()->company_id);
-                    });
-                } else if (AdminService::instance()->checkUser()) {
-                    // for admins
-                    if ($validated['company_id'] ?? null) {
-                        $builder->where('company_id', $validated['company_id']);
-                    }
-                }
-
-                $builder
-                    ->with([
-                        'creatable',
-                        'groups',
-                        'groups.translatable',
-                        'city',
-                        'city.translatable',
-                        'brandModels',
-                        'brandModels.translatable',
-                        'product.creatable',
-                        'product.categories',
-                        'product.categories.translatable',
-                        'product.mainCategory.translatable',
-                        'product.mainCategory.parent.translatable',
-                    ])
-                    ->withCount([
-                        'sets',
-                    ]);
-            }, function ($builder) {
-                // load for a site
-                $builder->active();
-                $builder->whereHas('product', function ($query) {
-                    $query->active();
+            ->when(CompanyAdminService::instance()->checkUser(), function (Builder $builder) {
+                $builder->whereHas('companyListings', function (Builder $q) {
+                    $q->where('company_id', CompanyAdminService::instance()->getUser()->company_id);
                 });
-                $builder->withCount([
-                    'companyListings' => function (Builder $q) {
-                        $q->where('is_active', true)
-                            ->where('approval_status', ProductVariantApprovalStatusEnum::APPROVED->value);
-                    },
-                ]);
+            })
+            ->when(AdminService::instance()->checkUser() && ($validated['company_id'] ?? null), function (Builder $builder) use ($validated) {
+                $builder->where('company_id', $validated['company_id']);
             })
             ->with([
-                'sets' => function ($query) {
-                    $query->active();
-                }
+                'creatable',
+                'groups',
+                'groups.translatable',
+                'city',
+                'city.translatable',
+                'brandModels',
+                'brandModels.translatable',
+                'product.creatable',
+                'product.categories',
+                'product.categories.translatable',
+                'product.mainCategory.translatable',
+                'product.mainCategory.parent.translatable',
+                'sets' => fn($q) => $q->active(),
             ])
-            ->when($validated['product_id'] ?? null, function (Builder $builder) use ($validated) {
-                $builder->where('product_id', $validated['product_id']);
+            ->withCount(['sets'])
+            ->when($validated['product_id'] ?? null, fn(Builder $b) => $b->where('product_id', $validated['product_id']))
+            ->when($validated['is_set'] ?? null, function (Builder $b) use ($validated) {
+                if ($validated['is_set'] === 'yes') $b->isSet();
+                elseif ($validated['is_set'] === 'no') $b->isNotSet();
             })
-            ->when($validated['is_set'] ?? null, function ($builder) use ($validated) {
-                if ($validated['is_set'] === 'yes') {
-                    $builder->isSet();
-                } elseif ($validated['is_set'] === 'no') {
-                    $builder->isNotSet();
-                }
-            })
-            ->when($validated['oem_code'] ?? null, function (Builder $builder) use ($validated) {
-                $builder->where('oem_code', $validated['oem_code']);
-            })
-            ->when(count($brandsIds) > 0, function (Builder $builder) use ($brandsIds) {
-                $builder->whereHas('product', function (Builder $query) use ($brandsIds) {
-                    $query->whereIn('products.brand_id', $brandsIds);
+            ->when($validated['oem_code'] ?? null, fn(Builder $b) => $b->where('oem_code', $validated['oem_code']))
+            ->when(count($brandsIds) > 0, fn(Builder $b) => $b->whereHas('product', fn(Builder $q) => $q->whereIn('products.brand_id', $brandsIds)))
+            ->when(count($categoriesIds) > 0, fn(Builder $b) => $b->whereHas('product.categoriesRel', fn(Builder $q) => $q->whereIn('product_categories.category_id', $categoriesIds)))
+            ->when(count($subCategoriesIds) > 0, fn(Builder $b) => $b->whereHas('product.categoriesRel', fn(Builder $q) => $q->whereIn('product_categories.category_id', $subCategoriesIds)))
+            ->when($validated['group_id'] ?? null, fn(Builder $b) => $b->whereHas('groupsRel', fn(Builder $q) => $q->where('group_products.group_id', $validated['group_id'])))
+            ->when($validated['search'] ?? null, function (Builder $b) use ($validated) {
+                $b->whereHas('product.translatable', function (Builder $q) use ($validated) {
+                    $q->where(fn($i) => $i->where('column', 'title')->where('text', 'ILIKE', '%' . $validated['search'] . '%'))
+                      ->orWhere(fn($i) => $i->where('column', 'description_short')->where('text', 'ILIKE', '%' . $validated['search'] . '%'))
+                      ->orWhere(fn($i) => $i->where('column', 'description')->where('text', 'ILIKE', '%' . $validated['search'] . '%'));
                 });
             })
-            ->when(count($categoriesIds) > 0, function (Builder $builder) use ($categoriesIds) {
-                $builder->whereHas('product.categoriesRel', function (Builder $query) use ($categoriesIds) {
-                    $query->whereIn('product_categories.category_id', $categoriesIds);
-                });
+            ->when(isset($validated['min_price']) || isset($validated['max_price']), function (Builder $b) use ($validated, $priceCalculation) {
+                if (isset($validated['min_price'])) $b->whereRaw("({$priceCalculation}) >= ?", [$validated['min_price']]);
+                if (isset($validated['max_price'])) $b->whereRaw("({$priceCalculation}) <= ?", [$validated['max_price']]);
             })
-            ->when(count($subCategoriesIds) > 0, function (Builder $builder) use ($subCategoriesIds) {
-                $builder->whereHas('product.categoriesRel', function (Builder $query) use ($subCategoriesIds) {
-                    $query->whereIn('product_categories.category_id', $subCategoriesIds);
-                });
-            })
-            ->when($validated['group_id'] ?? null, function (Builder $builder) use ($validated) {
-                $builder->whereHas('groupsRel', function (Builder $query) use ($validated) {
-                    $query->where('group_products.group_id', $validated['group_id']);
-                });
-            })
-            ->when($validated['search'] ?? null, function (Builder $builder) use ($validated) {
-                $builder->where(function (Builder $builder) use ($validated) {
-                    $builder->whereHas('product.translatable', function (Builder $query) use ($validated) {
-                        $query->where(function (Builder $q) use ($validated) {
-                            $q->where('column', 'title');
-                            $q->where('text', 'ILIKE', '%' . $validated['search'] . '%');
-                        });
-                        $query->orWhere(function (Builder $q) use ($validated) {
-                            $q->where('column', 'description_short');
-                            $q->where('text', 'ILIKE', '%' . $validated['search'] . '%');
-                        });
-                        $query->orWhere(function (Builder $q) use ($validated) {
-                            $q->where('column', 'description');
-                            $q->where('text', 'ILIKE', '%' . $validated['search'] . '%');
-                        });
-                    });
-                });
-            })
-            ->when(
-                isset($validated['min_price']) || isset($validated['max_price']),
-                function (Builder $builder) use ($validated, $priceCalculation) {
-                    if (isset($validated['min_price'])) {
-                        $builder->whereRaw("({$priceCalculation}) >= ?", [$validated['min_price']]);
-                    }
-
-                    if (isset($validated['max_price'])) {
-                        $builder->whereRaw("({$priceCalculation}) <= ?", [$validated['max_price']]);
-                    }
-                }
-            )
             ->when(
                 isset($validated['sort']) && isset($validated['sort_type']),
-                function (Builder $builder) use ($validated, $priceCalculation, $currentLangId) {
+                function (Builder $b) use ($validated, $priceCalculation, $currentLangId) {
                     $sortType = strtolower($validated['sort_type'] ?? 'desc');
-
                     switch ($validated['sort']) {
                         case 'title':
-                            $builder->leftJoin('model_translations as mt_sort', function ($join) use ($currentLangId) {
+                            $b->leftJoin('model_translations as mt_sort', function ($join) use ($currentLangId) {
                                 $join->on('mt_sort.translatable_id', '=', 'products.id')
                                     ->where('mt_sort.translatable_type', '=', Product::class)
                                     ->where('mt_sort.column', '=', 'title')
                                     ->where('mt_sort.language_id', '=', $currentLangId)
                                     ->whereNull('mt_sort.deleted_at');
-                            })
-                                ->orderBy('mt_sort.text', $sortType);
+                            })->orderBy('mt_sort.text', $sortType);
                             break;
-
                         case 'price':
-                            $builder->orderByRaw("{$priceCalculation} {$sortType}");
+                            $b->orderByRaw("{$priceCalculation} {$sortType}");
                             break;
-
                         case 'date':
-                            $builder->orderBy('product_variants.id', $sortType);
+                            $b->orderBy('product_variants.id', $sortType);
                             break;
-
                         default:
-                            $builder->orderByDesc('product_variants.id');
-                            break;
+                            $b->orderByDesc('product_variants.id');
                     }
                 },
-                function (Builder $builder) {
-                    $builder->orderByDesc('product_variants.id');
-                }
+                fn(Builder $b) => $b->orderByDesc('product_variants.id')
             )
-            //->select('products.*')
+            ->paginate($validated['limit'] ?? 10);
+    }
+
+    private function loadForSite(array $validated): LengthAwarePaginator
+    {
+        $brands = $validated['brands'] ?? [];
+        $brandsIds = [];
+
+        if (count($brands)) {
+            $brandsIds = Brand::query()
+                ->whereIn('slug', $brands)
+                ->active()
+                ->pluck('id')
+                ->toArray();
+        }
+
+        $categories = $validated['categories'] ?? [];
+        $categoriesIds = [];
+
+        if (count($categories)) {
+            $categoriesIds = Category::query()
+                ->whereIn('slug', $categories)
+                ->active()
+                ->onlyParents()
+                ->pluck('id')
+                ->toArray();
+        }
+
+        $subCategories = $validated['sub_categories'] ?? [];
+        $subCategoriesIds = [];
+
+        if (count($subCategories)) {
+            $subCategoriesIds = Category::query()
+                ->whereIn('slug', $subCategories)
+                ->active()
+                ->onlySubs()
+                ->pluck('id')
+                ->toArray();
+        }
+
+        $currentLangId = LangService::instance()->getCurrentLangId();
+
+        $result = CompanyProductVariant::query()
+            ->where('company_product_variant.is_active', true)
+            ->where('company_product_variant.approval_status', ProductVariantApprovalStatusEnum::APPROVED->value)
+            ->whereHas('productVariant', fn(Builder $q) => $q->active()->whereHas('product', fn(Builder $pq) => $pq->active()))
+            ->with([
+                'media',
+                'city',
+                'city.translatable',
+                'company',
+                'productVariant',
+                'productVariant.media',
+                'productVariant.product',
+                'productVariant.product.translatable',
+                'productVariant.product.media',
+                'productVariant.product.mainCategory',
+                'productVariant.product.mainCategory.translatable',
+                'productVariant.product.mainCategory.parent',
+                'productVariant.product.mainCategory.parent.translatable',
+                'productVariant.product.brand',
+                'productVariant.product.brand.translatable',
+                'productVariant.options',
+                'productVariant.options.option',
+                'productVariant.options.option.translatable',
+                'productVariant.options.item',
+                'productVariant.options.item.translatable',
+            ])
+            ->when($validated['city_id'] ?? null, fn(Builder $b) => $b->where('company_product_variant.city_id', $validated['city_id']))
+            ->when($validated['seller_store_code'] ?? null, fn(Builder $b) => $b->whereHas('company', fn(Builder $cq) => $cq->where('store_code', $validated['seller_store_code'])))
+            ->when($validated['product_id'] ?? null, fn(Builder $b) => $b->whereHas('productVariant', fn(Builder $pq) => $pq->where('product_id', $validated['product_id'])))
+            ->when($validated['is_set'] ?? null, function (Builder $b) use ($validated) {
+                if ($validated['is_set'] === 'yes') $b->whereHas('productVariant', fn(Builder $q) => $q->isSet());
+                elseif ($validated['is_set'] === 'no') $b->whereHas('productVariant', fn(Builder $q) => $q->isNotSet());
+            })
+            ->when($validated['oem_code'] ?? null, fn(Builder $b) => $b->whereHas('productVariant', fn(Builder $q) => $q->where('oem_code', $validated['oem_code'])))
+            ->when(count($brandsIds) > 0, fn(Builder $b) => $b->whereHas('productVariant.product', fn(Builder $q) => $q->whereIn('brand_id', $brandsIds)))
+            ->when(count($categoriesIds) > 0, fn(Builder $b) => $b->whereHas('productVariant.product.categoriesRel', fn(Builder $q) => $q->whereIn('product_categories.category_id', $categoriesIds)))
+            ->when(count($subCategoriesIds) > 0, fn(Builder $b) => $b->whereHas('productVariant.product.categoriesRel', fn(Builder $q) => $q->whereIn('product_categories.category_id', $subCategoriesIds)))
+            ->when($validated['group_id'] ?? null, fn(Builder $b) => $b->whereHas('productVariant.groupsRel', fn(Builder $q) => $q->where('group_products.group_id', $validated['group_id'])))
+            ->when($validated['search'] ?? null, function (Builder $b) use ($validated) {
+                $b->whereHas('productVariant.product.translatable', function (Builder $q) use ($validated) {
+                    $q->where(fn($i) => $i->where('column', 'title')->where('text', 'ILIKE', '%' . $validated['search'] . '%'))
+                      ->orWhere(fn($i) => $i->where('column', 'description_short')->where('text', 'ILIKE', '%' . $validated['search'] . '%'))
+                      ->orWhere(fn($i) => $i->where('column', 'description')->where('text', 'ILIKE', '%' . $validated['search'] . '%'));
+                });
+            })
+            ->when(isset($validated['min_price']), fn(Builder $b) => $b->where('company_product_variant.price', '>=', (int) ($validated['min_price'] * 100)))
+            ->when(isset($validated['max_price']), fn(Builder $b) => $b->where('company_product_variant.price', '<=', (int) ($validated['max_price'] * 100)))
+            ->when(
+                isset($validated['sort']) && isset($validated['sort_type']),
+                function (Builder $b) use ($validated, $currentLangId) {
+                    $sortType = strtolower($validated['sort_type'] ?? 'desc');
+                    switch ($validated['sort']) {
+                        case 'price':
+                            $b->orderBy('company_product_variant.price', $sortType);
+                            break;
+                        case 'title':
+                            $b->leftJoin('product_variants as pv_sort', 'pv_sort.id', '=', 'company_product_variant.product_variant_id')
+                              ->leftJoin('products as p_sort', 'p_sort.id', '=', 'pv_sort.product_id')
+                              ->leftJoin('model_translations as mt_sort', function ($join) use ($currentLangId) {
+                                  $join->on('mt_sort.translatable_id', '=', 'p_sort.id')
+                                       ->where('mt_sort.translatable_type', '=', Product::class)
+                                       ->where('mt_sort.column', '=', 'title')
+                                       ->where('mt_sort.language_id', '=', $currentLangId)
+                                       ->whereNull('mt_sort.deleted_at');
+                              })
+                              ->orderBy('mt_sort.text', $sortType);
+                            break;
+                        case 'date':
+                            $b->orderBy('company_product_variant.id', $sortType);
+                            break;
+                        default:
+                            $b->orderByDesc('company_product_variant.id');
+                    }
+                },
+                fn(Builder $b) => $b->orderByDesc('company_product_variant.id')
+            )
             ->paginate($validated['limit'] ?? 10);
 
-        if (!$isAdmin) {
-            $this->attachSellerDataToVariants($result);
-        }
+        $this->attachWishlistAndBasketToCpvs($result);
 
         return $result;
     }
@@ -885,8 +930,8 @@ class ProductVariantRepository
 
     public function showBySlug(string $productSlug, string $subCategorySlug, ?string $categorySlug = null, array $validated = []): ProductVariant
     {
-        $productVariantSlug = $validated['variant'] ?? null;
-        $sellerUuid = $validated['seller'] ?? null;
+        $productVariantSlug  = $validated['variant'] ?? null;
+        $sellerStoreCode     = $validated['seller'] ?? null;
 
         $productVariant = ProductVariant::query()
             ->active()
@@ -967,7 +1012,7 @@ class ProductVariantRepository
         }
 
         // Load seller-specific data
-        $sellerListing = $this->resolveSellerListing($productVariant, $sellerUuid);
+        $sellerListing = $this->resolveSellerListing($productVariant, $sellerStoreCode);
 
         if ($sellerListing) {
             $this->overrideWithSellerData($productVariant, $sellerListing);
@@ -1004,7 +1049,7 @@ class ProductVariantRepository
                 ->where('id', '!=', $sellerListing->id)
                 ->where('is_active', true)
                 ->where('approval_status', ProductVariantApprovalStatusEnum::APPROVED->value)
-                ->with(['city', 'city.translatable', 'media'])
+                ->with(['city', 'city.translatable', 'media', 'company'])
                 ->orderBy('price');
 
             $otherSellersTotal = $otherSellersQuery->count();
@@ -1017,27 +1062,25 @@ class ProductVariantRepository
         return $productVariant;
     }
 
-    private function resolveSellerListing(ProductVariant $productVariant, ?string $sellerUuid): ?CompanyProductVariant
+    private function resolveSellerListing(ProductVariant $productVariant, ?string $sellerStoreCode): ?CompanyProductVariant
     {
-        $query = $productVariant->companyListings()
+        $baseQuery = fn() => $productVariant->companyListings()
             ->where('is_active', true)
             ->where('approval_status', ProductVariantApprovalStatusEnum::APPROVED->value)
-            ->with(['city', 'city.translatable', 'media']);
+            ->with(['city', 'city.translatable', 'media', 'company']);
 
-        if ($sellerUuid) {
-            $listing = $query->where('uuid', $sellerUuid)->first();
+        if ($sellerStoreCode) {
+            $listing = $baseQuery()
+                ->whereHas('company', fn(Builder $q) => $q->where('store_code', $sellerStoreCode))
+                ->first();
+
             if ($listing) {
                 return $listing;
             }
         }
 
         // Fallback: cheapest active seller
-        return $productVariant->companyListings()
-            ->where('is_active', true)
-            ->where('approval_status', ProductVariantApprovalStatusEnum::APPROVED->value)
-            ->with(['city', 'city.translatable', 'media'])
-            ->orderBy('price')
-            ->first();
+        return $baseQuery()->orderBy('price')->first();
     }
 
     public function loadRelatedProducts(ProductVariant $productVariant): Collection
@@ -1097,7 +1140,7 @@ class ProductVariantRepository
         return $productVariant->companyListings()
             ->where('is_active', true)
             ->where('approval_status', ProductVariantApprovalStatusEnum::APPROVED->value)
-            ->with(['city', 'city.translatable', 'media'])
+            ->with(['city', 'city.translatable', 'media', 'company'])
             ->orderBy('price')
             ->paginate($validated['limit'] ?? 20);
     }
@@ -1300,6 +1343,44 @@ class ProductVariantRepository
                     $variant->in_basket = $cpvId ? $basketedCpvIds->contains($cpvId) : false;
                 }
             }
+        }
+    }
+
+    /**
+     * Attach in_wishlist / in_basket flags directly to CPV items in a paginated listing.
+     */
+    private function attachWishlistAndBasketToCpvs(LengthAwarePaginator $paginator): void
+    {
+        if (RouteService::instance()->getName() !== 'app') {
+            return;
+        }
+
+        $cpvs = collect($paginator->items());
+
+        if ($cpvs->isEmpty()) {
+            return;
+        }
+
+        $user   = UserService::instance()->getUserOrGuest();
+        $cpvIds = $cpvs->pluck('id')->unique()->values();
+
+        $wishlistedIds = Wishlist::query()
+            ->where('userable_id', $user->id)
+            ->where('userable_type', $user::class)
+            ->whereNull('deleted_at')
+            ->whereIn('company_product_variant_id', $cpvIds)
+            ->pluck('company_product_variant_id');
+
+        $basketedIds = Basket::query()
+            ->where('userable_id', $user->id)
+            ->where('userable_type', $user::class)
+            ->whereNull('deleted_at')
+            ->whereIn('company_product_variant_id', $cpvIds)
+            ->pluck('company_product_variant_id');
+
+        foreach ($cpvs as $cpv) {
+            $cpv->in_wishlist = $wishlistedIds->contains($cpv->id);
+            $cpv->in_basket   = $basketedIds->contains($cpv->id);
         }
     }
 

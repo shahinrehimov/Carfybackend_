@@ -284,7 +284,7 @@ class OrderService
                             $q->when(count($productVariantRelations['with']) > 0, fn($q) => $q->with($productVariantRelations['with']));
                         },
                         'companyProductVariant' => function ($q) {
-                            $q->with(['city', 'city.translatable']);
+                            $q->with(['city', 'city.translatable', 'media', 'company']);
                         },
                     ]);
                 },
@@ -309,7 +309,7 @@ class OrderService
                             $q->when(count($productVariantRelations['with']) > 0, fn($q) => $q->with($productVariantRelations['with']));
                         },
                         'companyProductVariant' => function ($q) {
-                            $q->with(['city', 'city.translatable']);
+                            $q->with(['city', 'city.translatable', 'media', 'company']);
                         },
                     ]);
                 },

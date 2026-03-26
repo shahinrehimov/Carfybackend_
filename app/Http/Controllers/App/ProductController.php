@@ -9,6 +9,7 @@ use App\Http\Requests\GeneralListRequest;
 use App\Http\Resources\Admin\Brands\BrandsListResource;
 use App\Http\Resources\Admin\Categories\CategoriesListResource;
 use App\Http\Resources\Admin\Cities\CitiesListResource;
+use App\Http\Resources\App\CompanyProductVariants\CompanyProductVariantListResource;
 use App\Http\Resources\App\ProductVariants\ProductVariantResource;
 use App\Http\Resources\App\ProductVariants\ProductVariantsResource;
 use App\Models\ProductVariant;
@@ -29,7 +30,7 @@ class ProductController extends Controller
 
     public function index(ProductSearchRequest $request): AnonymousResourceCollection
     {
-        return ProductVariantsResource::collection($this->repo->load($request->validated()));
+        return CompanyProductVariantListResource::collection($this->repo->load($request->validated()));
     }
 
     public function getProductsSearchFilters(): JsonResponse
@@ -61,12 +62,18 @@ class ProductController extends Controller
 
         $data = $paginated->through(function ($cpv) {
             return [
-                'uuid' => $cpv->uuid,
-                'price' => $cpv->price,
-                'price_final' => $cpv->price_final,
-                'stock' => $cpv->stock,
-                'has_discount' => $cpv->price != $cpv->price_final,
-                'city' => $cpv->relationLoaded('city') ? CitiesListResource::make($cpv->city) : null,
+                'uuid'          => $cpv->uuid,
+                'price'         => $cpv->price,
+                'price_final'   => $cpv->price_final,
+                'has_discount'  => $cpv->price != $cpv->price_final,
+                'discount_type' => $cpv->discount_type,
+                'discount'      => $cpv->discount,
+                'stock'         => $cpv->stock,
+                'city'          => $cpv->relationLoaded('city') ? CitiesListResource::make($cpv->city) : null,
+                'seller_label'  => $cpv->company?->getSellerLabel(),
+                'images'        => $cpv->relationLoaded('media')
+                    ? $cpv->getMedia('company_product_variant_images')->map(fn($m) => ['url' => $m->getUrl()])
+                    : [],
             ];
         });
 

@@ -18,17 +18,20 @@ use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
 
 /**
- * @property mixed $company_id
- * @property mixed $product_variant_id
- * @property mixed $price
- * @property mixed $discount
- * @property mixed $discount_type
- * @property mixed $discount_start_at
- * @property mixed $discount_end_at
- * @property mixed $stock
- * @property bool $is_active
- * @property mixed $approval_status
- * @property mixed|null $approval_status_message
+ * @property mixed       $company_id
+ * @property mixed       $product_variant_id
+ * @property mixed       $price
+ * @property mixed       $discount
+ * @property mixed       $discount_type
+ * @property mixed       $discount_start_at
+ * @property mixed       $discount_end_at
+ * @property mixed       $stock
+ * @property bool        $is_active
+ * @property mixed       $approval_status
+ * @property mixed|null  $approval_status_message
+ * @property string|null $listing_hover_image
+ * @property string|null $listing_main_image
+ * @property array       $listing_gallery
  */
 class CompanyProductVariant extends Model implements HasMedia
 {
@@ -120,5 +123,88 @@ class CompanyProductVariant extends Model implements HasMedia
     public function wishlists(): HasMany
     {
         return $this->hasMany(Wishlist::class);
+    }
+
+    // ─── Image cascade accessors ──────────────────────────────────────────────
+
+    /**
+     * Hover image: CPV images[0] → variant hover_image → product hover_image
+     */
+    public function getListingHoverImageAttribute(): ?string
+    {
+        if ($this->relationLoaded('media') && $this->hasMedia('company_product_variant_images')) {
+            return $this->getFirstMediaUrl('company_product_variant_images');
+        }
+
+        if ($this->relationLoaded('productVariant') && $this->productVariant) {
+            $variant = $this->productVariant;
+
+            if ($variant->relationLoaded('media') && $variant->hover_image) {
+                return $variant->hover_image;
+            }
+
+            if ($variant->relationLoaded('product') && $variant->product?->relationLoaded('media')) {
+                return $variant->product->hover_image;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Main image: CPV images[0] → variant main_image → product main_image
+     */
+    public function getListingMainImageAttribute(): ?string
+    {
+        if ($this->relationLoaded('media') && $this->hasMedia('company_product_variant_images')) {
+            return $this->getFirstMediaUrl('company_product_variant_images');
+        }
+
+        if ($this->relationLoaded('productVariant') && $this->productVariant) {
+            $variant = $this->productVariant;
+
+            if ($variant->relationLoaded('media') && $variant->main_image) {
+                return $variant->main_image;
+            }
+
+            if ($variant->relationLoaded('product') && $variant->product?->relationLoaded('media')) {
+                return $variant->product->main_image;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Gallery: CPV images + variant images + product images (CPV önce)
+     * Her element: ['source' => 'seller'|'variant'|'product', 'url' => '...']
+     */
+    public function getListingGalleryAttribute(): array
+    {
+        $gallery = [];
+
+        if ($this->relationLoaded('media')) {
+            foreach ($this->getMedia('company_product_variant_images') as $media) {
+                $gallery[] = ['source' => 'seller', 'url' => $media->getUrl()];
+            }
+        }
+
+        if ($this->relationLoaded('productVariant') && $this->productVariant) {
+            $variant = $this->productVariant;
+
+            if ($variant->relationLoaded('media')) {
+                foreach ($variant->getMedia('product_variants_images') as $media) {
+                    $gallery[] = ['source' => 'variant', 'url' => $media->getUrl()];
+                }
+            }
+
+            if ($variant->relationLoaded('product') && $variant->product?->relationLoaded('media')) {
+                foreach ($variant->product->getMedia('products_images') as $media) {
+                    $gallery[] = ['source' => 'product', 'url' => $media->getUrl()];
+                }
+            }
+        }
+
+        return $gallery;
     }
 }

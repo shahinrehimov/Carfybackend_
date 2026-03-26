@@ -86,18 +86,17 @@ class ProductVariantResource extends JsonResource
             // Seller data (price/stock/discount already overridden at top level via setRawAttributes)
             'seller' => $this->when(isset($this->seller_listing), function () {
                 if (!$this->seller_listing) return null;
+                $sl = $this->seller_listing;
                 return [
-                    'id' => $this->seller_listing->id,
-                    'uuid' => $this->seller_listing->uuid,
-                    'city' => $this->seller_listing->relationLoaded('city')
-                        ? CitiesListResource::make($this->seller_listing->city)
+                    'uuid'         => $sl->uuid,
+                    'seller_label' => $sl->company?->getSellerLabel(),
+                    'city'         => $sl->relationLoaded('city')
+                        ? CitiesListResource::make($sl->city)
                         : null,
-                    'images' => $this->seller_listing->relationLoaded('media')
-                        ? $this->seller_listing->getMedia('company_product_variant_images')->map(fn($media) => [
-                            'id' => $media->id,
-                            'url' => $media->getUrl(),
-                        ])
+                    'images'       => $sl->relationLoaded('media')
+                        ? $sl->getMedia('company_product_variant_images')->map(fn($m) => ['url' => $m->getUrl()])
                         : [],
+                    'gallery'      => $sl->listing_gallery,
                 ];
             }),
             'sellers_count' => $this->whenNotNull($this->sellers_count),
@@ -105,12 +104,18 @@ class ProductVariantResource extends JsonResource
             // Other sellers
             'other_sellers' => $this->when(isset($this->other_sellers), function () {
                 return $this->other_sellers->map(fn(CompanyProductVariant $cpv) => [
-                    'uuid' => $cpv->uuid,
-                    'price' => $cpv->price,
-                    'price_final' => $cpv->price_final,
-                    'stock' => $cpv->stock,
-                    'has_discount' => $cpv->price != $cpv->price_final,
-                    'city' => $cpv->relationLoaded('city') ? CitiesListResource::make($cpv->city) : null,
+                    'uuid'          => $cpv->uuid,
+                    'seller_label'  => $cpv->company?->getSellerLabel(),
+                    'price'         => $cpv->price,
+                    'price_final'   => $cpv->price_final,
+                    'has_discount'  => $cpv->price != $cpv->price_final,
+                    'discount_type' => $cpv->discount_type,
+                    'discount'      => $cpv->discount,
+                    'stock'         => $cpv->stock,
+                    'city'          => $cpv->relationLoaded('city') ? CitiesListResource::make($cpv->city) : null,
+                    'images'        => $cpv->relationLoaded('media')
+                        ? $cpv->getMedia('company_product_variant_images')->map(fn($m) => ['url' => $m->getUrl()])
+                        : [],
                 ]);
             }),
             'other_sellers_total' => $this->whenNotNull($this->other_sellers_total),
