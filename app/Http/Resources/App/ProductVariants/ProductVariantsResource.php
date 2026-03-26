@@ -65,10 +65,10 @@ class ProductVariantsResource extends JsonResource
             'basket_quantity' => $this->whenNotNull($this->basket_quantity),
 
             'seller' => $this->seller_listing ? [
-                'id' => $this->seller_listing->id,
-                'uuid' => $this->seller_listing->uuid,
-                'city' => $this->seller_listing->relationLoaded('city') && $this->seller_listing->city ? [
-                    'id' => $this->seller_listing->city->id,
+                'uuid'         => $this->seller_listing->uuid,
+                'seller_label' => $this->seller_listing->company?->getSellerLabel(),
+                'city'         => $this->seller_listing->relationLoaded('city') && $this->seller_listing->city ? [
+                    'id'    => $this->seller_listing->city->id,
                     'title' => $this->seller_listing->city->getLang('title'),
                 ] : null,
             ] : null,

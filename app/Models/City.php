@@ -80,6 +80,10 @@ class City extends Model implements TranslatableInterface
     public function productVariants(): HasMany
     {
         return $this->hasMany(ProductVariant::class);
+    }
 
+    public function companyProductVariants(): HasMany
+    {
+        return $this->hasMany(CompanyProductVariant::class);
     }
 }

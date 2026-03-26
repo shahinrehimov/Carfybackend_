@@ -1118,7 +1118,7 @@ class ProductVariantRepository
                 ->whereIn('product_variant_id', $variantIds)
                 ->where('is_active', true)
                 ->where('approval_status', ProductVariantApprovalStatusEnum::APPROVED->value)
-                ->with(['city', 'city.translatable', 'media'])
+                ->with(['city', 'city.translatable', 'media', 'company'])
                 ->orderBy('price')
                 ->get()
                 ->groupBy('product_variant_id')

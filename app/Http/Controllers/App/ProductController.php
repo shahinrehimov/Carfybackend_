@@ -12,6 +12,7 @@ use App\Http\Resources\Admin\Cities\CitiesListResource;
 use App\Http\Resources\App\CompanyProductVariants\CompanyProductVariantListResource;
 use App\Http\Resources\App\ProductVariants\ProductVariantResource;
 use App\Http\Resources\App\ProductVariants\ProductVariantsResource;
+use App\Models\CompanyProductVariant;
 use App\Models\ProductVariant;
 use App\Repositories\BrandRepository;
 use App\Repositories\CategoryRepository;
@@ -35,13 +36,29 @@ class ProductController extends Controller
 
     public function getProductsSearchFilters(): JsonResponse
     {
+        $priceRange = CompanyProductVariant::query()
+            ->where('is_active', true)
+            ->where('approval_status', \App\Enum\ProductVariantApprovalStatusEnum::APPROVED->value)
+            ->selectRaw('MIN(price) as min_price, MAX(price) as max_price')
+            ->first();
+
+        $cities = \App\Models\City::query()
+            ->whereHas('companyProductVariants', fn($q) => $q
+                ->where('is_active', true)
+                ->where('approval_status', \App\Enum\ProductVariantApprovalStatusEnum::APPROVED->value)
+            )
+            ->with('translatable')
+            ->orderBy('id')
+            ->get();
+
         return response()->json([
-            'categories' => CategoriesListResource::collection((new CategoryRepository)->list(['with_subs' => 'yes'])),
-            'brands' => BrandsListResource::collection((new BrandRepository())->list(withModels: true)),
-            'statuses' => $this->repo->getProductsSearchStatusesList(),
+            'categories'   => CategoriesListResource::collection((new CategoryRepository)->list(['with_subs' => 'yes'])),
+            'brands'       => BrandsListResource::collection((new BrandRepository())->list(withModels: true)),
+            'statuses'     => $this->repo->getProductsSearchStatusesList(),
+            'cities'       => CitiesListResource::collection($cities),
             'price_ranges' => [
-                'min' => 0,
-                'max' => 1000000, // TODO: Adjust this value based on your product price range
+                'min' => round(($priceRange->min_price ?? 0) / 100, 2),
+                'max' => round(($priceRange->max_price ?? 0) / 100, 2),
             ],
         ]);
     }
