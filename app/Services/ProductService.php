@@ -117,6 +117,8 @@ class ProductService
                 $prefix . 'media',
                 $prefix . 'brand',
                 $prefix . 'brand.translatable',
+                $prefix . 'brand.brandModels',
+                $prefix . 'brand.brandModels.translatable',
                 $prefix . 'mainCategory',
                 $prefix . 'mainCategory.parent',
             ];
@@ -126,6 +128,8 @@ class ProductService
                 $prefix . 'media',
                 $prefix . 'brand',
                 $prefix . 'brand.translatable',
+                $prefix . 'brand.brandModels',
+                $prefix . 'brand.brandModels.translatable',
                 $prefix . 'mainCategory',
                 $prefix . 'mainCategory.parent',
             ];

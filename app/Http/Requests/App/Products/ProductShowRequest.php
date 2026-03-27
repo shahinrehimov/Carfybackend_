@@ -25,7 +25,7 @@ class ProductShowRequest extends FormRequest
     {
         return [
             'variant' => ['nullable', 'string', 'max:10000'],
-            'seller' => ['nullable', 'string', 'max:36'],
+            'seller' => ['required', 'string', 'max:36'],
             'other_sellers' => ['nullable', 'string', 'in:yes,no'],
             'with_related' => ['nullable', 'string', 'in:yes,no'],
         ];

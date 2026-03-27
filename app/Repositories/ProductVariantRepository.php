@@ -1074,12 +1074,17 @@ class ProductVariantRepository
                 ->whereHas('company', fn(Builder $q) => $q->where('store_code', $sellerStoreCode))
                 ->first();
 
-            if ($listing) {
-                return $listing;
+            if (!$listing) {
+                throw new \Symfony\Component\HttpKernel\Exception\NotFoundHttpException(
+                    LangService::instance()
+                        ->setDefault('Seller listing not found!')
+                        ->getLang('seller_listing_not_found')
+                );
             }
+
+            return $listing;
         }
 
-        // Fallback: cheapest active seller
         return $baseQuery()->orderBy('price')->first();
     }
 

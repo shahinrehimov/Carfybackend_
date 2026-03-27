@@ -29,9 +29,10 @@ class CompanyProductVariantListResource extends JsonResource
         $variant = $this->productVariant;
 
         return [
-            'uuid'        => $this->uuid,
-            'title'       => $variant?->title,
-            'oem_code'    => $variant?->oem_code,
+            'uuid'          => $this->uuid,
+            'variant_slug'  => $variant?->slug,
+            'title'         => $variant?->title,
+            'oem_code'      => $variant?->oem_code,
             'hover_image' => $this->listing_hover_image,
             'is_set'      => $variant?->isSet() ?? false,
             'stock'       => $this->stock,
@@ -49,9 +50,10 @@ class CompanyProductVariantListResource extends JsonResource
             'in_basket'   => $this->in_basket ?? false,
 
             'seller' => [
-                'uuid'  => $this->uuid,
-                'label' => $this->company?->getSellerLabel(),
-                'city'  => $this->when(
+                'uuid'       => $this->uuid,
+                'store_code' => $this->company?->store_code,
+                'label'      => $this->company?->getSellerLabel(),
+                'city'       => $this->when(
                     $this->relationLoaded('city') && $this->city,
                     fn() => [
                         'id'    => $this->city->id,
