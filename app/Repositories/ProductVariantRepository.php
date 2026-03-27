@@ -26,6 +26,7 @@ use Carbon\Carbon;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Support\Collection as SupportCollection;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -1336,7 +1337,7 @@ class ProductVariantRepository
      * Attach in_wishlist / in_basket flags to a Collection of CPV models.
      * Can be called from any context that builds a CPV list (listing, groups, related).
      */
-    public function attachWishlistAndBasketToCpvsCollection(Collection $cpvs): void
+    public function attachWishlistAndBasketToCpvsCollection(SupportCollection $cpvs): void
     {
         if (RouteService::instance()->getName() !== 'app') {
             return;
