@@ -20529,14 +20529,20 @@
                     },
                     {
                       "key": "seller",
-                      "value": "",
-                      "description": "CPV uuid — selects which seller listing to display. If omitted, cheapest approved seller is shown.",
+                      "value": "AB123",
+                      "description": "seller store code (5-char) — selects which seller listing to display. Falls back to cheapest approved seller if not found or omitted.",
                       "disabled": true
                     },
                     {
                       "key": "other_sellers",
                       "value": "yes",
                       "description": "yes — include paginated list of other sellers offering the same variant",
+                      "disabled": true
+                    },
+                    {
+                      "key": "seller_store_code",
+                      "value": "AB123",
+                      "description": "alias — same as 'seller' param, included for consistency with the Load endpoint",
                       "disabled": true
                     }
                   ],
@@ -20618,14 +20624,20 @@
                     },
                     {
                       "key": "seller",
-                      "value": "",
-                      "description": "CPV uuid — selects which seller listing to display",
+                      "value": "AB123",
+                      "description": "seller store code (5-char) — selects which seller listing to display. Falls back to cheapest approved seller if not found or omitted.",
                       "disabled": true
                     },
                     {
                       "key": "other_sellers",
                       "value": "yes",
                       "description": "yes — include other sellers list",
+                      "disabled": true
+                    },
+                    {
+                      "key": "seller_store_code",
+                      "value": "AB123",
+                      "description": "alias — same as 'seller' param, included for consistency with the Load endpoint",
                       "disabled": true
                     }
                   ],
