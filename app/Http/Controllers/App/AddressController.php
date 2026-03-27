@@ -5,9 +5,11 @@ namespace App\Http\Controllers\App;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\App\Addresses\AddressStoreRequest;
 use App\Http\Requests\GeneralListRequest;
+use App\Http\Resources\Admin\AddressTypes\AddressTypesListResource;
 use App\Http\Resources\App\Addresses\AddressesResource;
 use App\Http\Resources\GeneralResource;
 use App\Models\Address;
+use App\Models\AddressType;
 use App\Repositories\AddressRepository;
 use App\Services\LangService;
 use App\Services\UserService;
@@ -21,6 +23,20 @@ class AddressController extends Controller
     public function __construct(AddressRepository $repo)
     {
         $this->repo = $repo;
+    }
+
+    public function formData(): JsonResponse
+    {
+        $types = AddressType::query()
+            ->active()
+            ->with('translatable')
+            ->orderBy('sort')
+            ->orderBy('id')
+            ->get();
+
+        return response()->json([
+            'address_types' => AddressTypesListResource::collection($types),
+        ]);
     }
 
     public function index(GeneralListRequest $request): AnonymousResourceCollection

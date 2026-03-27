@@ -74,9 +74,20 @@ class WishlistService
 
     public function ids(): array
     {
-        return UserService::instance()->getUserOrGuest()
+        $cpvIds = UserService::instance()->getUserOrGuest()
             ->wishlists()
             ->pluck('company_product_variant_id')
+            ->filter()
+            ->unique()
+            ->values();
+
+        if ($cpvIds->isEmpty()) {
+            return [];
+        }
+
+        return CompanyProductVariant::query()
+            ->whereIn('id', $cpvIds)
+            ->pluck('uuid')
             ->toArray();
     }
 

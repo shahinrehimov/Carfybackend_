@@ -18602,6 +18602,55 @@
               "name": "Addresses",
               "item": [
                 {
+                  "name": "Form Data",
+                  "request": {
+                    "auth": {
+                      "type": "bearer",
+                      "bearer": [
+                        {
+                          "key": "token",
+                          "value": "{{login_token_site}}",
+                          "type": "string"
+                        }
+                      ]
+                    },
+                    "method": "GET",
+                    "header": [
+                      {
+                        "key": "Token",
+                        "value": "{{app_site_token}}",
+                        "type": "text"
+                      },
+                      {
+                        "key": "accept",
+                        "value": "application/json",
+                        "type": "text"
+                      }
+                    ],
+                    "url": {
+                      "raw": "{{url}}/:provider/profile/addresses/form-data",
+                      "host": [
+                        "{{url}}"
+                      ],
+                      "path": [
+                        ":provider",
+                        "profile",
+                        "addresses",
+                        "form-data"
+                      ],
+                      "variable": [
+                        {
+                          "key": "provider",
+                          "value": "site",
+                          "description": "site or app"
+                        }
+                      ]
+                    },
+                    "description": "Returns data needed to render the address form.\n  address_types: [ { id, title } ] — pass id as address_type_id when creating/updating an address."
+                  },
+                  "response": []
+                },
+                {
                   "name": "Load",
                   "request": {
                     "auth": {
@@ -20938,7 +20987,7 @@
                   }
                 ],
                 "url": {
-                  "raw": "{{url}}/:provider/wishlist/add/:companyProductVariantId",
+                  "raw": "{{url}}/:provider/wishlist/add/:companyProductVariantUuid",
                   "host": [
                     "{{url}}"
                   ],
@@ -20946,7 +20995,7 @@
                     ":provider",
                     "wishlist",
                     "add",
-                    ":companyProductVariantId"
+                    ":companyProductVariantUuid"
                   ],
                   "variable": [
                     {
@@ -20955,13 +21004,13 @@
                       "description": "site or app"
                     },
                     {
-                      "key": "companyProductVariantId",
-                      "value": "86",
-                      "description": "CPV id (integer) — the specific seller listing to add to wishlist"
+                      "key": "companyProductVariantUuid",
+                      "value": "",
+                      "description": "CPV uuid — taken from product load response (uuid field)"
                     }
                   ]
                 },
-                "description": "Add a seller listing (CPV) to the user's or guest's wishlist.\nRoute param: companyProductVariantId (integer).\nWorks for both authenticated users and guests (via identifier header)."
+                "description": "Add a seller listing (CPV) to the user's or guest's wishlist.\nRoute param: CPV uuid (from product load response).\nWorks for both authenticated users and guests (via identifier header)."
               },
               "response": []
             },
@@ -20990,7 +21039,7 @@
                   }
                 ],
                 "url": {
-                  "raw": "{{url}}/:provider/wishlist/remove/:companyProductVariantId",
+                  "raw": "{{url}}/:provider/wishlist/remove/:companyProductVariantUuid",
                   "host": [
                     "{{url}}"
                   ],
@@ -20998,7 +21047,7 @@
                     ":provider",
                     "wishlist",
                     "remove",
-                    ":companyProductVariantId"
+                    ":companyProductVariantUuid"
                   ],
                   "variable": [
                     {
@@ -21007,13 +21056,13 @@
                       "description": "site or app"
                     },
                     {
-                      "key": "companyProductVariantId",
-                      "value": "86",
-                      "description": "CPV id (integer)"
+                      "key": "companyProductVariantUuid",
+                      "value": "",
+                      "description": "CPV uuid — taken from product load response (uuid field)"
                     }
                   ]
                 },
-                "description": "Remove a seller listing (CPV) from the wishlist.\nRoute param: companyProductVariantId (integer)."
+                "description": "Remove a seller listing (CPV) from the wishlist.\nRoute param: CPV uuid (from product load response)."
               },
               "response": []
             },
@@ -21162,7 +21211,7 @@
                   }
                 },
                 "url": {
-                  "raw": "{{url}}/:provider/basket/add/:companyProductVariantId",
+                  "raw": "{{url}}/:provider/basket/add/:companyProductVariantUuid",
                   "host": [
                     "{{url}}"
                   ],
@@ -21170,7 +21219,7 @@
                     ":provider",
                     "basket",
                     "add",
-                    ":companyProductVariantId"
+                    ":companyProductVariantUuid"
                   ],
                   "variable": [
                     {
@@ -21179,13 +21228,13 @@
                       "description": "site or app"
                     },
                     {
-                      "key": "companyProductVariantId",
-                      "value": "86",
-                      "description": "CPV id (integer) — the specific seller listing"
+                      "key": "companyProductVariantUuid",
+                      "value": "",
+                      "description": "CPV uuid — from product load response"
                     }
                   ]
                 },
-                "description": "Add a seller listing (CPV) to the basket. Route param: companyProductVariantId (integer)."
+                "description": "Add a seller listing (CPV) to the basket. Route param: CPV uuid (from product load response)."
               },
               "response": []
             },
@@ -21214,7 +21263,7 @@
                   }
                 ],
                 "url": {
-                  "raw": "{{url}}/:provider/basket/remove/:companyProductVariantId",
+                  "raw": "{{url}}/:provider/basket/remove/:companyProductVariantUuid",
                   "host": [
                     "{{url}}"
                   ],
@@ -21222,7 +21271,7 @@
                     ":provider",
                     "basket",
                     "remove",
-                    ":companyProductVariantId"
+                    ":companyProductVariantUuid"
                   ],
                   "variable": [
                     {
@@ -21231,9 +21280,9 @@
                       "description": "site or app"
                     },
                     {
-                      "key": "companyProductVariantId",
-                      "value": "1",
-                      "description": "CPV id (integer) — the specific seller listing"
+                      "key": "companyProductVariantUuid",
+                      "value": "",
+                      "description": "CPV uuid — from product load response"
                     }
                   ]
                 },
@@ -21266,7 +21315,7 @@
                   }
                 ],
                 "url": {
-                  "raw": "{{url}}/:provider/basket/increment/:companyProductVariantId",
+                  "raw": "{{url}}/:provider/basket/increment/:companyProductVariantUuid",
                   "host": [
                     "{{url}}"
                   ],
@@ -21274,7 +21323,7 @@
                     ":provider",
                     "basket",
                     "increment",
-                    ":companyProductVariantId"
+                    ":companyProductVariantUuid"
                   ],
                   "variable": [
                     {
@@ -21283,9 +21332,9 @@
                       "description": "site or app"
                     },
                     {
-                      "key": "companyProductVariantId",
-                      "value": "86",
-                      "description": "CPV id (integer) — the specific seller listing"
+                      "key": "companyProductVariantUuid",
+                      "value": "",
+                      "description": "CPV uuid — from product load response"
                     }
                   ]
                 },
@@ -21318,7 +21367,7 @@
                   }
                 ],
                 "url": {
-                  "raw": "{{url}}/:provider/basket/decrement/:companyProductVariantId",
+                  "raw": "{{url}}/:provider/basket/decrement/:companyProductVariantUuid",
                   "host": [
                     "{{url}}"
                   ],
@@ -21326,7 +21375,7 @@
                     ":provider",
                     "basket",
                     "decrement",
-                    ":companyProductVariantId"
+                    ":companyProductVariantUuid"
                   ],
                   "variable": [
                     {
@@ -21335,9 +21384,9 @@
                       "description": "site or app"
                     },
                     {
-                      "key": "companyProductVariantId",
-                      "value": "86",
-                      "description": "CPV id (integer) — the specific seller listing"
+                      "key": "companyProductVariantUuid",
+                      "value": "",
+                      "description": "CPV uuid — from product load response"
                     }
                   ]
                 },
@@ -21370,7 +21419,7 @@
                   }
                 ],
                 "url": {
-                  "raw": "{{url}}/:provider/basket/increment/:companyProductVariantId/set/:setItemId",
+                  "raw": "{{url}}/:provider/basket/increment/:companyProductVariantUuid/set/:setItemId",
                   "host": [
                     "{{url}}"
                   ],
@@ -21378,7 +21427,7 @@
                     ":provider",
                     "basket",
                     "increment",
-                    ":companyProductVariantId",
+                    ":companyProductVariantUuid",
                     "set",
                     ":setItemId"
                   ],
@@ -21389,9 +21438,9 @@
                       "description": "site or app"
                     },
                     {
-                      "key": "companyProductVariantId",
-                      "value": "86",
-                      "description": "CPV id (integer) — the specific seller listing"
+                      "key": "companyProductVariantUuid",
+                      "value": "",
+                      "description": "CPV uuid — from product load response"
                     },
                     {
                       "key": "setItemId",
@@ -21435,7 +21484,7 @@
                   }
                 ],
                 "url": {
-                  "raw": "{{url}}/:provider/basket/decrement/:companyProductVariantId/set/:setItemId",
+                  "raw": "{{url}}/:provider/basket/decrement/:companyProductVariantUuid/set/:setItemId",
                   "host": [
                     "{{url}}"
                   ],
@@ -21443,7 +21492,7 @@
                     ":provider",
                     "basket",
                     "decrement",
-                    ":companyProductVariantId",
+                    ":companyProductVariantUuid",
                     "set",
                     ":setItemId"
                   ],
@@ -21454,9 +21503,9 @@
                       "description": "site or app"
                     },
                     {
-                      "key": "companyProductVariantId",
-                      "value": "86",
-                      "description": "CPV id (integer) — the specific seller listing"
+                      "key": "companyProductVariantUuid",
+                      "value": "",
+                      "description": "CPV uuid — from product load response"
                     },
                     {
                       "key": "setItemId",
@@ -21493,7 +21542,7 @@
                   }
                 ],
                 "url": {
-                  "raw": "{{url}}/:provider/basket/remove/:companyProductVariantId/set/:setItemId",
+                  "raw": "{{url}}/:provider/basket/remove/:companyProductVariantUuid/set/:setItemId",
                   "host": [
                     "{{url}}"
                   ],
@@ -21501,7 +21550,7 @@
                     ":provider",
                     "basket",
                     "remove",
-                    ":companyProductVariantId",
+                    ":companyProductVariantUuid",
                     "set",
                     ":setItemId"
                   ],
@@ -21512,9 +21561,9 @@
                       "description": "site or app"
                     },
                     {
-                      "key": "companyProductVariantId",
-                      "value": "86",
-                      "description": "CPV id (integer) — the specific seller listing"
+                      "key": "companyProductVariantUuid",
+                      "value": "",
+                      "description": "CPV uuid — from product load response"
                     },
                     {
                       "key": "setItemId",
