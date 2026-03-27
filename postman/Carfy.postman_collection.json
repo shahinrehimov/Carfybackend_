@@ -21159,6 +21159,59 @@
           "name": "Basket",
           "item": [
             {
+              "name": "IDs",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{login_token_site}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Token",
+                    "value": "{{app_site_token}}",
+                    "type": "text"
+                  },
+                  {
+                    "key": "accept",
+                    "value": "application/json",
+                    "type": "text"
+                  },
+                  {
+                    "key": "identifier",
+                    "value": "{{guest_identifier}}",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{url}}/:provider/basket/ids",
+                  "host": [
+                    "{{url}}"
+                  ],
+                  "path": [
+                    ":provider",
+                    "basket",
+                    "ids"
+                  ],
+                  "variable": [
+                    {
+                      "key": "provider",
+                      "value": "site",
+                      "description": "site or app"
+                    }
+                  ]
+                },
+                "description": "Returns a flat array of CompanyProductVariant UUIDs currently in the basket. Useful for highlighting basket items in listing pages."
+              },
+              "response": []
+            },
+            {
               "name": "Load",
               "request": {
                 "auth": {

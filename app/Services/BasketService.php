@@ -290,6 +290,25 @@ class BasketService
         return [$basket, $sets, $selectedIndex];
     }
 
+    public function ids(): array
+    {
+        $cpvIds = UserService::instance()->getUserOrGuest()
+            ->baskets()
+            ->pluck('company_product_variant_id')
+            ->filter()
+            ->unique()
+            ->values();
+
+        if ($cpvIds->isEmpty()) {
+            return [];
+        }
+
+        return CompanyProductVariant::query()
+            ->whereIn('id', $cpvIds)
+            ->pluck('uuid')
+            ->toArray();
+    }
+
     public function remove(CompanyProductVariant $cpv): bool
     {
         return DB::transaction(function () use ($cpv) {

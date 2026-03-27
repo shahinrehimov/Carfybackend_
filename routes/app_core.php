@@ -103,6 +103,7 @@ return static function () {
             });
 
             Route::group(['prefix' => 'basket'], static function () {
+                Route::get('ids', [BasketController::class, 'ids']);
                 Route::get('load', [BasketController::class, 'load']);
                 Route::post('add/{companyProductVariant:uuid}', [BasketController::class, 'add']);
                 Route::post('remove/{companyProductVariant:uuid}', [BasketController::class, 'remove']);

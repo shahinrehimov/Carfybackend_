@@ -15,6 +15,13 @@ use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 
 class BasketController extends Controller
 {
+    public function ids(): JsonResponse
+    {
+        return response()->json([
+            'data' => BasketService::instance()->ids(),
+        ]);
+    }
+
     public function load(GeneralListRequest $request): AnonymousResourceCollection
     {
         [$list, $basketData] = BasketService::instance()->load($request->validated());
