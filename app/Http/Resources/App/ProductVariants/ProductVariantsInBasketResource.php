@@ -48,9 +48,9 @@ class ProductVariantsInBasketResource extends JsonResource
             'slug' => $this->slug,
             'oem_code' => $this->oem_code,
             'title' => $this->title,
-            'hover_image' => $this->whenLoaded('media', function () {
-                return $this->hover_image;
-            }),
+            'hover_image' => $sellerListing
+                ? ($sellerListing->listing_hover_image ?? $this->whenLoaded('media', fn() => $this->hover_image))
+                : $this->whenLoaded('media', fn() => $this->hover_image),
             'is_set' => $this->isSet(),
             'stock' => $this->stock,
             'price' => $this->price,

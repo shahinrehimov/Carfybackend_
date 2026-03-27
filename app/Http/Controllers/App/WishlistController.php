@@ -4,7 +4,7 @@ namespace App\Http\Controllers\App;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\GeneralListRequest;
-use App\Http\Resources\App\ProductVariants\ProductVariantsResource;
+use App\Http\Resources\App\ProductVariants\ProductVariantsInBasketResource;
 use App\Models\CompanyProductVariant;
 use App\Services\LangService;
 use App\Services\WishlistService;
@@ -15,7 +15,7 @@ class WishlistController extends Controller
 {
     public function load(GeneralListRequest $request): AnonymousResourceCollection
     {
-        return ProductVariantsResource::collection(WishlistService::instance()->load($request->validated()));
+        return ProductVariantsInBasketResource::collection(WishlistService::instance()->load($request->validated()));
     }
 
     public function add(CompanyProductVariant $companyProductVariant): JsonResponse

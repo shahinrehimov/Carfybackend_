@@ -298,6 +298,8 @@ class ProductVariantRepository
                 },
                 fn(Builder $b) => $b->orderByDesc('company_product_variant.id')
             )
+            ->withAvg('productVariant.reviews', 'rating')
+            ->withCount('productVariant.reviews')
             ->paginate($validated['limit'] ?? 10);
 
         $this->attachWishlistAndBasketToCpvs($result);
