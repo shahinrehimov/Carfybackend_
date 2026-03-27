@@ -2,6 +2,7 @@
 
 namespace App\Repositories;
 
+use App\Models\CompanyProductVariant;
 use App\Models\ProductReview;
 use App\Models\ProductVariant;
 use App\Services\AdminService;
@@ -37,6 +38,9 @@ class ProductReviewRepository
             ->when($validated['product_variant_id'] ?? null, function (Builder $builder) use ($validated) {
                 $builder->where('product_variant_id', $validated['product_variant_id']);
             })
+            ->when($validated['company_product_variant_id'] ?? null, function (Builder $builder) use ($validated) {
+                $builder->where('company_product_variant_id', $validated['company_product_variant_id']);
+            })
             ->when($validated['user_id'] ?? null, function (Builder $builder) use ($validated) {
                 $builder->where('user_id', $validated['user_id']);
             })
@@ -67,28 +71,29 @@ class ProductReviewRepository
             ->paginate($validated['limit'] ?? 10);
     }
 
-    public function loadForSite(ProductVariant $productVariant, array $validated = []): LengthAwarePaginator
+    public function loadForSite(CompanyProductVariant $cpv, array $validated = []): LengthAwarePaginator
     {
-        $productVariant = ProductService::instance()->setProductVariant($productVariant)->getActiveProductVariant();
-
-        return $productVariant->reviews()
+        return $cpv->reviews()
             ->approved()
             ->orderByDesc('id')
             ->paginate($validated['limit'] ?? 5);
     }
 
-    public function store(ProductVariant $productVariant, array $validated): ProductReview
+    public function store(CompanyProductVariant $cpv, array $validated): ProductReview
     {
-        $productVariant = ProductService::instance()->setProductVariant($productVariant)->getActiveProductVariant();
+        $cpv->loadMissing(['productVariant']);
+        $productVariant = ProductService::instance()->setProductVariant($cpv->productVariant)->getActiveProductVariant();
 
         if (UserService::instance()->checkUser()) {
             $validated['user_id'] = UserService::instance()->getUser()->id;
         }
 
-        $validated['product_id'] = $productVariant->product_id;
+        $validated['product_id']                  = $productVariant->product_id;
+        $validated['product_variant_id']           = $productVariant->id;
+        $validated['company_product_variant_id']   = $cpv->id;
 
-        return DB::transaction(static function () use ($productVariant, $validated) {
-            return $productVariant->reviews()->create($validated);
+        return DB::transaction(static function () use ($cpv, $validated) {
+            return $cpv->reviews()->create($validated);
         });
     }
 

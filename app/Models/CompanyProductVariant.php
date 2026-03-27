@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Casts\CompanyProductVariants\DiscountCast;
+use App\Models\ProductReview;
 use App\Casts\CompanyProductVariants\PriceCast;
 use App\Casts\CompanyProductVariants\PriceFinalCast;
 use App\Traits\ActionBy;
@@ -123,6 +124,11 @@ class CompanyProductVariant extends Model implements HasMedia
     public function wishlists(): HasMany
     {
         return $this->hasMany(Wishlist::class);
+    }
+
+    public function reviews(): HasMany
+    {
+        return $this->hasMany(ProductReview::class);
     }
 
     // ─── Image cascade accessors ──────────────────────────────────────────────

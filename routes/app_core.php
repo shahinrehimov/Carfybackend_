@@ -73,7 +73,7 @@ return static function () {
                 Route::get('show/{subCategorySlug}/{productSlug}', [ProductController::class, 'showBySlugOnlySubCategory']);
                 Route::get('{productVariant}/other-sellers', [ProductController::class, 'otherSellers']);
 
-                Route::prefix('{productVariant}/reviews')->group(function () {
+                Route::prefix('{companyProductVariant}/reviews')->group(function () {
                     Route::post('store', [ProductReviewController::class, 'store'])->middleware(['throttle:2,1']);
                     Route::get('load', [ProductReviewController::class, 'load']);
                 });

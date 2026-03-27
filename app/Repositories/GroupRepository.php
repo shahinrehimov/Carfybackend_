@@ -382,8 +382,6 @@ class GroupRepository
                 'productVariant.options.item',
                 'productVariant.options.item.translatable',
             ])
-            ->withAvg('productVariant.reviews', 'rating')
-            ->withCount('productVariant.reviews')
             ->limit($limit)
             ->inRandomOrder()
             ->get();

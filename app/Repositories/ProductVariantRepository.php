@@ -298,8 +298,6 @@ class ProductVariantRepository
                 },
                 fn(Builder $b) => $b->orderByDesc('company_product_variant.id')
             )
-            ->withAvg('productVariant.reviews', 'rating')
-            ->withCount('productVariant.reviews')
             ->paginate($validated['limit'] ?? 10);
 
         $this->attachWishlistAndBasketToCpvs($result);
@@ -994,8 +992,6 @@ class ProductVariantRepository
             'brandModels.translatable',
         ]);
 
-        $productVariant->ratings = ProductService::instance()->setProductVariant($productVariant)->calculateVariantRating();
-
         if ($productVariant->isSet()) {
             $relations = ProductService::instance()->getVariantRelationsForSite();
 
@@ -1018,6 +1014,7 @@ class ProductVariantRepository
 
         if ($sellerListing) {
             $this->overrideWithSellerData($productVariant, $sellerListing);
+            $productVariant->ratings = $this->calculateCpvRating($sellerListing);
         }
 
         // CPV-level in_wishlist / in_basket for detail page
@@ -1115,8 +1112,6 @@ class ProductVariantRepository
                 'productVariant.options.item',
                 'productVariant.options.item.translatable',
             ])
-            ->withAvg('productVariant.reviews', 'rating')
-            ->withCount('productVariant.reviews')
             ->limit(12)
             ->inRandomOrder()
             ->get();
@@ -1377,6 +1372,30 @@ class ProductVariantRepository
     private function attachWishlistAndBasketToCpvs(LengthAwarePaginator $paginator): void
     {
         $this->attachWishlistAndBasketToCpvsCollection(collect($paginator->items()));
+    }
+
+    private function calculateCpvRating(CompanyProductVariant $cpv): array
+    {
+        $avg    = $cpv->reviews()->approved()->avg('rating');
+        $counts = $cpv->reviews()->approved()->count();
+
+        $list = $cpv->reviews()
+            ->approved()
+            ->selectRaw('rating, COUNT(*) as count')
+            ->groupBy('rating')
+            ->get();
+
+        for ($i = 1; $i <= 5; $i++) {
+            if (!$list->firstWhere('rating', $i)) {
+                $list->push((object) ['rating' => $i, 'count' => 0]);
+            }
+        }
+
+        return [
+            'average' => $avg ? round((float) $avg, 1) : 0,
+            'count'   => $counts,
+            'list'    => $list->sortByDesc('rating')->values()->toArray(),
+        ];
     }
 
     /**

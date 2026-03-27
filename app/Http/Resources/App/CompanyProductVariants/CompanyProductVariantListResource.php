@@ -45,12 +45,8 @@ class CompanyProductVariantListResource extends JsonResource
                     ->getLang('discount_types_' . $this->discount_type)
                 : null,
             'discount'    => $this->discount,
-            'in_wishlist'    => $this->in_wishlist ?? false,
-            'in_basket'      => $this->in_basket ?? false,
-            'ratings_avg'    => $this->product_variant_reviews_avg_rating
-                ? round((float) $this->product_variant_reviews_avg_rating, 1)
-                : null,
-            'reviews_count'  => $this->product_variant_reviews_count ?? 0,
+            'in_wishlist' => $this->in_wishlist ?? false,
+            'in_basket'   => $this->in_basket ?? false,
 
             'seller' => [
                 'uuid'  => $this->uuid,

@@ -7,6 +7,7 @@ use App\Traits\ActionUser;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use App\Models\CompanyProductVariant;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 /**
@@ -20,6 +21,7 @@ class ProductReview extends Model
     protected $fillable = [
         'product_id',
         'product_variant_id',
+        'company_product_variant_id',
         'user_id', // nullable
         'rating',
         'name', // 150
@@ -58,6 +60,11 @@ class ProductReview extends Model
     public function productVariant(): BelongsTo
     {
         return $this->belongsTo(ProductVariant::class);
+    }
+
+    public function companyProductVariant(): BelongsTo
+    {
+        return $this->belongsTo(CompanyProductVariant::class);
     }
 
     public function user(): BelongsTo

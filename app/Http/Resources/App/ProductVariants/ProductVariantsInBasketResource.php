@@ -65,10 +65,6 @@ class ProductVariantsInBasketResource extends JsonResource
             'discount' => $this->discount,
             'in_wishlist'    => $this->in_wishlist ?? false,
             'in_basket'      => $this->in_basket ?? false,
-            'ratings_avg'    => $this->reviews_avg_rating
-                ? round((float) $this->reviews_avg_rating, 1)
-                : null,
-            'reviews_count'  => $this->reviews_count ?? 0,
             'basket_quantity' => $this->whenNotNull($this->basket_quantity),
             'price_in_basket' => $this->price_in_basket,
             'price_final_in_basket' => $this->price_final_in_basket,
