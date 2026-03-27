@@ -270,6 +270,16 @@ class ProductVariantRepository
             })
             ->when(isset($validated['min_price']), fn(Builder $b) => $b->where('company_product_variant.price', '>=', (int) ($validated['min_price'] * 100)))
             ->when(isset($validated['max_price']), fn(Builder $b) => $b->where('company_product_variant.price', '<=', (int) ($validated['max_price'] * 100)))
+            ->when(!empty($validated['colors']), fn(Builder $b) => $b->whereHas('productVariant.options', fn(Builder $q) => $q
+                ->whereHas('option', fn(Builder $oq) => $oq->where('name', 'color'))
+                ->whereHas('item', fn(Builder $iq) => $iq->whereIn('slug', $validated['colors']))
+            ))
+            ->when(!empty($validated['conditions']), fn(Builder $b) => $b->whereHas('productVariant.options', fn(Builder $q) => $q
+                ->whereHas('option', fn(Builder $oq) => $oq->where('name', 'condition'))
+                ->whereHas('item', fn(Builder $iq) => $iq->whereIn('slug', $validated['conditions']))
+            ))
+            ->when(isset($validated['min_year']), fn(Builder $b) => $b->whereHas('productVariant', fn(Builder $q) => $q->where('year', '>=', $validated['min_year'])))
+            ->when(isset($validated['max_year']), fn(Builder $b) => $b->whereHas('productVariant', fn(Builder $q) => $q->where('year', '<=', $validated['max_year'])))
             ->when(
                 isset($validated['sort']) && isset($validated['sort_type']),
                 function (Builder $b) use ($validated, $currentLangId) {

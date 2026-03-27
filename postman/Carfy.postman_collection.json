@@ -20336,7 +20336,7 @@
                     }
                   ]
                 },
-                "description": "Returns all available filter data for the product listing page:\n  categories (with subs), brands (with models), statuses, cities, price_ranges { min, max }\n\nPrice ranges are returned in AZN (converted from cents).\nOnly cities that have at least one active approved CPV are included."
+                "description": "Returns all available filter data for the product listing page:\n  categories (with subs), brands (with models), statuses, cities, price_ranges { min, max },\n  colors [ { slug, title } ], conditions [ { slug, title } ], year_range { min, max }\n\nPrice ranges are returned in AZN (converted from cents).\nOnly cities that have at least one active approved CPV are included.\nColors and conditions contain the slugs to pass as filter params."
               },
               "response": []
             },
@@ -20467,7 +20467,7 @@
                     }
                   ]
                 },
-                "description": "Returns a paginated list of active, approved CompanyProductVariant (seller listings).\n\nEach card in the response represents ONE seller's listing for a product variant.\nMultiple sellers can sell the same variant — each appears as a separate card.\n\nAvailable filters (all optional):\n  search            — full-text search on product title/description\n  brands[]          — filter by brand slug(s)\n  categories[]      — filter by parent category slug(s)\n  sub_categories[]  — filter by sub-category slug(s)\n  statuses[]        — on_sale | new_arrival | ...\n  min_price / max_price — price in AZN (stored in cents, filter in AZN)\n  sort              — date | title | price\n  sort_type         — asc | desc\n  is_set            — yes | no\n  city_id           — filter by seller's city\n  seller_store_code — filter by seller's 5-char store code\n  limit             — 5-100, default 10\n  page              — pagination page\n\nResponse: uuid field = CPV.uuid (used as seller param on detail page)"
+                "description": "Returns a paginated list of active, approved CompanyProductVariant (seller listings).\n\nEach card in the response represents ONE seller's listing for a product variant.\nMultiple sellers can sell the same variant — each appears as a separate card.\n\nAvailable filters (all optional):\n  search            — full-text search on product title/description\n  brands[]          — filter by brand slug(s)\n  categories[]      — filter by parent category slug(s)\n  sub_categories[]  — filter by sub-category slug(s)\n  statuses[]        — on_sale | new_arrival | ...\n  min_price / max_price — price in AZN (stored in cents, filter in AZN)\n  sort              — date | title | price\n  sort_type         — asc | desc\n  is_set            — yes | no\n  city_id           — filter by seller's city\n  seller_store_code — filter by seller's 5-char store code\n  colors[]          — filter by color option item slug(s) (slugs from /products/filters)\n  conditions[]      — filter by condition option item slug(s) (slugs from /products/filters)\n  min_year / max_year — filter by product variant year\n  limit             — 5-100, default 10\n  page              — pagination page\n\nResponse: uuid field = CPV.uuid (used as seller param on detail page)"
               },
               "response": []
             },

@@ -13,6 +13,7 @@ use App\Http\Resources\App\CompanyProductVariants\CompanyProductVariantListResou
 use App\Http\Resources\App\ProductVariants\ProductVariantResource;
 use App\Http\Resources\App\ProductVariants\ProductVariantsResource;
 use App\Models\CompanyProductVariant;
+use App\Models\ProductOption;
 use App\Models\ProductVariant;
 use App\Repositories\BrandRepository;
 use App\Repositories\CategoryRepository;
@@ -51,6 +52,31 @@ class ProductController extends Controller
             ->orderBy('id')
             ->get();
 
+        $colorItems = ProductOption::query()
+            ->where('name', 'color')
+            ->with(['items' => fn($q) => $q->active()->with('translatable')->orderBy('sort')])
+            ->first()
+            ?->items
+            ?->map(fn($item) => ['slug' => $item->slug, 'title' => $item->getLang('title')])
+            ?? [];
+
+        $conditionItems = ProductOption::query()
+            ->where('name', 'condition')
+            ->with(['items' => fn($q) => $q->active()->with('translatable')->orderBy('sort')])
+            ->first()
+            ?->items
+            ?->map(fn($item) => ['slug' => $item->slug, 'title' => $item->getLang('title')])
+            ?? [];
+
+        $yearRange = ProductVariant::query()
+            ->whereHas('companyListings', fn($q) => $q
+                ->where('is_active', true)
+                ->where('approval_status', \App\Enum\ProductVariantApprovalStatusEnum::APPROVED->value)
+            )
+            ->whereNotNull('year')
+            ->selectRaw('MIN(year) as min_year, MAX(year) as max_year')
+            ->first();
+
         return response()->json([
             'categories'   => CategoriesListResource::collection((new CategoryRepository)->list(['with_subs' => 'yes'])),
             'brands'       => BrandsListResource::collection((new BrandRepository())->list(withModels: true)),
@@ -59,6 +85,12 @@ class ProductController extends Controller
             'price_ranges' => [
                 'min' => round(($priceRange->min_price ?? 0) / 100, 2),
                 'max' => round(($priceRange->max_price ?? 0) / 100, 2),
+            ],
+            'colors'       => $colorItems,
+            'conditions'   => $conditionItems,
+            'year_range'   => [
+                'min' => $yearRange->min_year,
+                'max' => $yearRange->max_year,
             ],
         ]);
     }
