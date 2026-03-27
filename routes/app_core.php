@@ -80,6 +80,7 @@ return static function () {
             });
 
             Route::group(['prefix' => 'groups'], static function () {
+                Route::get('list', [GroupController::class, 'list']);
                 Route::get('single/{groupName}/products/load', [GroupController::class, 'loadGroupWithProducts']);
                 Route::get('bulk/products/load', [GroupController::class, 'loadGroupsWithProducts']);
             });

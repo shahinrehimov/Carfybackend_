@@ -20782,6 +20782,47 @@
           "name": "Groups",
           "item": [
             {
+              "name": "List",
+              "request": {
+                "auth": {
+                  "type": "noauth"
+                },
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Token",
+                    "value": "{{app_site_token}}",
+                    "type": "text"
+                  },
+                  {
+                    "key": "accept",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{url}}/:provider/groups/list",
+                  "host": [
+                    "{{url}}"
+                  ],
+                  "path": [
+                    ":provider",
+                    "groups",
+                    "list"
+                  ],
+                  "variable": [
+                    {
+                      "key": "provider",
+                      "value": "site",
+                      "description": "site or app"
+                    }
+                  ]
+                },
+                "description": "Returns all active groups ordered by sort then id.\nEach item: name, slug, title, description, image.\nNo products included — use single/bulk endpoints for that."
+              },
+              "response": []
+            },
+            {
               "name": "Single with products",
               "request": {
                 "auth": {
