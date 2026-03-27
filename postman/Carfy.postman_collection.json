@@ -20335,7 +20335,8 @@
                       "description": "app or site"
                     }
                   ]
-                }
+                },
+                "description": "Returns all available filter data for the product listing page:\n  categories (with subs), brands (with models), statuses, cities, price_ranges { min, max }\n\nPrice ranges are returned in AZN (converted from cents).\nOnly cities that have at least one active approved CPV are included."
               },
               "response": []
             },
@@ -20433,6 +20434,29 @@
                       "value": "desc",
                       "description": "filled --- asc,desc --- default desc",
                       "disabled": true
+                    },
+                    {
+                      "key": "page",
+                      "value": "1",
+                      "disabled": false
+                    },
+                    {
+                      "key": "search",
+                      "value": "test",
+                      "disabled": true,
+                      "description": "free-text search on product title/description"
+                    },
+                    {
+                      "key": "city_id",
+                      "value": "1",
+                      "disabled": true,
+                      "description": "filter by city id"
+                    },
+                    {
+                      "key": "seller_store_code",
+                      "value": "AB123",
+                      "disabled": true,
+                      "description": "filter by seller 5-char store code"
                     }
                   ],
                   "variable": [
@@ -20442,7 +20466,8 @@
                       "description": "app or site"
                     }
                   ]
-                }
+                },
+                "description": "Returns a paginated list of active, approved CompanyProductVariant (seller listings).\n\nEach card in the response represents ONE seller's listing for a product variant.\nMultiple sellers can sell the same variant — each appears as a separate card.\n\nAvailable filters (all optional):\n  search            — full-text search on product title/description\n  brands[]          — filter by brand slug(s)\n  categories[]      — filter by parent category slug(s)\n  sub_categories[]  — filter by sub-category slug(s)\n  statuses[]        — on_sale | new_arrival | ...\n  min_price / max_price — price in AZN (stored in cents, filter in AZN)\n  sort              — date | title | price\n  sort_type         — asc | desc\n  is_set            — yes | no\n  city_id           — filter by seller's city\n  seller_store_code — filter by seller's 5-char store code\n  limit             — 5-100, default 10\n  page              — pagination page\n\nResponse: uuid field = CPV.uuid (used as seller param on detail page)"
               },
               "response": []
             },
@@ -20478,7 +20503,7 @@
                   }
                 ],
                 "url": {
-                  "raw": "{{url}}/:provider/products/show/:paremyCategorySlug/:subCategorySlug/:productSlug?variant=2-2",
+                  "raw": "{{url}}/:provider/products/show/:parentCategorySlug/:subCategorySlug/:productSlug?variant=2-2",
                   "host": [
                     "{{url}}"
                   ],
@@ -20486,32 +20511,32 @@
                     ":provider",
                     "products",
                     "show",
-                    ":paremyCategorySlug",
+                    ":parentCategorySlug",
                     ":subCategorySlug",
                     ":productSlug"
                   ],
                   "query": [
                     {
                       "key": "variant",
-                      "value": "2-2",
-                      "description": "variant slug (slug null olarsa gonderme, varsa mutleq gonder)"
+                      "value": "test-salam-az-2",
+                      "description": "product variant slug — selects which variant to display by default"
                     },
                     {
                       "key": "with_related",
                       "value": "yes",
-                      "description": "nullable",
+                      "description": "yes — include related products (CPV cards)",
                       "disabled": true
                     },
                     {
                       "key": "seller",
                       "value": "",
-                      "description": "CPV uuid — specific seller",
+                      "description": "CPV uuid — selects which seller listing to display. If omitted, cheapest approved seller is shown.",
                       "disabled": true
                     },
                     {
                       "key": "other_sellers",
                       "value": "yes",
-                      "description": "yes/no — load other sellers list",
+                      "description": "yes — include paginated list of other sellers offering the same variant",
                       "disabled": true
                     }
                   ],
@@ -20522,7 +20547,7 @@
                       "description": "app or site"
                     },
                     {
-                      "key": "paremyCategorySlug",
+                      "key": "parentCategorySlug",
                       "value": "test"
                     },
                     {
@@ -20534,7 +20559,226 @@
                       "value": "test-salam-az-2"
                     }
                   ]
-                }
+                },
+                "description": "Show a product detail page by 3-level slug (parent category / sub category / product).\n\nQuery params:\n  variant       — product variant slug (selects which variant tab is active)\n  seller        — CPV uuid (selects which seller listing is shown; defaults to cheapest approved)\n  other_sellers — yes: include other seller listings for the same variant\n  with_related  — yes: include related product CPV cards\n\nResponse includes: ratings (average, count, breakdown) only for the selected seller listing (CPV)."
+              },
+              "response": []
+            },
+            {
+              "name": "Show by slug (only sub category)",
+              "request": {
+                "auth": {
+                  "type": "noauth"
+                },
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Token",
+                    "value": "{{app_site_token}}",
+                    "type": "text"
+                  },
+                  {
+                    "key": "accept",
+                    "value": "application/json",
+                    "type": "text"
+                  },
+                  {
+                    "key": "identifier",
+                    "value": "{{guest_identifier}}",
+                    "type": "text"
+                  },
+                  {
+                    "key": "Accept-Language",
+                    "value": "en",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{url}}/:provider/products/show/:subCategorySlug/:productSlug?variant=pesaro-lotus-tff&with_related=yes",
+                  "host": [
+                    "{{url}}"
+                  ],
+                  "path": [
+                    ":provider",
+                    "products",
+                    "show",
+                    ":subCategorySlug",
+                    ":productSlug"
+                  ],
+                  "query": [
+                    {
+                      "key": "variant",
+                      "value": "pesaro-lotus-tff",
+                      "description": "product variant slug"
+                    },
+                    {
+                      "key": "with_related",
+                      "value": "yes",
+                      "description": "nullable"
+                    },
+                    {
+                      "key": "seller",
+                      "value": "",
+                      "description": "CPV uuid — selects which seller listing to display",
+                      "disabled": true
+                    },
+                    {
+                      "key": "other_sellers",
+                      "value": "yes",
+                      "description": "yes — include other sellers list",
+                      "disabled": true
+                    }
+                  ],
+                  "variable": [
+                    {
+                      "key": "provider",
+                      "value": "site",
+                      "description": "app or site"
+                    },
+                    {
+                      "key": "subCategorySlug",
+                      "value": "bedroom-furniture-geo"
+                    },
+                    {
+                      "key": "productSlug",
+                      "value": "q-22-1-lotos-bedroom-mirror"
+                    }
+                  ]
+                },
+                "description": "Show product detail page by 2-level slug (sub category / product) — used when the product has no parent category.\nSame query params as the 3-level slug endpoint."
+              },
+              "response": []
+            },
+            {
+              "name": "Other Sellers",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{login_token_app}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Token",
+                    "value": "{{app_token_app}}",
+                    "type": "text"
+                  },
+                  {
+                    "key": "accept",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{url}}/:provider/products/:productVariantId/other-sellers",
+                  "host": [
+                    "{{url}}"
+                  ],
+                  "path": [
+                    ":provider",
+                    "products",
+                    ":productVariantId",
+                    "other-sellers"
+                  ],
+                  "query": [
+                    {
+                      "key": "page",
+                      "value": "1",
+                      "disabled": false
+                    },
+                    {
+                      "key": "limit",
+                      "value": "20",
+                      "disabled": true
+                    }
+                  ],
+                  "variable": [
+                    {
+                      "key": "provider",
+                      "value": "site",
+                      "description": "app or site"
+                    },
+                    {
+                      "key": "productVariantId",
+                      "value": "1",
+                      "description": "ProductVariant id (integer) — NOT the CPV id"
+                    }
+                  ]
+                },
+                "description": "Returns other sellers (CPV cards) offering the same product variant.\n\nRoute param: productVariantId (integer) — the product variant, NOT the CPV.\nExcludes the currently-selected seller listing from the results.\nPaginated — use limit and page query params."
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "Groups",
+          "item": [
+            {
+              "name": "Single with products",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{login_token_site}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Token",
+                    "value": "{{app_site_token}}",
+                    "type": "text"
+                  },
+                  {
+                    "key": "accept",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{url}}/:provider/groups/single/:groupName/products/load?limit=10",
+                  "host": [
+                    "{{url}}"
+                  ],
+                  "path": [
+                    ":provider",
+                    "groups",
+                    "single",
+                    ":groupName",
+                    "products",
+                    "load"
+                  ],
+                  "query": [
+                    {
+                      "key": "limit",
+                      "value": "10",
+                      "description": "filled. default: 10. min: 1, max: 50"
+                    }
+                  ],
+                  "variable": [
+                    {
+                      "key": "provider",
+                      "value": "site",
+                      "description": "app or site"
+                    },
+                    {
+                      "key": "groupName",
+                      "value": "testsalamaz"
+                    }
+                  ]
+                },
+                "description": "Load a single product group by name, returning its CPV cards.\nRoute param groupName is the group's URL-safe name (not the display title)."
               },
               "response": []
             },
@@ -20601,205 +20845,8 @@
                       "description": "app or site"
                     }
                   ]
-                }
-              },
-              "response": []
-            },
-            {
-              "name": "Show by slug (only sub category)",
-              "request": {
-                "auth": {
-                  "type": "noauth"
                 },
-                "method": "GET",
-                "header": [
-                  {
-                    "key": "Token",
-                    "value": "{{app_site_token}}",
-                    "type": "text"
-                  },
-                  {
-                    "key": "accept",
-                    "value": "application/json",
-                    "type": "text"
-                  },
-                  {
-                    "key": "identifier",
-                    "value": "{{guest_identifier}}",
-                    "type": "text"
-                  },
-                  {
-                    "key": "Accept-Language",
-                    "value": "en",
-                    "type": "text"
-                  }
-                ],
-                "url": {
-                  "raw": "{{url}}/:provider/products/show/:subCategorySlug/:productSlug?variant=pesaro-lotus-tff&with_related=yes",
-                  "host": [
-                    "{{url}}"
-                  ],
-                  "path": [
-                    ":provider",
-                    "products",
-                    "show",
-                    ":subCategorySlug",
-                    ":productSlug"
-                  ],
-                  "query": [
-                    {
-                      "key": "variant",
-                      "value": "pesaro-lotus-tff",
-                      "description": "variant slug (slug null olarsa gonderme, varsa mutleq gonder)"
-                    },
-                    {
-                      "key": "with_related",
-                      "value": "yes",
-                      "description": "nullable"
-                    },
-                    {
-                      "key": "seller",
-                      "value": "",
-                      "description": "CPV uuid — specific seller",
-                      "disabled": true
-                    },
-                    {
-                      "key": "other_sellers",
-                      "value": "yes",
-                      "description": "yes/no — load other sellers list",
-                      "disabled": true
-                    }
-                  ],
-                  "variable": [
-                    {
-                      "key": "provider",
-                      "value": "site",
-                      "description": "app or site"
-                    },
-                    {
-                      "key": "subCategorySlug",
-                      "value": "bedroom-furniture-geo"
-                    },
-                    {
-                      "key": "productSlug",
-                      "value": "q-22-1-lotos-bedroom-mirror"
-                    }
-                  ]
-                }
-              },
-              "response": []
-            },
-            {
-              "name": "Other Sellers",
-              "request": {
-                "auth": {
-                  "type": "bearer",
-                  "bearer": [
-                    {
-                      "key": "token",
-                      "value": "{{login_token_app}}",
-                      "type": "string"
-                    }
-                  ]
-                },
-                "method": "GET",
-                "header": [
-                  {
-                    "key": "Token",
-                    "value": "{{app_token_app}}",
-                    "type": "text"
-                  },
-                  {
-                    "key": "accept",
-                    "value": "application/json",
-                    "type": "text"
-                  }
-                ],
-                "url": {
-                  "raw": "{{url}}/:provider/products/::productVariantId/other-sellers",
-                  "host": [
-                    "{{url}}"
-                  ],
-                  "path": [
-                    ":provider",
-                    "products",
-                    "::productVariantId",
-                    "other-sellers"
-                  ],
-                  "query": [
-                    {
-                      "key": "limit",
-                      "value": "20",
-                      "disabled": true
-                    }
-                  ]
-                }
-              },
-              "response": []
-            }
-          ]
-        },
-        {
-          "name": "Groups",
-          "item": [
-            {
-              "name": "Single with products",
-              "request": {
-                "auth": {
-                  "type": "bearer",
-                  "bearer": [
-                    {
-                      "key": "token",
-                      "value": "{{login_token_site}}",
-                      "type": "string"
-                    }
-                  ]
-                },
-                "method": "GET",
-                "header": [
-                  {
-                    "key": "Token",
-                    "value": "{{app_site_token}}",
-                    "type": "text"
-                  },
-                  {
-                    "key": "accept",
-                    "value": "application/json",
-                    "type": "text"
-                  }
-                ],
-                "url": {
-                  "raw": "{{url}}/:provider/groups/single/:groupName/products/load?limit=10",
-                  "host": [
-                    "{{url}}"
-                  ],
-                  "path": [
-                    ":provider",
-                    "groups",
-                    "single",
-                    ":groupName",
-                    "products",
-                    "load"
-                  ],
-                  "query": [
-                    {
-                      "key": "limit",
-                      "value": "10",
-                      "description": "filled. default: 10. min: 1, max: 50"
-                    }
-                  ],
-                  "variable": [
-                    {
-                      "key": "provider",
-                      "value": "site",
-                      "description": "app or site"
-                    },
-                    {
-                      "key": "groupName",
-                      "value": "testsalamaz"
-                    }
-                  ]
-                }
+                "description": "Load multiple product groups and their CPV cards in a single request.\n\nPass an array of groups, each with name and limit:\n  groups[0][name]=featured&groups[0][limit]=4\n  groups[1][name]=bestsellers&groups[1][limit]=6\n\nReturns each group with its products as CPV cards (same structure as product listing cards)."
               },
               "response": []
             }
@@ -20849,7 +20896,8 @@
                       "description": "site or app"
                     }
                   ]
-                }
+                },
+                "description": "Returns the current wishlist as CPV cards.\nEach card has in_wishlist=true. Works for guests (identifier header) and authenticated users."
               },
               "response": []
             },
@@ -20895,11 +20943,13 @@
                       "description": "site or app"
                     },
                     {
-                      "key": "productId",
-                      "value": "86"
+                      "key": "companyProductVariantId",
+                      "value": "86",
+                      "description": "CPV id (integer) — the specific seller listing to add to wishlist"
                     }
                   ]
-                }
+                },
+                "description": "Add a seller listing (CPV) to the user's or guest's wishlist.\nRoute param: companyProductVariantId (integer).\nWorks for both authenticated users and guests (via identifier header)."
               },
               "response": []
             },
@@ -20945,11 +20995,13 @@
                       "description": "site or app"
                     },
                     {
-                      "key": "productId",
-                      "value": "86"
+                      "key": "companyProductVariantId",
+                      "value": "86",
+                      "description": "CPV id (integer)"
                     }
                   ]
-                }
+                },
+                "description": "Remove a seller listing (CPV) from the wishlist.\nRoute param: companyProductVariantId (integer)."
               },
               "response": []
             }
@@ -21006,7 +21058,8 @@
                       "description": "site or app"
                     }
                   ]
-                }
+                },
+                "description": "Returns the current basket contents.\nEach item is a CPV card with quantity. Set products include their sub-items.\nWorks for both authenticated users and guests (identifier header)."
               },
               "response": []
             },
@@ -21068,11 +21121,13 @@
                       "description": "site or app"
                     },
                     {
-                      "key": "productVariantId",
-                      "value": "86"
+                      "key": "companyProductVariantId",
+                      "value": "86",
+                      "description": "CPV id (integer) — the specific seller listing"
                     }
                   ]
-                }
+                },
+                "description": "Add a seller listing (CPV) to the basket. Route param: companyProductVariantId (integer)."
               },
               "response": []
             },
@@ -21118,11 +21173,13 @@
                       "description": "site or app"
                     },
                     {
-                      "key": "productVariantId",
-                      "value": "86"
+                      "key": "companyProductVariantId",
+                      "value": "1",
+                      "description": "CPV id (integer) — the specific seller listing"
                     }
                   ]
-                }
+                },
+                "description": "Remove a seller listing (CPV) from the basket entirely."
               },
               "response": []
             },
@@ -21168,11 +21225,13 @@
                       "description": "site or app"
                     },
                     {
-                      "key": "productId",
-                      "value": "86"
+                      "key": "companyProductVariantId",
+                      "value": "86",
+                      "description": "CPV id (integer) — the specific seller listing"
                     }
                   ]
-                }
+                },
+                "description": "Increase quantity of a seller listing in the basket by 1."
               },
               "response": []
             },
@@ -21218,11 +21277,13 @@
                       "description": "site or app"
                     },
                     {
-                      "key": "productId",
-                      "value": "86"
+                      "key": "companyProductVariantId",
+                      "value": "86",
+                      "description": "CPV id (integer) — the specific seller listing"
                     }
                   ]
-                }
+                },
+                "description": "Decrease quantity of a seller listing in the basket by 1."
               },
               "response": []
             },
@@ -21270,15 +21331,17 @@
                       "description": "site or app"
                     },
                     {
-                      "key": "productVariantId",
-                      "value": "86"
+                      "key": "companyProductVariantId",
+                      "value": "86",
+                      "description": "CPV id (integer) — the specific seller listing"
                     },
                     {
                       "key": "setItemId",
                       "value": "2"
                     }
                   ]
-                }
+                },
+                "description": "Increase quantity of a specific sub-item inside a set product basket entry."
               },
               "response": []
             },
@@ -21333,15 +21396,17 @@
                       "description": "site or app"
                     },
                     {
-                      "key": "productVariantId",
-                      "value": "86"
+                      "key": "companyProductVariantId",
+                      "value": "86",
+                      "description": "CPV id (integer) — the specific seller listing"
                     },
                     {
                       "key": "setItemId",
                       "value": "2"
                     }
                   ]
-                }
+                },
+                "description": "Decrease quantity of a specific sub-item inside a set product basket entry."
               },
               "response": []
             },
@@ -21389,15 +21454,17 @@
                       "description": "site or app"
                     },
                     {
-                      "key": "productVariantId",
-                      "value": "86"
+                      "key": "companyProductVariantId",
+                      "value": "86",
+                      "description": "CPV id (integer) — the specific seller listing"
                     },
                     {
                       "key": "setItemId",
                       "value": "2"
                     }
                   ]
-                }
+                },
+                "description": "Remove a specific sub-item from a set product basket entry."
               },
               "response": []
             }
