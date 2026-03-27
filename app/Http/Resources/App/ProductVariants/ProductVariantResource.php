@@ -4,6 +4,7 @@ namespace App\Http\Resources\App\ProductVariants;
 
 use App\Http\Resources\Admin\BrandModels\BrandModelsListResource;
 use App\Http\Resources\Admin\Cities\CitiesListResource;
+use App\Http\Resources\App\CompanyProductVariants\CompanyProductVariantListResource;
 use App\Http\Resources\App\Products\ProductResource;
 use App\Models\CompanyProductVariant;
 use App\Services\LangService;
@@ -81,7 +82,7 @@ class ProductVariantResource extends JsonResource
             'in_basket' => $this->in_basket ?? false,
             'options' => ProductVariantOptionsResource::collection($this->whenLoaded('options')),
             'ratings' => $this->whenNotNull($this->ratings),
-            'related_products' => ProductVariantsResource::collection($this->whenNotNull($this->related_products)),
+            'related_products' => CompanyProductVariantListResource::collection($this->whenNotNull($this->related_products)),
 
             // Seller data (price/stock/discount already overridden at top level via setRawAttributes)
             'seller' => $this->when(isset($this->seller_listing), function () {

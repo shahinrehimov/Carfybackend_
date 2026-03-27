@@ -2,7 +2,7 @@
 
 namespace App\Http\Resources\App\Orders;
 
-use App\Http\Resources\App\ProductVariants\ProductVariantsResource;
+use App\Http\Resources\App\CompanyProductVariants\CompanyProductVariantListResource;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -14,35 +14,27 @@ use Illuminate\Http\Resources\Json\JsonResource;
  */
 class OrderItemsListResource extends JsonResource
 {
-    /**
-     * Transform the resource into an array.
-     *
-     * @param Request $request
-     * @return array
-     */
-
     public function toArray(Request $request): array
     {
+        $cpv = $this->whenLoaded('companyProductVariant', fn() => $this->companyProductVariant);
+        $pv  = $this->whenLoaded('productVariant', fn() => $this->productVariant);
+
+        // Make listing_hover_image cascade work without extra queries:
+        // CPV already has media loaded; attach the PV so Level 2/3 fallback works.
+        if ($cpv instanceof \App\Models\CompanyProductVariant &&
+            $pv  instanceof \App\Models\ProductVariant &&
+            !$cpv->relationLoaded('productVariant')
+        ) {
+            $cpv->setRelation('productVariant', $pv);
+        }
+
         return [
-            'id' => $this->id,
-            'product_variant' => ProductVariantsResource::make($this->whenLoaded('productVariant')),
-            'quantity' => $this->quantity,
-            'amount' => $this->amount,
+            'quantity'     => $this->quantity,
+            'amount'       => $this->amount,
             'amount_final' => $this->amount_final,
-            'seller' => $this->whenLoaded('companyProductVariant', function () {
-                $cpv = $this->companyProductVariant;
-                return [
-                    'uuid'         => $cpv->uuid,
-                    'seller_label' => $cpv->company?->getSellerLabel(),
-                    'city'         => $cpv->relationLoaded('city') && $cpv->city ? [
-                        'id'    => $cpv->city->id,
-                        'title' => $cpv->city->getLang('title'),
-                    ] : null,
-                    'images'       => $cpv->relationLoaded('media')
-                        ? $cpv->getMedia('company_product_variant_images')->map(fn($m) => ['url' => $m->getUrl()])
-                        : [],
-                ];
-            }),
+            'product'      => $cpv instanceof \App\Models\CompanyProductVariant
+                ? CompanyProductVariantListResource::make($cpv)
+                : null,
         ];
     }
 }

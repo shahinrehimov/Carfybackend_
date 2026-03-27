@@ -1087,54 +1087,43 @@ class ProductVariantRepository
 
     public function loadRelatedProducts(ProductVariant $productVariant): Collection
     {
-        $productVariant->loadMissing([
-            'product',
-            'product.mainCategory',
-        ]);
-
-        $relations = ProductService::instance()->getVariantRelationsForSite('', true);
-
-        $relatedVariants = ProductVariant::query()
-            ->when(count($relations['with']) > 0, fn($q) => $q->with($relations['with']))
-            ->when(count($relations['exists']) > 0, fn($q) => $q->withExists($relations['exists']))
-            ->when(count($relations['counts']) > 0, fn($q) => $q->withCount($relations['counts']))
-            ->where('id', '!=', $productVariant->id)
-            ->active()
-            ->whereHas('product', function ($query) {
-                $query->active();
-            })
+        $relatedCpvs = CompanyProductVariant::query()
+            ->where('company_product_variant.is_active', true)
+            ->where('company_product_variant.approval_status', ProductVariantApprovalStatusEnum::APPROVED->value)
+            ->whereHas('productVariant', fn(Builder $q) => $q
+                ->active()
+                ->where('id', '!=', $productVariant->id)
+                ->whereHas('product', fn(Builder $pq) => $pq->active())
+            )
             ->with([
-                'sets' => function ($query) {
-                    $query->active();
-                }
+                'media',
+                'city',
+                'city.translatable',
+                'company',
+                'productVariant',
+                'productVariant.media',
+                'productVariant.product',
+                'productVariant.product.translatable',
+                'productVariant.product.media',
+                'productVariant.product.mainCategory',
+                'productVariant.product.mainCategory.translatable',
+                'productVariant.product.mainCategory.parent',
+                'productVariant.product.mainCategory.parent.translatable',
+                'productVariant.options',
+                'productVariant.options.option',
+                'productVariant.options.option.translatable',
+                'productVariant.options.item',
+                'productVariant.options.item.translatable',
             ])
+            ->withAvg('productVariant.reviews', 'rating')
+            ->withCount('productVariant.reviews')
             ->limit(12)
             ->inRandomOrder()
             ->get();
 
-        // Batch load cheapest CPV for related products
-        if ($relatedVariants->isNotEmpty()) {
-            $variantIds = $relatedVariants->pluck('id')->unique()->values();
+        $this->attachWishlistAndBasketToCpvsCollection($relatedCpvs);
 
-            $cpvs = CompanyProductVariant::query()
-                ->whereIn('product_variant_id', $variantIds)
-                ->where('is_active', true)
-                ->where('approval_status', ProductVariantApprovalStatusEnum::APPROVED->value)
-                ->with(['city', 'city.translatable', 'media', 'company'])
-                ->orderBy('price')
-                ->get()
-                ->groupBy('product_variant_id')
-                ->map->first();
-
-            foreach ($relatedVariants as $variant) {
-                $cpv = $cpvs->get($variant->id);
-                if ($cpv) {
-                    $this->overrideWithSellerData($variant, $cpv);
-                }
-            }
-        }
-
-        return $relatedVariants;
+        return $relatedCpvs;
     }
 
     public function otherSellers(ProductVariant $productVariant, array $validated = []): LengthAwarePaginator
@@ -1349,15 +1338,14 @@ class ProductVariantRepository
     }
 
     /**
-     * Attach in_wishlist / in_basket flags directly to CPV items in a paginated listing.
+     * Attach in_wishlist / in_basket flags to a Collection of CPV models.
+     * Can be called from any context that builds a CPV list (listing, groups, related).
      */
-    private function attachWishlistAndBasketToCpvs(LengthAwarePaginator $paginator): void
+    public function attachWishlistAndBasketToCpvsCollection(Collection $cpvs): void
     {
         if (RouteService::instance()->getName() !== 'app') {
             return;
         }
-
-        $cpvs = collect($paginator->items());
 
         if ($cpvs->isEmpty()) {
             return;
@@ -1384,6 +1372,11 @@ class ProductVariantRepository
             $cpv->in_wishlist = $wishlistedIds->contains($cpv->id);
             $cpv->in_basket   = $basketedIds->contains($cpv->id);
         }
+    }
+
+    private function attachWishlistAndBasketToCpvs(LengthAwarePaginator $paginator): void
+    {
+        $this->attachWishlistAndBasketToCpvsCollection(collect($paginator->items()));
     }
 
     /**

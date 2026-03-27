@@ -2,6 +2,8 @@
 
 namespace App\Repositories;
 
+use App\Enum\ProductVariantApprovalStatusEnum;
+use App\Models\CompanyProductVariant;
 use App\Models\Group;
 use App\Models\ProductVariant;
 use App\Services\FileUpload;
@@ -302,16 +304,7 @@ class GroupRepository
             );
         }
 
-        $relations = ProductService::instance()->getVariantRelationsForSite('', true);
-
-        $group->products_data = $group->productVariants()
-            ->active()
-            ->when(count($relations['with']) > 0, fn($q) => $q->with($relations['with']))
-            ->when(count($relations['exists']) > 0, fn($q) => $q->withExists($relations['exists']))
-            ->when(count($relations['counts']) > 0, fn($q) => $q->withCount($relations['counts']))
-            ->limit($validated['limit'] ?? 10)
-            ->inRandomOrder()
-            ->get();
+        $group->products_data = $this->loadCpvsForGroup($group->id, $validated['limit'] ?? 10);
 
         return $group;
     }
@@ -353,18 +346,50 @@ class GroupRepository
                 );
             }
 
-            $relations = ProductService::instance()->getVariantRelationsForSite('', true);
-
-            $group->products_data = $group->productVariants()
-                ->active()
-                ->when(count($relations['with']) > 0, fn($q) => $q->with($relations['with']))
-                ->when(count($relations['exists']) > 0, fn($q) => $q->withExists($relations['exists']))
-                ->when(count($relations['counts']) > 0, fn($q) => $q->withCount($relations['counts']))
-                ->limit($groupData['limit'])
-                ->inRandomOrder()
-                ->get();
+            $group->products_data = $this->loadCpvsForGroup($group->id, $groupData['limit']);
         }
 
         return $groups;
+    }
+
+    private function loadCpvsForGroup(int $groupId, int $limit): Collection
+    {
+        $cpvs = CompanyProductVariant::query()
+            ->where('company_product_variant.is_active', true)
+            ->where('company_product_variant.approval_status', ProductVariantApprovalStatusEnum::APPROVED->value)
+            ->whereHas('productVariant', fn(Builder $q) => $q
+                ->active()
+                ->whereHas('product', fn(Builder $pq) => $pq->active())
+                ->whereHas('groupsRel', fn(Builder $gq) => $gq->where('group_products.group_id', $groupId))
+            )
+            ->with([
+                'media',
+                'city',
+                'city.translatable',
+                'company',
+                'productVariant',
+                'productVariant.media',
+                'productVariant.product',
+                'productVariant.product.translatable',
+                'productVariant.product.media',
+                'productVariant.product.mainCategory',
+                'productVariant.product.mainCategory.translatable',
+                'productVariant.product.mainCategory.parent',
+                'productVariant.product.mainCategory.parent.translatable',
+                'productVariant.options',
+                'productVariant.options.option',
+                'productVariant.options.option.translatable',
+                'productVariant.options.item',
+                'productVariant.options.item.translatable',
+            ])
+            ->withAvg('productVariant.reviews', 'rating')
+            ->withCount('productVariant.reviews')
+            ->limit($limit)
+            ->inRandomOrder()
+            ->get();
+
+        (new ProductVariantRepository())->attachWishlistAndBasketToCpvsCollection($cpvs);
+
+        return $cpvs;
     }
 }

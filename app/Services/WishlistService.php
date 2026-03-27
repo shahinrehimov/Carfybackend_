@@ -82,6 +82,8 @@ class WishlistService
             ->when(count($relations['with']) > 0, fn($q) => $q->with($relations['with']))
             ->when(count($relations['exists']) > 0, fn($q) => $q->withExists($relations['exists']))
             ->when(count($relations['counts']) > 0, fn($q) => $q->withCount($relations['counts']))
+            ->withAvg('reviews', 'rating')
+            ->withCount('reviews')
             ->paginate($validated['limit'] ?? 10);
 
         $this->batchLoadSellerData($products);

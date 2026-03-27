@@ -318,6 +318,8 @@ class BasketService
             ->when(count($relations['with']) > 0, fn($q) => $q->with($relations['with']))
             ->when(count($relations['exists']) > 0, fn($q) => $q->withExists($relations['exists']))
             ->when(count($relations['counts']) > 0, fn($q) => $q->withCount($relations['counts']))
+            ->withAvg('reviews', 'rating')
+            ->withCount('reviews')
             ->with([
                 'sets' => function ($query) use ($relations) {
                     $query->active();

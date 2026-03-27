@@ -2,7 +2,7 @@
 
 namespace App\Http\Resources\App\Groups;
 
-use App\Http\Resources\App\ProductVariants\ProductVariantsResource;
+use App\Http\Resources\App\CompanyProductVariants\CompanyProductVariantListResource;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -34,7 +34,7 @@ class GroupsResource extends JsonResource
                 return $this->image;
             }),
             'product_variants' => $this->when(!empty($this->products_data), function () {
-                return ProductVariantsResource::collection($this->products_data);
+                return CompanyProductVariantListResource::collection($this->products_data);
             }),
         ];
     }
