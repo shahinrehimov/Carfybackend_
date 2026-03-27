@@ -90,6 +90,7 @@ return static function () {
             });
 
             Route::group(['prefix' => 'wishlist'], static function () {
+                Route::get('ids', [WishlistController::class, 'ids']);
                 Route::get('load', [WishlistController::class, 'load']);
                 Route::post('add/{companyProductVariant}', [WishlistController::class, 'add']);
                 Route::post('remove/{companyProductVariant}', [WishlistController::class, 'remove']);

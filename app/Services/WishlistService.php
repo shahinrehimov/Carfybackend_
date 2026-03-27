@@ -72,6 +72,14 @@ class WishlistService
         });
     }
 
+    public function ids(): array
+    {
+        return UserService::instance()->getUserOrGuest()
+            ->wishlists()
+            ->pluck('company_product_variant_id')
+            ->toArray();
+    }
+
     public function load(array $validated): LengthAwarePaginator
     {
         $relations = ProductService::instance()->getVariantRelationsForSite('', true);

@@ -13,6 +13,13 @@ use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 
 class WishlistController extends Controller
 {
+    public function ids(): JsonResponse
+    {
+        return response()->json([
+            'data' => WishlistService::instance()->ids(),
+        ]);
+    }
+
     public function load(GeneralListRequest $request): AnonymousResourceCollection
     {
         return ProductVariantsInBasketResource::collection(WishlistService::instance()->load($request->validated()));

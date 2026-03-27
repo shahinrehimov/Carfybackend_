@@ -21016,6 +21016,52 @@
                 "description": "Remove a seller listing (CPV) from the wishlist.\nRoute param: companyProductVariantId (integer)."
               },
               "response": []
+            },
+            {
+              "name": "IDs",
+              "request": {
+                "auth": {
+                  "type": "noauth"
+                },
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Token",
+                    "value": "{{app_site_token}}",
+                    "type": "text"
+                  },
+                  {
+                    "key": "accept",
+                    "value": "application/json",
+                    "type": "text"
+                  },
+                  {
+                    "key": "identifier",
+                    "value": "{{guest_identifier}}",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{url}}/:provider/wishlist/ids",
+                  "host": [
+                    "{{url}}"
+                  ],
+                  "path": [
+                    ":provider",
+                    "wishlist",
+                    "ids"
+                  ],
+                  "variable": [
+                    {
+                      "key": "provider",
+                      "value": "site",
+                      "description": "site or app"
+                    }
+                  ]
+                },
+                "description": "Returns all company_product_variant_id values in the user's or guest's wishlist.\nUseful for quickly checking which CPVs are wishlisted without loading full card data.\nWorks for guests (identifier header) and authenticated users."
+              },
+              "response": []
             }
           ]
         },
