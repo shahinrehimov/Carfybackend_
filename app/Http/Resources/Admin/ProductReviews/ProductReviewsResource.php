@@ -30,16 +30,23 @@ class ProductReviewsResource extends JsonResource
     public function toArray(Request $request): array
     {
         return [
-            'id' => $this->id,
+            'id'              => $this->id,
             'product_variant' => ProductVariantsListResource::make($this->whenLoaded('productVariant')),
-            'user' => UsersListResource::make($this->whenLoaded('user')),
-            'rating' => $this->rating,
-            'name' => $this->name,
-            'surname' => $this->surname,
-            'review' => $this->review,
-            'created_at' => $this->created_at?->toDateTimeString(),
-            'is_approved' => $this->isApproved(),
-            'approved_at' => $this->approved_at?->toDateTimeString(),
+            'seller'          => $this->whenLoaded('companyProductVariant', function () {
+                $cpv = $this->companyProductVariant;
+                return [
+                    'uuid'  => $cpv->uuid,
+                    'label' => $cpv->company?->getSellerLabel(),
+                ];
+            }),
+            'user'         => UsersListResource::make($this->whenLoaded('user')),
+            'rating'       => $this->rating,
+            'name'         => $this->name,
+            'surname'      => $this->surname,
+            'review'       => $this->review,
+            'created_at'   => $this->created_at?->toDateTimeString(),
+            'is_approved'  => $this->isApproved(),
+            'approved_at'  => $this->approved_at?->toDateTimeString(),
             'approved_user' => AdminsListResource::make($this->whenLoaded('approvedUser')),
         ];
     }

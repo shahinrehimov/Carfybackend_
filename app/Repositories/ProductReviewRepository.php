@@ -22,6 +22,8 @@ class ProductReviewRepository
                 'productVariant',
                 'productVariant.product',
                 'productVariant.product.translatable',
+                'companyProductVariant',
+                'companyProductVariant.company',
                 'user',
                 'approvedUser',
             ])
@@ -77,6 +79,25 @@ class ProductReviewRepository
             ->approved()
             ->orderByDesc('id')
             ->paginate($validated['limit'] ?? 5);
+    }
+
+    public function loadForCompany(int $companyId, array $validated = []): LengthAwarePaginator
+    {
+        return ProductReview::query()
+            ->whereHas('companyProductVariant', fn($q) => $q->where('company_id', $companyId))
+            ->with([
+                'companyProductVariant',
+                'productVariant',
+                'productVariant.product',
+                'productVariant.product.translatable',
+                'user',
+            ])
+            ->when($validated['approved'] ?? null, function ($q) use ($validated) {
+                $validated['approved'] === 'yes' ? $q->approved() : $q->notApproved();
+            })
+            ->when($validated['rating'] ?? null, fn($q) => $q->where('rating', $validated['rating']))
+            ->orderByDesc('id')
+            ->paginate($validated['limit'] ?? 10);
     }
 
     public function store(CompanyProductVariant $cpv, array $validated): ProductReview

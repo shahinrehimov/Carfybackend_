@@ -15,6 +15,7 @@ use App\Http\Controllers\Sellers\Auth\LogoutController;
 use App\Http\Controllers\Sellers\Auth\RegisterController;
 use App\Http\Controllers\Sellers\CompanyProductVariantController;
 use App\Http\Controllers\Sellers\ProductController;
+use App\Http\Controllers\Sellers\ProductReviewController;
 use App\Http\Controllers\Sellers\ProductVariantController;
 use App\Http\Controllers\Sellers\ProfileController;
 use App\Http\Controllers\Sellers\SessionController;
@@ -102,6 +103,12 @@ Route::middleware(['general_access:sellers', RouteLogMiddleware::class])->prefix
                     Route::get('history', [CompanyProductVariantController::class, 'approvalStatusHistory']);
                     Route::post('resend', [CompanyProductVariantController::class, 'approvalStatusResend']);
                 });
+
+                Route::get('{companyProductVariant}/reviews/load', [ProductReviewController::class, 'load']);
+            });
+
+            Route::group(['prefix' => 'reviews'], static function () {
+                Route::get('load', [ProductReviewController::class, 'loadAll']);
             });
 
             Route::group(['prefix' => 'countries'], static function () {

@@ -27,6 +27,7 @@ class ProductReviewSearchRequest extends GeneralListRequest
                 'approved' => ['nullable', 'string', 'in:yes,no'],
                 'product_id' => ['nullable', 'integer'],
                 'product_variant_id' => ['nullable', 'integer'],
+                'company_product_variant_id' => ['nullable', 'integer'],
                 'user_id' => ['nullable', 'integer'],
                 'rating' => ['nullable', 'integer', 'min:1', 'max:5'],
                 'product' => ['nullable', 'string', 'max:500'],
