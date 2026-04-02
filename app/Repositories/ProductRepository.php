@@ -249,8 +249,6 @@ class ProductRepository
 
     public function show(Product $product): Product
     {
-        $this->checkCompanyForSellers($product);
-
         $product
             ->load([
                 'media',
