@@ -3,6 +3,8 @@
 namespace App\Http\Requests\App\Products;
 
 use App\Enum\ProductSearchStatusEnum;
+use App\Enum\ProductSortEnum;
+use App\Enum\SortTypeEnum;
 use App\Models\Brand;
 use App\Models\Category;
 use Illuminate\Foundation\Http\FormRequest;
@@ -28,8 +30,8 @@ class ProductSearchRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'sort' => ['filled', 'string', 'in:date,title,price'],
-            'sort_type' => ['filled', 'string', 'in:asc,desc'],
+            'sort' => ['filled', 'string', Rule::in(ProductSortEnum::cases())],
+            'sort_type' => ['filled', 'string', Rule::in(SortTypeEnum::cases())],
             'limit' => ['filled', 'integer', 'min:5', 'max:100'],
             'search' => ['nullable', 'string', 'max:500'],
 
