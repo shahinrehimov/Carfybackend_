@@ -10,7 +10,6 @@ use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\DB;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
-use Illuminate\Database\Query\JoinClause;
 
 class CarTypeRepository
 {
@@ -30,20 +29,11 @@ class CarTypeRepository
 
     public function list(): Collection
     {
-        $langId = LangService::instance()->getCurrentLangId();
-
         return CarType::query()
             ->active()
             ->with(['translatable'])
-            ->leftJoin('model_translations as mt', function (JoinClause $join) use ($langId) {
-                $join->on('mt.translatable_id', '=', 'car_types.id')
-                    ->where('mt.translatable_type', '=', CarType::class)
-                    ->where('mt.column', '=', 'title')
-                    ->where('mt.language_id', '=', $langId)
-                    ->whereNull('mt.deleted_at');
-            })
-            ->orderBy('mt.text')
-            ->select('car_types.*')
+            ->orderBy('sort')
+            ->orderBy('id')
             ->get();
     }
 

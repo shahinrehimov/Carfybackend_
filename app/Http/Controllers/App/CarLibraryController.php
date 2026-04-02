@@ -11,13 +11,13 @@ use App\Http\Resources\Admin\EngineVolumes\EngineVolumesListResource;
 use App\Http\Resources\Admin\FuelTypes\FuelTypesListResource;
 use App\Http\Resources\Admin\TransmissionTypes\TransmissionTypesListResource;
 use App\Models\Brand;
+use App\Models\CarColor;
+use App\Models\CarType;
 use App\Models\EngineVolume;
 use App\Models\FuelType;
 use App\Models\TransmissionType;
 use App\Repositories\BrandModelRepository;
 use App\Repositories\BrandRepository;
-use App\Repositories\CarColorRepository;
-use App\Repositories\CarTypeRepository;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 
@@ -64,7 +64,14 @@ class CarLibraryController extends Controller
 
     public function carTypes(): AnonymousResourceCollection
     {
-        return CarTypesListResource::collection((new CarTypeRepository())->list());
+        $items = CarType::query()
+            ->active()
+            ->with(['translatable'])
+            ->orderBy('sort')
+            ->orderBy('id')
+            ->get();
+
+        return CarTypesListResource::collection($items);
     }
 
     public function engineVolumes(): AnonymousResourceCollection
@@ -81,6 +88,13 @@ class CarLibraryController extends Controller
 
     public function carColors(): AnonymousResourceCollection
     {
-        return CarColorsListResource::collection((new CarColorRepository())->list());
+        $items = CarColor::query()
+            ->active()
+            ->with(['translatable'])
+            ->orderBy('sort')
+            ->orderBy('id')
+            ->get();
+
+        return CarColorsListResource::collection($items);
     }
 }
