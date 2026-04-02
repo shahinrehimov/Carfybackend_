@@ -173,6 +173,7 @@ return static function () {
                     Route::post('change-password', [ProfileController::class, 'changePassword'])->withoutMiddleware(RouteLogMiddleware::class);
                     Route::post('change-password/verify-otp', [ProfileController::class, 'changePasswordVerifyOtp'])->withoutMiddleware(RouteLogMiddleware::class);
                     Route::post('update', [ProfileController::class, 'updateProfile']);
+                    Route::delete('delete-account', [ProfileController::class, 'deleteAccount']);
 
                     Route::group(['prefix' => 'addresses'], static function () {
                         Route::get('form-data', [AddressController::class, 'formData']);

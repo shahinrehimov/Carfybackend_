@@ -104,6 +104,21 @@ class ProfileController extends Controller
         ]);
     }
 
+    public function deleteAccount(): JsonResponse
+    {
+        $user = UserService::instance()->getUser();
+
+        DB::transaction(static function () use ($user) {
+            $user->delete();
+        });
+
+        return response()->json(GeneralResource::make([
+            'message' => LangService::instance()
+                ->setDefault('Your account has been deleted successfully.')
+                ->getLang('account_deleted_successfully'),
+        ]));
+    }
+
     public function checkLoggedIn(): JsonResponse
     {
         return response()->json([
