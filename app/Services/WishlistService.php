@@ -116,17 +116,17 @@ class WishlistService
             ->unique()
             ->values();
 
-        if ($cpvIds->isEmpty()) {
-            return;
-        }
-
-        $cpvs = CompanyProductVariant::query()
-            ->with(['city', 'city.translatable', 'media', 'company'])
-            ->whereIn('id', $cpvIds)
-            ->get()
-            ->keyBy('id');
+        $cpvs = $cpvIds->isNotEmpty()
+            ? CompanyProductVariant::query()
+                ->with(['city', 'city.translatable', 'media', 'company'])
+                ->whereIn('id', $cpvIds)
+                ->get()
+                ->keyBy('id')
+            : collect();
 
         foreach ($productVariants as $productVariant) {
+            $productVariant->in_wishlist = true;
+
             $cpvId = $productVariant->pivot->company_product_variant_id ?? null;
 
             if ($cpvId && $cpvs->has($cpvId)) {
