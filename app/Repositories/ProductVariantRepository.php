@@ -14,6 +14,7 @@ use App\Models\CompanyProductVariant;
 use App\Models\ProductVariantRevision;
 use App\Models\SellerSearchToken;
 use App\Models\Wishlist;
+use App\Models\ProductReview;
 use App\Models\ProductVariantProductOption;
 use App\Services\AdminService;
 use App\Services\CompanyAdminService;
@@ -1298,6 +1299,16 @@ class ProductVariantRepository
             ->groupBy('product_variant_id')
             ->map->first();
 
+        // Batch load ratings (avg + count) for all CPVs in one query
+        $cpvIds = $cpvs->pluck('id');
+        $ratingsMap = ProductReview::query()
+            ->approved()
+            ->whereIn('company_product_variant_id', $cpvIds)
+            ->selectRaw('company_product_variant_id, ROUND(AVG(rating)::numeric, 1) as average, COUNT(*) as count')
+            ->groupBy('company_product_variant_id')
+            ->get()
+            ->keyBy('company_product_variant_id');
+
         // Override each variant's attrs with cheapest CPV data
         foreach ($variants as $variant) {
             /** @var CompanyProductVariant|null $cpv */
@@ -1316,6 +1327,12 @@ class ProductVariantRepository
                         'discount_end_at' => $cpv->getRawOriginal('discount_end_at'),
                     ]
                 ), true);
+
+                $ratingRow = $ratingsMap->get($cpv->id);
+                $variant->ratings = [
+                    'average' => $ratingRow ? (float) $ratingRow->average : 0,
+                    'count'   => $ratingRow ? (int) $ratingRow->count : 0,
+                ];
             }
         }
 

@@ -25,6 +25,7 @@ use Illuminate\Support\Str;
  * @property mixed $title
  * @property mixed $oem_code
  * @property mixed $seller_listing
+ * @property mixed $ratings
  * @method getLang(string $string)
  * @method isSet()
  */
@@ -63,6 +64,7 @@ class ProductVariantsResource extends JsonResource
             'in_wishlist' => $this->in_wishlist ?? false,
             'in_basket' => $this->in_basket ?? false,
             'basket_quantity' => $this->whenNotNull($this->basket_quantity),
+            'ratings' => $this->whenNotNull($this->ratings),
 
             'seller' => $this->seller_listing ? [
                 'uuid'         => $this->seller_listing->uuid,
