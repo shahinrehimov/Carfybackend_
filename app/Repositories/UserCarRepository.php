@@ -2,14 +2,11 @@
 
 namespace App\Repositories;
 
-use App\Models\Brand;
-use App\Models\BrandModel;
 use App\Models\User;
 use App\Models\UserCar;
 use App\Services\FileUpload;
 use App\Services\LangService;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
-use Illuminate\Database\Query\JoinClause;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\DB;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
@@ -18,8 +15,6 @@ class UserCarRepository
 {
     public function load(User $user, array $validated): LengthAwarePaginator
     {
-        $langId = LangService::instance()->getCurrentLangId();
-
         return $user->userCars()
             ->with([
                 'brandModel.brand.translatable',
@@ -31,25 +26,7 @@ class UserCarRepository
                 'carColor.translatable',
                 'media',
             ])
-            ->leftJoin('brand_models', 'brand_models.id', '=', 'user_cars.brand_model_id')
-            ->leftJoin('brands', 'brands.id', '=', 'brand_models.brand_id')
-            ->leftJoin('model_translations as mt_brand', function (JoinClause $join) use ($langId) {
-                $join->on('mt_brand.translatable_id', '=', 'brands.id')
-                    ->where('mt_brand.translatable_type', '=', Brand::class)
-                    ->where('mt_brand.column', '=', 'title')
-                    ->where('mt_brand.language_id', '=', $langId)
-                    ->whereNull('mt_brand.deleted_at');
-            })
-            ->leftJoin('model_translations as mt_model', function (JoinClause $join) use ($langId) {
-                $join->on('mt_model.translatable_id', '=', 'brand_models.id')
-                    ->where('mt_model.translatable_type', '=', BrandModel::class)
-                    ->where('mt_model.column', '=', 'title')
-                    ->where('mt_model.language_id', '=', $langId)
-                    ->whereNull('mt_model.deleted_at');
-            })
-            ->orderBy('mt_brand.text')
-            ->orderBy('mt_model.text')
-            ->select('user_cars.*')
+            ->orderByDesc('id')
             ->paginate($validated['limit'] ?? 10);
     }
 

@@ -8,6 +8,7 @@ use App\Services\LangService;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Database\Query\JoinClause;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\DB;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
@@ -37,13 +38,20 @@ class BrandModelRepository
 
     public function list(Brand $brand): Collection
     {
+        $langId = LangService::instance()->getCurrentLangId();
+
         return $brand->brandModels()
             ->active()
-            ->with([
-                'translatable',
-            ])
-            ->orderBy('sort')
-            ->orderBy('id')
+            ->with(['translatable'])
+            ->leftJoin('model_translations as mt', function (JoinClause $join) use ($langId) {
+                $join->on('mt.translatable_id', '=', 'brand_models.id')
+                    ->where('mt.translatable_type', '=', BrandModel::class)
+                    ->where('mt.column', '=', 'title')
+                    ->where('mt.language_id', '=', $langId)
+                    ->whereNull('mt.deleted_at');
+            })
+            ->orderBy('mt.text')
+            ->select('brand_models.*')
             ->get();
     }
 

@@ -3,11 +3,13 @@
 namespace App\Repositories;
 
 use App\Models\Brand;
+use App\Models\BrandModel;
 use App\Services\FileUpload;
 use App\Services\LangService;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Database\Query\JoinClause;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -39,23 +41,37 @@ class BrandRepository
 
     public function list(bool $withModels = false): Collection
     {
+        $langId = LangService::instance()->getCurrentLangId();
+
         return Brand::query()
             ->active()
-            ->with([
-                'translatable',
-            ])
-            ->when($withModels, function (Builder $builder) {
+            ->with(['translatable'])
+            ->when($withModels, function (Builder $builder) use ($langId) {
                 $builder->with([
-                    'brandModels' => function ($query) {
+                    'brandModels' => function ($query) use ($langId) {
                         $query->active();
-                        $query->orderBy('sort');
-                        $query->orderBy('id');
+                        $query->leftJoin('model_translations as mt_bm', function (JoinClause $join) use ($langId) {
+                            $join->on('mt_bm.translatable_id', '=', 'brand_models.id')
+                                ->where('mt_bm.translatable_type', '=', BrandModel::class)
+                                ->where('mt_bm.column', '=', 'title')
+                                ->where('mt_bm.language_id', '=', $langId)
+                                ->whereNull('mt_bm.deleted_at');
+                        });
+                        $query->orderBy('mt_bm.text');
+                        $query->select('brand_models.*');
                     },
                     'brandModels.translatable',
                 ]);
             })
-            ->orderBy('sort')
-            ->orderByDesc('id')
+            ->leftJoin('model_translations as mt', function (JoinClause $join) use ($langId) {
+                $join->on('mt.translatable_id', '=', 'brands.id')
+                    ->where('mt.translatable_type', '=', Brand::class)
+                    ->where('mt.column', '=', 'title')
+                    ->where('mt.language_id', '=', $langId)
+                    ->whereNull('mt.deleted_at');
+            })
+            ->orderBy('mt.text')
+            ->select('brands.*')
             ->get();
     }
 
