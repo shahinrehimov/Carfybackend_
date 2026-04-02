@@ -23,6 +23,7 @@ class UserCarRepository
                 'engineVolume.translatable',
                 'fuelType.translatable',
                 'transmissionType.translatable',
+                'carColor.translatable',
                 'media',
             ])
             ->orderByDesc('id')
@@ -40,6 +41,7 @@ class UserCarRepository
             'engineVolume.translatable',
             'fuelType.translatable',
             'transmissionType.translatable',
+            'carColor.translatable',
             'media',
         ]);
     }

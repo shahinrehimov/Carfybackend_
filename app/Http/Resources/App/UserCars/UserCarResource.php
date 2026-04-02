@@ -50,7 +50,15 @@ class UserCarResource extends JsonResource
                     'title' => $this->transmissionType->getLang('title'),
                 ] : null;
             }),
+            'car_color' => $this->whenLoaded('carColor', function () {
+                return $this->carColor ? [
+                    'id'       => $this->carColor->id,
+                    'title'    => $this->carColor->getLang('title'),
+                    'hex_code' => $this->carColor->hex_code,
+                ] : null;
+            }),
             'year'          => $this->year,
+            'seat_count'    => $this->seat_count,
             'engine_number' => $this->engine_number,
             'vin_number'    => $this->vin_number,
             'created_at'    => $this->created_at?->toDateTimeString(),

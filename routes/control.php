@@ -4,6 +4,7 @@ use App\Enum\RoleEnum;
 use App\Http\Controllers\Admin\AddressController;
 use App\Http\Controllers\Admin\AddressTypeController;
 use App\Http\Controllers\Admin\AdminController;
+use App\Http\Controllers\Admin\CarColorController;
 use App\Http\Controllers\Admin\CarTypeController;
 use App\Http\Controllers\Admin\EngineVolumeController;
 use App\Http\Controllers\Admin\FuelTypeController;
@@ -269,6 +270,18 @@ Route::middleware(['general_access:admin', RouteLogMiddleware::class])->prefix('
             Route::post('change-active-status/{carType}', [CarTypeController::class, 'changeActiveStatus']);
             Route::post('change-sorting/{carType}', [CarTypeController::class, 'changeSorting']);
             Route::post('change-sorting-multiple', [CarTypeController::class, 'changeSortingMultiple']);
+        });
+
+        Route::group(['prefix' => 'car-colors'], static function () {
+            Route::get('load', [CarColorController::class, 'index']);
+            Route::get('list', [CarColorController::class, 'list']);
+            Route::get('show/{carColor}', [CarColorController::class, 'show']);
+            Route::post('add', [CarColorController::class, 'store']);
+            Route::post('update/{carColor}', [CarColorController::class, 'update']);
+            Route::delete('delete/{carColor}', [CarColorController::class, 'destroy']);
+            Route::post('change-active-status/{carColor}', [CarColorController::class, 'changeActiveStatus']);
+            Route::post('change-sorting/{carColor}', [CarColorController::class, 'changeSorting']);
+            Route::post('change-sorting-multiple', [CarColorController::class, 'changeSortingMultiple']);
         });
 
         Route::group(['prefix' => 'engine-volumes'], static function () {

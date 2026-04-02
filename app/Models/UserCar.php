@@ -25,14 +25,17 @@ class UserCar extends Model implements HasMedia
         'engine_volume_id',
         'fuel_type_id',
         'transmission_type_id',
+        'car_color_id',
         'year',
+        'seat_count',
         'engine_number',
         'vin_number',
     ];
 
     protected $casts = [
-        'year'  => 'integer',
-        'photo' => ImageCast::class,
+        'year'       => 'integer',
+        'seat_count' => 'integer',
+        'photo'      => ImageCast::class,
     ];
 
     public function registerMediaCollections(): void
@@ -68,5 +71,10 @@ class UserCar extends Model implements HasMedia
     public function transmissionType(): BelongsTo
     {
         return $this->belongsTo(TransmissionType::class);
+    }
+
+    public function carColor(): BelongsTo
+    {
+        return $this->belongsTo(CarColor::class);
     }
 }

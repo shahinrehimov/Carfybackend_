@@ -56,6 +56,7 @@ return static function () {
                 Route::get('transmission-types', [CarLibraryController::class, 'transmissionTypes']);
                 Route::get('car-types', [CarLibraryController::class, 'carTypes']);
                 Route::get('engine-volumes', [CarLibraryController::class, 'engineVolumes']);
+                Route::get('car-colors', [CarLibraryController::class, 'carColors']);
             });
 
             Route::group(['prefix' => 'categories'], static function () {

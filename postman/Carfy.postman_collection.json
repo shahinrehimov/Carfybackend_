@@ -15149,6 +15149,510 @@
           ]
         },
         {
+          "name": "Car colors",
+          "item": [
+            {
+              "name": "Load",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{token}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Token",
+                    "value": "{{app_token}}",
+                    "type": "text"
+                  },
+                  {
+                    "key": "accept",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{url}}/control/car-colors/load",
+                  "host": [
+                    "{{url}}"
+                  ],
+                  "path": [
+                    "control",
+                    "car-colors",
+                    "load"
+                  ],
+                  "query": [
+                    {
+                      "key": "search",
+                      "value": "test"
+                    }
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "List",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{token}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Token",
+                    "value": "{{app_token}}",
+                    "type": "text"
+                  },
+                  {
+                    "key": "accept",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{url}}/control/car-colors/list",
+                  "host": [
+                    "{{url}}"
+                  ],
+                  "path": [
+                    "control",
+                    "car-colors",
+                    "list"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Show",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{token}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Token",
+                    "value": "{{app_token}}",
+                    "type": "text"
+                  },
+                  {
+                    "key": "accept",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{url}}/control/car-colors/show/::id",
+                  "host": [
+                    "{{url}}"
+                  ],
+                  "path": [
+                    "control",
+                    "car-colors",
+                    "show",
+                    "::id"
+                  ],
+                  "variable": [
+                    {
+                      "key": ":id",
+                      "value": "1"
+                    }
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Store",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{token}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Token",
+                    "value": "{{app_token}}",
+                    "type": "text"
+                  },
+                  {
+                    "key": "accept",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ],
+                "body": {
+                  "mode": "formdata",
+                  "formdata": [
+                    {
+                      "key": "translations[0][language_id]",
+                      "value": "1",
+                      "type": "text"
+                    },
+                    {
+                      "key": "translations[0][title]",
+                      "value": "Test az",
+                      "type": "text"
+                    },
+                    {
+                      "key": "translations[1][language_id]",
+                      "value": "2",
+                      "type": "text"
+                    },
+                    {
+                      "key": "translations[1][title]",
+                      "value": "Test en",
+                      "type": "text"
+                    },
+                    {
+                      "key": "translations[2][language_id]",
+                      "value": "3",
+                      "type": "text"
+                    },
+                    {
+                      "key": "translations[2][title]",
+                      "value": "Test ru",
+                      "type": "text"
+                    },
+                    {
+                      "key": "hex_code",
+                      "value": "#FF5733",
+                      "type": "text"
+                    }
+                  ]
+                },
+                "url": {
+                  "raw": "{{url}}/control/car-colors/add",
+                  "host": [
+                    "{{url}}"
+                  ],
+                  "path": [
+                    "control",
+                    "car-colors",
+                    "add"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Update",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{token}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Token",
+                    "value": "{{app_token}}",
+                    "type": "text"
+                  },
+                  {
+                    "key": "accept",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ],
+                "body": {
+                  "mode": "formdata",
+                  "formdata": [
+                    {
+                      "key": "translations[0][language_id]",
+                      "value": "1",
+                      "type": "text"
+                    },
+                    {
+                      "key": "translations[0][title]",
+                      "value": "Test az",
+                      "type": "text"
+                    },
+                    {
+                      "key": "translations[1][language_id]",
+                      "value": "2",
+                      "type": "text"
+                    },
+                    {
+                      "key": "translations[1][title]",
+                      "value": "Test en",
+                      "type": "text"
+                    },
+                    {
+                      "key": "translations[2][language_id]",
+                      "value": "3",
+                      "type": "text"
+                    },
+                    {
+                      "key": "translations[2][title]",
+                      "value": "Test ru",
+                      "type": "text"
+                    },
+                    {
+                      "key": "hex_code",
+                      "value": "#FF5733",
+                      "type": "text"
+                    }
+                  ]
+                },
+                "url": {
+                  "raw": "{{url}}/control/car-colors/update/::id",
+                  "host": [
+                    "{{url}}"
+                  ],
+                  "path": [
+                    "control",
+                    "car-colors",
+                    "update",
+                    "::id"
+                  ],
+                  "variable": [
+                    {
+                      "key": ":id",
+                      "value": "1"
+                    }
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Delete",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{token}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "DELETE",
+                "header": [
+                  {
+                    "key": "Token",
+                    "value": "{{app_token}}",
+                    "type": "text"
+                  },
+                  {
+                    "key": "accept",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{url}}/control/car-colors/delete/::id",
+                  "host": [
+                    "{{url}}"
+                  ],
+                  "path": [
+                    "control",
+                    "car-colors",
+                    "delete",
+                    "::id"
+                  ],
+                  "variable": [
+                    {
+                      "key": ":id",
+                      "value": "1"
+                    }
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Change active status",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{token}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Token",
+                    "value": "{{app_token}}",
+                    "type": "text"
+                  },
+                  {
+                    "key": "accept",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{url}}/control/car-colors/change-active-status/::id",
+                  "host": [
+                    "{{url}}"
+                  ],
+                  "path": [
+                    "control",
+                    "car-colors",
+                    "change-active-status",
+                    "::id"
+                  ],
+                  "variable": [
+                    {
+                      "key": ":id",
+                      "value": "1"
+                    }
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Change sorting",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{token}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Token",
+                    "value": "{{app_token}}",
+                    "type": "text"
+                  },
+                  {
+                    "key": "accept",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"sort\": 3\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{url}}/control/car-colors/change-sorting/::id",
+                  "host": [
+                    "{{url}}"
+                  ],
+                  "path": [
+                    "control",
+                    "car-colors",
+                    "change-sorting",
+                    "::id"
+                  ],
+                  "variable": [
+                    {
+                      "key": ":id",
+                      "value": "1"
+                    }
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Change sorting multiple",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{token}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Token",
+                    "value": "{{app_token}}",
+                    "type": "text"
+                  },
+                  {
+                    "key": "accept",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"items\": [\n        {\"id\": 1, \"sort\": 0},\n        {\"id\": 2, \"sort\": 1}\n    ]\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{url}}/control/car-colors/change-sorting-multiple",
+                  "host": [
+                    "{{url}}"
+                  ],
+                  "path": [
+                    "control",
+                    "car-colors",
+                    "change-sorting-multiple"
+                  ]
+                }
+              },
+              "response": []
+            }
+          ]
+        },
+        {
           "name": "Engine volumes",
           "item": [
             {
@@ -18592,6 +19096,43 @@
                 }
               },
               "response": []
+            },
+            {
+              "name": "Car colors",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Token",
+                    "value": "{{app_site_token}}",
+                    "type": "text"
+                  },
+                  {
+                    "key": "accept",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{url}}/:provider/car-libraries/car-colors",
+                  "host": [
+                    "{{url}}"
+                  ],
+                  "path": [
+                    ":provider",
+                    "car-libraries",
+                    "car-colors"
+                  ],
+                  "variable": [
+                    {
+                      "key": "provider",
+                      "value": "site",
+                      "description": "site or app"
+                    }
+                  ]
+                }
+              },
+              "response": []
             }
           ]
         },
@@ -19511,6 +20052,16 @@
                         {
                           "key": "vin_number",
                           "value": "WF0AXXWPMARZ34516",
+                          "type": "text"
+                        },
+                        {
+                          "key": "car_color_id",
+                          "value": "1",
+                          "type": "text"
+                        },
+                        {
+                          "key": "seat_count",
+                          "value": "5",
                           "type": "text"
                         },
                         {
