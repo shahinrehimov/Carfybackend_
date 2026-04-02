@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers\App;
 
+use App\Enum\ProductSortEnum;
+use App\Enum\SortTypeEnum;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\App\Products\ProductSearchRequest;
 use App\Http\Requests\App\Products\ProductShowRequest;
@@ -92,6 +94,8 @@ class ProductController extends Controller
                 'min' => $yearRange->min_year,
                 'max' => $yearRange->max_year,
             ],
+            'sort_options' => ProductSortEnum::getList(),
+            'sort_types'   => SortTypeEnum::getList(),
         ]);
     }
 
