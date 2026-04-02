@@ -2,6 +2,7 @@
 
 use App\Enum\RoleEnum;
 use App\Http\Controllers\Admin\AddressController;
+use App\Http\Controllers\Admin\ContactMessageController;
 use App\Http\Controllers\Admin\AddressTypeController;
 use App\Http\Controllers\Admin\AdminController;
 use App\Http\Controllers\Admin\CarColorController;
@@ -428,6 +429,14 @@ Route::middleware(['general_access:admin', RouteLogMiddleware::class])->prefix('
             Route::get('{productVariant}/revisions', [ProductVariantController::class, 'revisions']);
             Route::post('revisions/{revision}/approve', [ProductVariantController::class, 'approveRevision']);
             Route::post('revisions/{revision}/reject', [ProductVariantController::class, 'rejectRevision']);
+        });
+
+        Route::group(['prefix' => 'contact-messages'], static function () {
+            Route::get('load', [ContactMessageController::class, 'index']);
+            Route::get('show/{contactMessage}', [ContactMessageController::class, 'show']);
+            Route::post('mark-as-read/{contactMessage}', [ContactMessageController::class, 'markAsRead']);
+            Route::post('mark-as-unread/{contactMessage}', [ContactMessageController::class, 'markAsUnread']);
+            Route::delete('delete/{contactMessage}', [ContactMessageController::class, 'destroy']);
         });
     });
 });

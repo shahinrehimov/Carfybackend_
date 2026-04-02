@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\App\AddressController;
+use App\Http\Controllers\App\ContactController;
 use App\Http\Controllers\App\CarLibraryController;
 use App\Http\Controllers\App\UserCarController;
 use App\Http\Controllers\App\Auth\EmailVerificationController;
@@ -84,6 +85,10 @@ return static function () {
                 Route::get('list', [GroupController::class, 'list']);
                 Route::get('single/{groupName}/products/load', [GroupController::class, 'loadGroupWithProducts']);
                 Route::get('bulk/products/load', [GroupController::class, 'loadGroupsWithProducts']);
+            });
+
+            Route::group(['prefix' => 'contact'], static function () {
+                Route::post('send', [ContactController::class, 'store'])->middleware(['throttle:3,1']);
             });
 
             // guests
