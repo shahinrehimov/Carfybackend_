@@ -7,6 +7,7 @@ use App\Services\LangService;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Database\Query\JoinClause;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\DB;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
@@ -29,11 +30,20 @@ class CarColorRepository
 
     public function list(): Collection
     {
+        $langId = LangService::instance()->getCurrentLangId();
+
         return CarColor::query()
             ->active()
             ->with(['translatable'])
-            ->orderBy('sort')
-            ->orderBy('id')
+            ->leftJoin('model_translations as mt', function (JoinClause $join) use ($langId) {
+                $join->on('mt.translatable_id', '=', 'car_colors.id')
+                    ->where('mt.translatable_type', '=', CarColor::class)
+                    ->where('mt.column', '=', 'title')
+                    ->where('mt.language_id', '=', $langId)
+                    ->whereNull('mt.deleted_at');
+            })
+            ->orderBy('mt.text')
+            ->select('car_colors.*')
             ->get();
     }
 
