@@ -23,6 +23,7 @@ use App\Http\Controllers\App\ProductController;
 use App\Http\Controllers\App\ProductReviewController;
 use App\Http\Controllers\App\ProfileController;
 use App\Http\Controllers\App\ServicesController;
+use App\Http\Controllers\App\PageController;
 use App\Http\Controllers\App\SliderController;
 use App\Http\Controllers\App\WishlistController;
 use App\Http\Controllers\LocalTranslationsController;
@@ -106,6 +107,11 @@ return static function () {
             Route::group(['prefix' => 'sliders'], static function () {
                 Route::get('load/{type}', [SliderController::class, 'loadByType']);
                 Route::get('show/{slug}', [SliderController::class, 'getBySlug']);
+            });
+
+            Route::group(['prefix' => 'pages'], static function () {
+                Route::get('list', [PageController::class, 'list']);
+                Route::get('show/{slug}', [PageController::class, 'show']);
             });
 
             Route::group(['prefix' => 'basket'], static function () {

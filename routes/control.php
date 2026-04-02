@@ -3,6 +3,7 @@
 use App\Enum\RoleEnum;
 use App\Http\Controllers\Admin\AddressController;
 use App\Http\Controllers\Admin\ContactMessageController;
+use App\Http\Controllers\Admin\PageController;
 use App\Http\Controllers\Admin\AddressTypeController;
 use App\Http\Controllers\Admin\AdminController;
 use App\Http\Controllers\Admin\CarColorController;
@@ -437,6 +438,19 @@ Route::middleware(['general_access:admin', RouteLogMiddleware::class])->prefix('
             Route::post('mark-as-read/{contactMessage}', [ContactMessageController::class, 'markAsRead']);
             Route::post('mark-as-unread/{contactMessage}', [ContactMessageController::class, 'markAsUnread']);
             Route::delete('delete/{contactMessage}', [ContactMessageController::class, 'destroy']);
+        });
+
+        Route::group(['prefix' => 'pages'], static function () {
+            Route::get('load', [PageController::class, 'index']);
+            Route::get('list', [PageController::class, 'list']);
+            Route::get('show/{page}', [PageController::class, 'show']);
+            Route::post('add', [PageController::class, 'store']);
+            Route::post('update/{page}', [PageController::class, 'update']);
+            Route::delete('delete/{page}', [PageController::class, 'destroy']);
+            Route::delete('images/delete/{page}/{mediaId}', [PageController::class, 'destroyImage']);
+            Route::post('change-active-status/{page}', [PageController::class, 'changeActiveStatus']);
+            Route::post('change-sorting/{page}', [PageController::class, 'changeSorting']);
+            Route::post('change-sorting-multiple', [PageController::class, 'changeSortingMultiple']);
         });
     });
 });
