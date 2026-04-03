@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Models\CarColor;
 use App\Models\CarType;
 use App\Models\EngineVolume;
 use App\Models\FuelType;

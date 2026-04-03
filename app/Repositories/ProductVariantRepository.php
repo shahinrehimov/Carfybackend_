@@ -313,6 +313,7 @@ class ProductVariantRepository
             ->paginate($validated['limit'] ?? 10);
 
         $this->attachWishlistAndBasketToCpvs($result);
+        $this->attachRatingsToCpvs($result);
 
         return $result;
     }
@@ -1405,6 +1406,33 @@ class ProductVariantRepository
     private function attachWishlistAndBasketToCpvs(LengthAwarePaginator $paginator): void
     {
         $this->attachWishlistAndBasketToCpvsCollection(collect($paginator->items()));
+    }
+
+    private function attachRatingsToCpvs(LengthAwarePaginator $paginator): void
+    {
+        $cpvs = collect($paginator->items());
+
+        if ($cpvs->isEmpty()) {
+            return;
+        }
+
+        $cpvIds = $cpvs->pluck('id');
+
+        $ratingsMap = ProductReview::query()
+            ->approved()
+            ->whereIn('company_product_variant_id', $cpvIds)
+            ->selectRaw('company_product_variant_id, ROUND(AVG(rating)::numeric, 1) as average, COUNT(*) as count')
+            ->groupBy('company_product_variant_id')
+            ->get()
+            ->keyBy('company_product_variant_id');
+
+        foreach ($cpvs as $cpv) {
+            $row = $ratingsMap->get($cpv->id);
+            $cpv->ratings = [
+                'average' => $row ? (float) $row->average : 0,
+                'count'   => $row ? (int) $row->count : 0,
+            ];
+        }
     }
 
     private function calculateCpvRating(CompanyProductVariant $cpv): array

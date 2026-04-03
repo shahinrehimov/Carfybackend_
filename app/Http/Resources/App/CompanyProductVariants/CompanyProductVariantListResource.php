@@ -21,6 +21,7 @@ use Illuminate\Support\Str;
  * @property mixed       $company
  * @property mixed       $city
  * @property mixed       $productVariant
+ * @property mixed       $ratings
  */
 class CompanyProductVariantListResource extends JsonResource
 {
@@ -48,6 +49,7 @@ class CompanyProductVariantListResource extends JsonResource
             'discount'    => $this->discount,
             'in_wishlist' => $this->in_wishlist ?? false,
             'in_basket'   => $this->in_basket ?? false,
+            'ratings'     => $this->whenNotNull($this->ratings),
 
             'seller' => [
                 'uuid'       => $this->uuid,
