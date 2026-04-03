@@ -20906,6 +20906,16 @@
                           "type": "text"
                         },
                         {
+                          "key": "car_color_id",
+                          "value": "1",
+                          "type": "text"
+                        },
+                        {
+                          "key": "seat_count",
+                          "value": "5",
+                          "type": "text"
+                        },
+                        {
                           "key": "photo",
                           "value": "",
                           "type": "file",
@@ -21711,14 +21721,7 @@
                   "name": "Store (submit review)",
                   "request": {
                     "auth": {
-                      "type": "bearer",
-                      "bearer": [
-                        {
-                          "key": "token",
-                          "value": "{{login_token_site}}",
-                          "type": "string"
-                        }
-                      ]
+                      "type": "noauth"
                     },
                     "method": "POST",
                     "header": [
@@ -21731,36 +21734,35 @@
                         "key": "accept",
                         "value": "application/json",
                         "type": "text"
-                      },
-                      {
-                        "key": "identifier",
-                        "value": "{{guest_identifier}}",
-                        "type": "text"
                       }
                     ],
                     "url": {
-                      "raw": "{{url}}/site/products/:companyProductVariantId/reviews/store",
+                      "raw": "{{url}}/:provider/products/:uuid/reviews/store",
                       "host": [
                         "{{url}}"
                       ],
                       "path": [
-                        "site",
+                        ":provider",
                         "products",
-                        ":companyProductVariantId",
+                        ":uuid",
                         "reviews",
                         "store"
                       ],
                       "variable": [
                         {
-                          "key": "companyProductVariantId",
-                          "value": "1",
-                          "description": "CompanyProductVariant id (integer) — the specific seller listing being reviewed, NOT the product variant id"
+                          "key": "provider",
+                          "value": "site",
+                          "description": "site or app"
+                        },
+                        {
+                          "key": "uuid",
+                          "value": "CPV_UUID_HERE"
                         }
                       ]
                     },
                     "body": {
                       "mode": "raw",
-                      "raw": "{\n    \"name\": \"Sahib\",\n    \"surname\": \"Fermanli\",\n    \"email\": \"sahib@fermanli.az\",\n    \"rating\": 5,\n    \"review\": \"Excellent product and very fast delivery!\"\n}",
+                      "raw": "{\n    \"rating\": 5,\n    \"name\": \"Əli\",\n    \"surname\": \"Əliyev\",\n    \"email\": \"ali@example.com\",\n    \"review\": \"Məhsul çox yaxşıdır, tövsiyyə edirəm.\"\n}",
                       "options": {
                         "raw": {
                           "language": "json"
@@ -21795,43 +21797,29 @@
                         "key": "accept",
                         "value": "application/json",
                         "type": "text"
-                      },
-                      {
-                        "key": "identifier",
-                        "value": "{{guest_identifier}}",
-                        "type": "text"
                       }
                     ],
                     "url": {
-                      "raw": "{{url}}/site/products/:companyProductVariantId/reviews/load",
+                      "raw": "{{url}}/:provider/products/:uuid/reviews/load",
                       "host": [
                         "{{url}}"
                       ],
                       "path": [
-                        "site",
+                        ":provider",
                         "products",
-                        ":companyProductVariantId",
+                        ":uuid",
                         "reviews",
                         "load"
                       ],
-                      "query": [
-                        {
-                          "key": "page",
-                          "value": "1",
-                          "disabled": false
-                        },
-                        {
-                          "key": "limit",
-                          "value": "5",
-                          "disabled": true,
-                          "description": "default 5"
-                        }
-                      ],
                       "variable": [
                         {
-                          "key": "companyProductVariantId",
-                          "value": "1",
-                          "description": "CompanyProductVariant id (integer) — the specific seller listing"
+                          "key": "provider",
+                          "value": "site",
+                          "description": "site or app"
+                        },
+                        {
+                          "key": "uuid",
+                          "value": "CPV_UUID_HERE"
                         }
                       ]
                     },
