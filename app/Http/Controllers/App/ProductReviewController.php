@@ -21,7 +21,7 @@ class ProductReviewController extends Controller
 
     public function store(ProductReviewStoreRequest $request, CompanyProductVariant $companyProductVariant): ProductReviewsResource
     {
-        return ProductReviewsResource::make($this->repo->store($companyProductVariant, $request->validated()));
+        return ProductReviewsResource::make($this->repo->store($companyProductVariant, $request, $request->validated()));
     }
 
     public function load(GeneralListRequest $request, CompanyProductVariant $companyProductVariant): AnonymousResourceCollection

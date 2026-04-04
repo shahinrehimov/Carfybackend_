@@ -45,9 +45,12 @@ class ProductReviewsResource extends JsonResource
             'surname'      => $this->surname,
             'review'       => $this->review,
             'created_at'   => $this->created_at?->toDateTimeString(),
-            'is_approved'  => $this->isApproved(),
-            'approved_at'  => $this->approved_at?->toDateTimeString(),
+            'is_approved'   => $this->isApproved(),
+            'approved_at'   => $this->approved_at?->toDateTimeString(),
             'approved_user' => AdminsListResource::make($this->whenLoaded('approvedUser')),
+            'images'        => $this->whenLoaded('media', function () {
+                return $this->images;
+            }),
         ];
     }
 }

@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Casts\ProductReviews\ImagesCast;
 use App\Traits\ActionBy;
 use App\Traits\ActionUser;
 use Illuminate\Database\Eloquent\Builder;
@@ -9,14 +10,16 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use App\Models\CompanyProductVariant;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Spatie\MediaLibrary\HasMedia;
+use Spatie\MediaLibrary\InteractsWithMedia;
 
 /**
  * @property mixed $approved_at
  * @property mixed|null $approved_by
  */
-class ProductReview extends Model
+class ProductReview extends Model implements HasMedia
 {
-    use SoftDeletes, ActionBy, ActionUser;
+    use SoftDeletes, ActionBy, ActionUser, InteractsWithMedia;
 
     protected $fillable = [
         'product_id',
@@ -33,8 +36,9 @@ class ProductReview extends Model
     ];
 
     protected $casts = [
-        'rating' => 'integer',
+        'rating'      => 'integer',
         'approved_at' => 'datetime',
+        'images'      => ImagesCast::class,
     ];
 
     public function scopeApproved(Builder $builder): void

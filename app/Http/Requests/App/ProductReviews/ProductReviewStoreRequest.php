@@ -24,11 +24,13 @@ class ProductReviewStoreRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'rating' => ['required', 'integer', 'min:1', 'max:5'],
-            'name' => ['required', 'string', 'max:150'],
-            'surname' => ['required', 'string', 'max:150'],
-            'email' => ['required', 'email', 'max:150'],
-            'review' => ['required', 'string', 'max:5000'],
+            'rating'    => ['required', 'integer', 'min:1', 'max:5'],
+            'name'      => ['required', 'string', 'max:150'],
+            'surname'   => ['required', 'string', 'max:150'],
+            'email'     => ['required', 'email', 'max:150'],
+            'review'    => ['required', 'string', 'max:5000'],
+            'images'    => ['nullable', 'array', 'max:10'],
+            'images.*'  => ['image', 'mimes:jpeg,png,jpg,webp', 'max:5120'],
         ];
     }
 }

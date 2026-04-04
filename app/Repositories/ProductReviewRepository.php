@@ -6,11 +6,13 @@ use App\Models\CompanyProductVariant;
 use App\Models\ProductReview;
 use App\Models\ProductVariant;
 use App\Services\AdminService;
+use App\Services\FileUpload;
 use App\Services\ProductService;
 use App\Services\UserService;
 use Carbon\Carbon;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\DB;
 
 class ProductReviewRepository
@@ -26,6 +28,7 @@ class ProductReviewRepository
                 'companyProductVariant.company',
                 'user',
                 'approvedUser',
+                'media',
             ])
             ->when($validated['approved'] ?? null, function ($builder) use ($validated) {
                 if ($validated['approved'] === 'yes') {
@@ -76,6 +79,7 @@ class ProductReviewRepository
     public function loadForSite(CompanyProductVariant $cpv, array $validated = []): LengthAwarePaginator
     {
         return $cpv->reviews()
+            ->with('media')
             ->approved()
             ->orderByDesc('id')
             ->paginate($validated['limit'] ?? 5);
@@ -91,6 +95,7 @@ class ProductReviewRepository
                 'productVariant.product',
                 'productVariant.product.translatable',
                 'user',
+                'media',
             ])
             ->when($validated['approved'] ?? null, function ($q) use ($validated) {
                 $validated['approved'] === 'yes' ? $q->approved() : $q->notApproved();
@@ -100,7 +105,7 @@ class ProductReviewRepository
             ->paginate($validated['limit'] ?? 10);
     }
 
-    public function store(CompanyProductVariant $cpv, array $validated): ProductReview
+    public function store(CompanyProductVariant $cpv, FormRequest $request, array $validated): ProductReview
     {
         $cpv->loadMissing(['productVariant']);
         $productVariant = ProductService::instance()->setProductVariant($cpv->productVariant)->getActiveProductVariant();
@@ -113,8 +118,10 @@ class ProductReviewRepository
         $validated['product_variant_id']           = $productVariant->id;
         $validated['company_product_variant_id']   = $cpv->id;
 
-        return DB::transaction(static function () use ($cpv, $validated) {
-            return $cpv->reviews()->create($validated);
+        return DB::transaction(static function () use ($cpv, $request, $validated) {
+            $review = $cpv->reviews()->create($validated);
+            FileUpload::multipleUpload($request, 'images', 'product_review_images', $review);
+            return $review;
         });
     }
 

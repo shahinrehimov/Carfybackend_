@@ -23739,6 +23739,136 @@
           ]
         },
         {
+          "name": "Product reviews",
+          "item": [
+            {
+              "name": "Load",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Token",
+                    "value": "{{app_site_token}}"
+                  },
+                  {
+                    "key": "accept",
+                    "value": "application/json"
+                  }
+                ],
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{login_token_site}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "url": {
+                  "raw": "{{url}}/app/products/:cpv_uuid/reviews/load",
+                  "host": [
+                    "{{url}}"
+                  ],
+                  "path": [
+                    "app",
+                    "products",
+                    ":cpv_uuid",
+                    "reviews",
+                    "load"
+                  ],
+                  "variable": [
+                    {
+                      "key": "cpv_uuid",
+                      "value": ""
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Store",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Token",
+                    "value": "{{app_site_token}}"
+                  },
+                  {
+                    "key": "accept",
+                    "value": "application/json"
+                  }
+                ],
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{login_token_site}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "body": {
+                  "mode": "formdata",
+                  "formdata": [
+                    {
+                      "key": "rating",
+                      "value": "5",
+                      "type": "text"
+                    },
+                    {
+                      "key": "name",
+                      "value": "John",
+                      "type": "text"
+                    },
+                    {
+                      "key": "surname",
+                      "value": "Doe",
+                      "type": "text"
+                    },
+                    {
+                      "key": "email",
+                      "value": "john@example.com",
+                      "type": "text"
+                    },
+                    {
+                      "key": "review",
+                      "value": "Great product!",
+                      "type": "text"
+                    },
+                    {
+                      "key": "images[]",
+                      "type": "file",
+                      "src": []
+                    }
+                  ]
+                },
+                "url": {
+                  "raw": "{{url}}/app/products/:cpv_uuid/reviews/store",
+                  "host": [
+                    "{{url}}"
+                  ],
+                  "path": [
+                    "app",
+                    "products",
+                    ":cpv_uuid",
+                    "reviews",
+                    "store"
+                  ],
+                  "variable": [
+                    {
+                      "key": "cpv_uuid",
+                      "value": ""
+                    }
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
           "name": "Dashboard",
           "item": [
             {

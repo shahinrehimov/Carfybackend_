@@ -25,12 +25,15 @@ class ProductReviewsResource extends JsonResource
     public function toArray(Request $request): array
     {
         return [
-            'id' => $this->id,
-            'rating' => $this->rating,
-            'name' => $this->name,
+            'id'      => $this->id,
+            'rating'  => $this->rating,
+            'name'    => $this->name,
             'surname' => $this->surname,
-            'review' => $this->review,
-            'date' => $this->created_at?->format('d.m.Y'),
+            'review'  => $this->review,
+            'date'    => $this->created_at?->format('d.m.Y'),
+            'images'  => $this->whenLoaded('media', function () {
+                return $this->images['urls'] ?? [];
+            }),
         ];
     }
 }

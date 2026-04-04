@@ -30,6 +30,9 @@ class ProductReviewsResource extends JsonResource
             'created_at'     => $this->created_at?->toDateTimeString(),
             'is_approved'    => $this->isApproved(),
             'approved_at'    => $this->approved_at?->toDateTimeString(),
+            'images'         => $this->whenLoaded('media', function () {
+                return $this->images;
+            }),
         ];
     }
 }
