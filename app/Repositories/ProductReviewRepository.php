@@ -118,11 +118,15 @@ class ProductReviewRepository
         $validated['product_variant_id']           = $productVariant->id;
         $validated['company_product_variant_id']   = $cpv->id;
 
-        return DB::transaction(static function () use ($cpv, $request, $validated) {
+        $review = DB::transaction(static function () use ($cpv, $request, $validated) {
             $review = $cpv->reviews()->create($validated);
             FileUpload::multipleUpload($request, 'images', 'product_review_images', $review);
             return $review;
         });
+
+        $review->load('media');
+
+        return $review;
     }
 
     public function destroy(ProductReview $productReview): void

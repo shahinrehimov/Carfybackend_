@@ -2,9 +2,7 @@
   "info": {
     "_postman_id": "b556f304-f057-43da-856c-ba73020f9138",
     "name": "Carfy",
-    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-    "_exporter_id": "50588827",
-    "_collection_link": "https://go.postman.co/collection/50588827-b556f304-f057-43da-856c-ba73020f9138?source=collection_link"
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "item": [
     {
@@ -21761,13 +21759,46 @@
                       ]
                     },
                     "body": {
-                      "mode": "raw",
-                      "raw": "{\n    \"rating\": 5,\n    \"name\": \"Əli\",\n    \"surname\": \"Əliyev\",\n    \"email\": \"ali@example.com\",\n    \"review\": \"Məhsul çox yaxşıdır, tövsiyyə edirəm.\"\n}",
-                      "options": {
-                        "raw": {
-                          "language": "json"
+                      "mode": "formdata",
+                      "formdata": [
+                        {
+                          "key": "rating",
+                          "value": "5",
+                          "type": "text"
+                        },
+                        {
+                          "key": "name",
+                          "value": "Əli",
+                          "type": "text"
+                        },
+                        {
+                          "key": "surname",
+                          "value": "Əliyev",
+                          "type": "text"
+                        },
+                        {
+                          "key": "email",
+                          "value": "ali@example.com",
+                          "type": "text"
+                        },
+                        {
+                          "key": "review",
+                          "value": "Məhsul çox yaxşıdır, tövsiyyə edirəm.",
+                          "type": "text"
+                        },
+                        {
+                          "key": "images[]",
+                          "value": "",
+                          "type": "file",
+                          "src": ""
+                        },
+                        {
+                          "key": "images[]",
+                          "value": "",
+                          "type": "file",
+                          "src": ""
                         }
-                      }
+                      ]
                     },
                     "description": "Submit a review for a specific seller listing (CompanyProductVariant).\n\nIMPORTANT: The route param is the CPV id (integer), NOT the product variant id.\nReviews are seller-specific — the same product variant sold by two different sellers has separate review lists.\n\nThrottled to 2 requests per minute.\nAuthentication is optional — guests can submit reviews too.\n\nRequired fields: name, surname, email, rating (1-5), review\nThe review is NOT visible publicly until an admin approves it."
                   },
@@ -23735,136 +23766,6 @@
                 }
               },
               "response": []
-            }
-          ]
-        },
-        {
-          "name": "Product reviews",
-          "item": [
-            {
-              "name": "Load",
-              "request": {
-                "method": "GET",
-                "header": [
-                  {
-                    "key": "Token",
-                    "value": "{{app_site_token}}"
-                  },
-                  {
-                    "key": "accept",
-                    "value": "application/json"
-                  }
-                ],
-                "auth": {
-                  "type": "bearer",
-                  "bearer": [
-                    {
-                      "key": "token",
-                      "value": "{{login_token_site}}",
-                      "type": "string"
-                    }
-                  ]
-                },
-                "url": {
-                  "raw": "{{url}}/app/products/:cpv_uuid/reviews/load",
-                  "host": [
-                    "{{url}}"
-                  ],
-                  "path": [
-                    "app",
-                    "products",
-                    ":cpv_uuid",
-                    "reviews",
-                    "load"
-                  ],
-                  "variable": [
-                    {
-                      "key": "cpv_uuid",
-                      "value": ""
-                    }
-                  ]
-                }
-              }
-            },
-            {
-              "name": "Store",
-              "request": {
-                "method": "POST",
-                "header": [
-                  {
-                    "key": "Token",
-                    "value": "{{app_site_token}}"
-                  },
-                  {
-                    "key": "accept",
-                    "value": "application/json"
-                  }
-                ],
-                "auth": {
-                  "type": "bearer",
-                  "bearer": [
-                    {
-                      "key": "token",
-                      "value": "{{login_token_site}}",
-                      "type": "string"
-                    }
-                  ]
-                },
-                "body": {
-                  "mode": "formdata",
-                  "formdata": [
-                    {
-                      "key": "rating",
-                      "value": "5",
-                      "type": "text"
-                    },
-                    {
-                      "key": "name",
-                      "value": "John",
-                      "type": "text"
-                    },
-                    {
-                      "key": "surname",
-                      "value": "Doe",
-                      "type": "text"
-                    },
-                    {
-                      "key": "email",
-                      "value": "john@example.com",
-                      "type": "text"
-                    },
-                    {
-                      "key": "review",
-                      "value": "Great product!",
-                      "type": "text"
-                    },
-                    {
-                      "key": "images[]",
-                      "type": "file",
-                      "src": []
-                    }
-                  ]
-                },
-                "url": {
-                  "raw": "{{url}}/app/products/:cpv_uuid/reviews/store",
-                  "host": [
-                    "{{url}}"
-                  ],
-                  "path": [
-                    "app",
-                    "products",
-                    ":cpv_uuid",
-                    "reviews",
-                    "store"
-                  ],
-                  "variable": [
-                    {
-                      "key": "cpv_uuid",
-                      "value": ""
-                    }
-                  ]
-                }
-              }
             }
           ]
         },
