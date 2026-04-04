@@ -1468,6 +1468,7 @@ class ProductVariantRepository
         $productVariant->setRawAttributes(array_merge(
             $productVariant->getAttributes(),
             [
+                'uuid' => $cpv->getRawOriginal('uuid'),
                 'stock' => $cpv->getRawOriginal('stock'),
                 'price' => $cpv->getRawOriginal('price'),
                 'discount_type' => $cpv->getRawOriginal('discount_type'),
