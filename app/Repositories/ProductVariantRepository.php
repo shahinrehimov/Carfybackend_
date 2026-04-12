@@ -1031,7 +1031,7 @@ class ProductVariantRepository
         }
 
         // CPV-level in_wishlist / in_basket for detail page
-        if ($sellerListing && RouteService::instance()->getName() === 'app') {
+        if ($sellerListing && in_array(RouteService::instance()->getName(), ['app', 'site'])) {
             $user = UserService::instance()->getUserOrGuest();
 
             $productVariant->in_wishlist = Wishlist::query()
@@ -1338,7 +1338,7 @@ class ProductVariantRepository
         }
 
         // CPV-level in_wishlist / in_basket check
-        if (RouteService::instance()->getName() === 'app') {
+        if (in_array(RouteService::instance()->getName(), ['app', 'site'])) {
             $user = UserService::instance()->getUserOrGuest();
             $cpvIds = $variants->map(fn($v) => $v->seller_listing?->id)->filter()->unique()->values();
 
@@ -1372,7 +1372,7 @@ class ProductVariantRepository
      */
     public function attachWishlistAndBasketToCpvsCollection(SupportCollection $cpvs): void
     {
-        if (RouteService::instance()->getName() !== 'app') {
+        if (!in_array(RouteService::instance()->getName(), ['app', 'site'])) {
             return;
         }
 
