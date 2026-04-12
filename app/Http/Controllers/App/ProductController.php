@@ -9,11 +9,13 @@ use App\Http\Requests\App\Products\ProductSearchRequest;
 use App\Http\Requests\App\Products\ProductShowRequest;
 use App\Http\Requests\GeneralListRequest;
 use App\Http\Resources\Admin\Brands\BrandsListResource;
+use App\Http\Resources\Admin\CarColors\CarColorsListResource;
 use App\Http\Resources\Admin\Categories\CategoriesListResource;
 use App\Http\Resources\Admin\Cities\CitiesListResource;
 use App\Http\Resources\App\CompanyProductVariants\CompanyProductVariantListResource;
 use App\Http\Resources\App\ProductVariants\ProductVariantResource;
 use App\Http\Resources\App\ProductVariants\ProductVariantsResource;
+use App\Models\CarColor;
 use App\Models\CompanyProductVariant;
 use App\Models\ProductOption;
 use App\Models\ProductVariant;
@@ -54,13 +56,12 @@ class ProductController extends Controller
             ->orderBy('id')
             ->get();
 
-        $colorItems = ProductOption::query()
-            ->where('name', 'color')
-            ->with(['items' => fn($q) => $q->active()->with('translatable')->orderBy('sort')])
-            ->first()
-            ?->items
-            ?->map(fn($item) => ['slug' => $item->slug, 'title' => $item->getLang('title')])
-            ?? [];
+        $carColors = CarColor::query()
+            ->active()
+            ->with(['translatable'])
+            ->orderBy('sort')
+            ->orderBy('id')
+            ->get();
 
         $conditionItems = ProductOption::query()
             ->where('name', 'condition')
@@ -88,7 +89,7 @@ class ProductController extends Controller
                 'min' => round(($priceRange->min_price ?? 0) / 100, 2),
                 'max' => round(($priceRange->max_price ?? 0) / 100, 2),
             ],
-            'colors'       => $colorItems,
+            'colors'       => CarColorsListResource::collection($carColors),
             'conditions'   => $conditionItems,
             'year_range'   => [
                 'min' => $yearRange->min_year,
