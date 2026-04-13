@@ -281,6 +281,7 @@ class ProductVariantRepository
             ))
             ->when(isset($validated['min_year']), fn(Builder $b) => $b->whereHas('productVariant', fn(Builder $q) => $q->where('year', '>=', $validated['min_year'])))
             ->when(isset($validated['max_year']), fn(Builder $b) => $b->whereHas('productVariant', fn(Builder $q) => $q->where('year', '<=', $validated['max_year'])))
+            ->when(!empty($validated['models']), fn(Builder $b) => $b->whereHas('productVariant.brandModels', fn(Builder $q) => $q->whereIn('brand_models.id', $validated['models'])))
             ->when(
                 isset($validated['sort']) && isset($validated['sort_type']),
                 function (Builder $b) use ($validated, $currentLangId) {

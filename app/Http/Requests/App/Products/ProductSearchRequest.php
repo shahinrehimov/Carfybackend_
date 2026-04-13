@@ -6,6 +6,7 @@ use App\Enum\ProductSearchStatusEnum;
 use App\Enum\ProductSortEnum;
 use App\Enum\SortTypeEnum;
 use App\Models\Brand;
+use App\Models\BrandModel;
 use App\Models\Category;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -54,6 +55,8 @@ class ProductSearchRequest extends FormRequest
             'conditions.*' => ['required', 'string', 'max:10000'],
             'min_year' => ['nullable', 'integer', 'min:1900'],
             'max_year' => ['nullable', 'integer', 'min:1900'],
+            'models' => ['nullable', 'array'],
+            'models.*' => ['required', 'integer', Rule::exists(BrandModel::class, 'id')->where('is_active', true)->whereNull('deleted_at')],
         ];
     }
 }
