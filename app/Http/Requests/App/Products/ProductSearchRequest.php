@@ -8,6 +8,7 @@ use App\Enum\SortTypeEnum;
 use App\Models\Brand;
 use App\Models\BrandModel;
 use App\Models\Category;
+use App\Models\ProductOptionItem;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -49,14 +50,14 @@ class ProductSearchRequest extends FormRequest
             'max_price' => ['nullable', 'numeric'],
             'city_id' => ['nullable', 'integer'],
             'seller_store_code' => ['nullable', 'string', 'size:5'],
-            'colors' => ['nullable', 'array'],
-            'colors.*' => ['required', 'string', 'max:10000'],
             'conditions' => ['nullable', 'array'],
             'conditions.*' => ['required', 'string', 'max:10000'],
             'min_year' => ['nullable', 'integer', 'min:1900'],
             'max_year' => ['nullable', 'integer', 'min:1900'],
             'models' => ['nullable', 'array'],
             'models.*' => ['required', 'integer', Rule::exists(BrandModel::class, 'id')->where('is_active', true)->whereNull('deleted_at')],
+            'color_ids' => ['nullable', 'array'],
+            'color_ids.*' => ['required', 'integer', Rule::exists(ProductOptionItem::class, 'id')->where('is_active', true)->whereNull('deleted_at')],
         ];
     }
 }

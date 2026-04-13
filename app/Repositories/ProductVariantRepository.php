@@ -271,9 +271,9 @@ class ProductVariantRepository
             })
             ->when(isset($validated['min_price']), fn(Builder $b) => $b->where('company_product_variant.price', '>=', (int) ($validated['min_price'] * 100)))
             ->when(isset($validated['max_price']), fn(Builder $b) => $b->where('company_product_variant.price', '<=', (int) ($validated['max_price'] * 100)))
-            ->when(!empty($validated['colors']), fn(Builder $b) => $b->whereHas('productVariant.options', fn(Builder $q) => $q
+            ->when(!empty($validated['color_ids']), fn(Builder $b) => $b->whereHas('productVariant.options', fn(Builder $q) => $q
                 ->whereHas('option', fn(Builder $oq) => $oq->where('name', 'color'))
-                ->whereHas('item', fn(Builder $iq) => $iq->whereIn('slug', $validated['colors']))
+                ->whereIn('product_option_item_id', $validated['color_ids'])
             ))
             ->when(!empty($validated['conditions']), fn(Builder $b) => $b->whereHas('productVariant.options', fn(Builder $q) => $q
                 ->whereHas('option', fn(Builder $oq) => $oq->where('name', 'condition'))
