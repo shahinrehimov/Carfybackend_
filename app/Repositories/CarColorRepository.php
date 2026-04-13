@@ -45,14 +45,20 @@ class CarColorRepository
     public function store(FormRequest $request): CarColor
     {
         return DB::transaction(static function () use ($request) {
-            return CarColor::createWithLangs($request->validated());
+            $validated = $request->validated();
+            $validated['details'] = ['hex_code' => $validated['hex_code'] ?? null];
+            unset($validated['hex_code']);
+            return CarColor::createWithLangs($validated);
         });
     }
 
     public function update(CarColor $carColor, FormRequest $request): CarColor
     {
         return DB::transaction(static function () use ($carColor, $request) {
-            $carColor->updateWithLangs($request->validated());
+            $validated = $request->validated();
+            $validated['details'] = array_merge($carColor->details ?? [], ['hex_code' => $validated['hex_code'] ?? null]);
+            unset($validated['hex_code']);
+            $carColor->updateWithLangs($validated);
             return $carColor;
         });
     }

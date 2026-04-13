@@ -27,6 +27,7 @@ class ProductOptionItem extends Model implements TranslatableInterface
         'uuid',
         'slug',
         'key', // nullable
+        'details', // nullable JSON, option-specific metadata (e.g. hex_code for color)
         'product_option_id',
         'sort',
         'is_active',
@@ -37,9 +38,10 @@ class ProductOptionItem extends Model implements TranslatableInterface
     ];
 
     protected $casts = [
-        'sort' => 'integer',
-        'is_active' => 'boolean',
+        'sort'              => 'integer',
+        'is_active'         => 'boolean',
         'product_option_id' => 'integer',
+        'details'           => 'array',
     ];
 
     protected array $cascadeDeletes = [

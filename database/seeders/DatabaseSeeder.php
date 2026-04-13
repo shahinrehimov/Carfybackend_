@@ -19,6 +19,7 @@ class DatabaseSeeder extends Seeder
             CountriesSeeder::class,
             CitiesSeeder::class,
             ConditionProductOptionSeeder::class,
+            ColorProductOptionSeeder::class,
             BrandsSeeder::class,
             CarLibrariesSeeder::class,
         ]);
