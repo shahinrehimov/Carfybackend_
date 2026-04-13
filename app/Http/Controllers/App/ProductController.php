@@ -15,9 +15,9 @@ use App\Http\Resources\Admin\Cities\CitiesListResource;
 use App\Http\Resources\App\CompanyProductVariants\CompanyProductVariantListResource;
 use App\Http\Resources\App\ProductVariants\ProductVariantResource;
 use App\Http\Resources\App\ProductVariants\ProductVariantsResource;
-use App\Models\CarColor;
 use App\Models\CompanyProductVariant;
 use App\Models\ProductOption;
+use App\Models\ProductOptionItem;
 use App\Models\ProductVariant;
 use App\Repositories\BrandRepository;
 use App\Repositories\CategoryRepository;
@@ -56,7 +56,8 @@ class ProductController extends Controller
             ->orderBy('id')
             ->get();
 
-        $carColors = CarColor::query()
+        $carColors = ProductOptionItem::query()
+            ->forOption('color')
             ->active()
             ->with(['translatable'])
             ->orderBy('sort')

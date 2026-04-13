@@ -75,6 +75,6 @@ class UserCar extends Model implements HasMedia
 
     public function carColor(): BelongsTo
     {
-        return $this->belongsTo(CarColor::class);
+        return $this->belongsTo(ProductOptionItem::class, 'car_color_id');
     }
 }

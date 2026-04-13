@@ -2,20 +2,23 @@
 
 namespace App\Repositories;
 
-use App\Models\CarColor;
+use App\Models\ProductOption;
+use App\Models\ProductOptionItem;
 use App\Services\LangService;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 
 class CarColorRepository
 {
     public function load(array $validated): LengthAwarePaginator
     {
-        return CarColor::query()
+        return ProductOptionItem::query()
+            ->forOption('color')
             ->with(['translatable', 'creatable'])
             ->when($validated['search'] ?? null, function (Builder $builder) use ($validated) {
                 $builder->whereHas('translatable', function (Builder $query) use ($validated) {
@@ -29,7 +32,8 @@ class CarColorRepository
 
     public function list(): Collection
     {
-        return CarColor::query()
+        return ProductOptionItem::query()
+            ->forOption('color')
             ->active()
             ->with(['translatable'])
             ->orderBy('sort')
@@ -37,57 +41,66 @@ class CarColorRepository
             ->get();
     }
 
-    public function loadRelations(CarColor $carColor): CarColor
+    public function loadRelations(ProductOptionItem $item): ProductOptionItem
     {
-        return $carColor->load(['translatable', 'creatable']);
+        return $item->load(['translatable', 'creatable']);
     }
 
-    public function store(FormRequest $request): CarColor
+    public function store(FormRequest $request): ProductOptionItem
     {
-        return DB::transaction(static function () use ($request) {
+        return DB::transaction(function () use ($request) {
             $validated = $request->validated();
-            $validated['details'] = ['hex_code' => $validated['hex_code'] ?? null];
+
+            $colorOptionId = ProductOption::query()->where('name', 'color')->value('id');
+
+            $validated['product_option_id'] = $colorOptionId;
+            $validated['details']           = ['hex_code' => $validated['hex_code'] ?? null];
+            $validated['uuid']              = Str::uuid();
             unset($validated['hex_code']);
-            return CarColor::createWithLangs($validated);
+
+            return ProductOptionItem::createWithLangs($validated);
         });
     }
 
-    public function update(CarColor $carColor, FormRequest $request): CarColor
+    public function update(ProductOptionItem $item, FormRequest $request): ProductOptionItem
     {
-        return DB::transaction(static function () use ($carColor, $request) {
+        return DB::transaction(static function () use ($item, $request) {
             $validated = $request->validated();
-            $validated['details'] = array_merge($carColor->details ?? [], ['hex_code' => $validated['hex_code'] ?? null]);
+            $validated['details'] = array_merge($item->details ?? [], ['hex_code' => $validated['hex_code'] ?? null]);
             unset($validated['hex_code']);
-            $carColor->updateWithLangs($validated);
-            return $carColor;
+            $item->updateWithLangs($validated);
+            return $item;
         });
     }
 
-    public function destroy(CarColor $carColor): void
+    public function destroy(ProductOptionItem $item): void
     {
-        DB::transaction(static function () use ($carColor) {
-            $carColor->delete();
+        DB::transaction(static function () use ($item) {
+            $item->delete();
         });
     }
 
-    public function changeActiveStatus(CarColor $carColor): void
+    public function changeActiveStatus(ProductOptionItem $item): void
     {
-        DB::transaction(function () use ($carColor) {
-            $carColor->is_active = !$carColor->is_active;
-            $carColor->save();
+        DB::transaction(function () use ($item) {
+            $item->is_active = !$item->is_active;
+            $item->save();
         });
     }
 
-    public function changeSorting(CarColor $carColor, int $sort): void
+    public function changeSorting(ProductOptionItem $item, int $sort): void
     {
-        $carColor->update(['sort' => $sort]);
+        $item->update(['sort' => $sort]);
     }
 
     public function changeSortingMultiple(array $validated): void
     {
         $items = $validated['items'];
 
-        $count = CarColor::query()->whereIn('id', data_get($items, '*.id'))->count();
+        $count = ProductOptionItem::query()
+            ->forOption('color')
+            ->whereIn('id', data_get($items, '*.id'))
+            ->count();
 
         if ($count !== count($items)) {
             throw new BadRequestHttpException(
@@ -97,7 +110,7 @@ class CarColorRepository
 
         DB::transaction(function () use ($items) {
             foreach ($items as $item) {
-                CarColor::query()->where('id', $item['id'])->update(['sort' => $item['sort']]);
+                ProductOptionItem::query()->where('id', $item['id'])->update(['sort' => $item['sort']]);
             }
         });
     }

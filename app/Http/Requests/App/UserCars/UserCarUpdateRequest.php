@@ -21,7 +21,7 @@ class UserCarUpdateRequest extends FormRequest
             'engine_volume_id'    => ['nullable', 'integer', 'exists:engine_volumes,id'],
             'fuel_type_id'        => ['nullable', 'integer', 'exists:fuel_types,id'],
             'transmission_type_id' => ['nullable', 'integer', 'exists:transmission_types,id'],
-            'car_color_id'         => ['required', 'integer', 'exists:car_colors,id'],
+            'car_color_id'         => ['required', 'integer', 'exists:product_option_items,id'],
             'seat_count'           => ['required', 'integer', 'min:1', 'max:100'],
             'engine_number'        => ['nullable', 'string', 'max:100'],
             'vin_number'           => ['nullable', 'string', 'max:100'],

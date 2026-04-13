@@ -7,11 +7,11 @@ use App\Http\Resources\Admin\BrandModels\BrandModelsListResource;
 use App\Http\Resources\Admin\Brands\BrandsListResource;
 use App\Http\Resources\Admin\CarColors\CarColorsListResource;
 use App\Http\Resources\Admin\CarTypes\CarTypesListResource;
+use App\Models\ProductOptionItem;
 use App\Http\Resources\Admin\EngineVolumes\EngineVolumesListResource;
 use App\Http\Resources\Admin\FuelTypes\FuelTypesListResource;
 use App\Http\Resources\Admin\TransmissionTypes\TransmissionTypesListResource;
 use App\Models\Brand;
-use App\Models\CarColor;
 use App\Models\CarType;
 use App\Models\EngineVolume;
 use App\Models\FuelType;
@@ -88,7 +88,8 @@ class CarLibraryController extends Controller
 
     public function carColors(): AnonymousResourceCollection
     {
-        $items = CarColor::query()
+        $items = ProductOptionItem::query()
+            ->forOption('color')
             ->active()
             ->with(['translatable'])
             ->orderBy('sort')

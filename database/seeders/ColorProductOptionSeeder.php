@@ -2,8 +2,8 @@
 
 namespace Database\Seeders;
 
-use App\Models\CarColor;
 use App\Models\ProductOption;
+use App\Models\ProductOptionItem;
 use App\Repositories\ProductOptionRepository;
 use App\Services\LangService;
 use Illuminate\Database\Seeder;
@@ -15,8 +15,7 @@ class ColorProductOptionSeeder extends Seeder
     {
         $option = $this->findOrCreateOption();
 
-        // Skip if items already exist
-        if ($option->items()->count() > 0) {
+        if (ProductOptionItem::query()->forOption('color')->count() > 0) {
             return;
         }
 
@@ -85,8 +84,7 @@ class ColorProductOptionSeeder extends Seeder
                 ];
             }
 
-            // Use CarColor so translatable_type is App\Models\CarColor
-            CarColor::createWithLangs([
+            ProductOptionItem::createWithLangs([
                 'product_option_id' => $option->id,
                 'uuid'              => Str::uuid(),
                 'details'           => ['hex_code' => $color['hex']],

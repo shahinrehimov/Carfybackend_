@@ -12,7 +12,7 @@ use App\Http\Resources\Admin\CarColors\CarColorResource;
 use App\Http\Resources\Admin\CarColors\CarColorsListResource;
 use App\Http\Resources\Admin\CarColors\CarColorsResource;
 use App\Http\Resources\GeneralResource;
-use App\Models\CarColor;
+use App\Models\ProductOptionItem;
 use App\Repositories\CarColorRepository;
 use App\Services\LangService;
 use Illuminate\Http\JsonResponse;
@@ -37,7 +37,7 @@ class CarColorController extends Controller
         return CarColorsListResource::collection($this->repo->list());
     }
 
-    public function show(CarColor $carColor): CarColorResource
+    public function show(ProductOptionItem $carColor): CarColorResource
     {
         $carColor->load(['translatable']);
         return CarColorResource::make($carColor);
@@ -54,7 +54,7 @@ class CarColorController extends Controller
         ]));
     }
 
-    public function update(CarColorUpdateRequest $request, CarColor $carColor): JsonResponse
+    public function update(CarColorUpdateRequest $request, ProductOptionItem $carColor): JsonResponse
     {
         $carColor = $this->repo->update($carColor, $request);
         $carColor = $this->repo->loadRelations($carColor);
@@ -65,7 +65,7 @@ class CarColorController extends Controller
         ]));
     }
 
-    public function destroy(CarColor $carColor): JsonResponse
+    public function destroy(ProductOptionItem $carColor): JsonResponse
     {
         $this->repo->destroy($carColor);
 
@@ -74,7 +74,7 @@ class CarColorController extends Controller
         ]));
     }
 
-    public function changeActiveStatus(CarColor $carColor): JsonResponse
+    public function changeActiveStatus(ProductOptionItem $carColor): JsonResponse
     {
         $this->repo->changeActiveStatus($carColor);
 
@@ -83,7 +83,7 @@ class CarColorController extends Controller
         ]));
     }
 
-    public function changeSorting(CarColorChangeSortRequest $request, CarColor $carColor): JsonResponse
+    public function changeSorting(CarColorChangeSortRequest $request, ProductOptionItem $carColor): JsonResponse
     {
         $this->repo->changeSorting($carColor, $request->validated('sort'));
 
