@@ -24459,51 +24459,6 @@
                 }
               },
               "response": []
-            },
-            {
-              "name": "Click (redirect)",
-              "request": {
-                "auth": {
-                  "type": "noauth"
-                },
-                "method": "GET",
-                "header": [
-                  {
-                    "key": "Token",
-                    "value": "{{app_site_token}}",
-                    "type": "text"
-                  },
-                  {
-                    "key": "accept",
-                    "value": "application/json",
-                    "type": "text"
-                  }
-                ],
-                "url": {
-                  "raw": "{{url}}/:provider/advertisements/:key/click",
-                  "host": [
-                    "{{url}}"
-                  ],
-                  "path": [
-                    ":provider",
-                    "advertisements",
-                    ":key",
-                    "click"
-                  ],
-                  "variable": [
-                    {
-                      "key": "provider",
-                      "value": "site",
-                      "description": "site or app"
-                    },
-                    {
-                      "key": "key",
-                      "value": "summer_sale_banner"
-                    }
-                  ]
-                }
-              },
-              "response": []
             }
           ]
         }

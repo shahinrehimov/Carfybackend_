@@ -4,8 +4,6 @@ Base URL: `{{url}}/app` (mobil) və ya `{{url}}/site` (veb)
 
 Header: `Token: {{app_site_token}}` + `accept: application/json`
 
-> Bu endpointlər auth tələb etmir. Bununla belə, əgər `Authorization: Bearer` token göndərilirsə istifadəçi məlumatı click statistikasında qeydlənir.
-
 ---
 
 ## Endpointlər
@@ -28,13 +26,11 @@ Hal-hazırda aktiv olan reklamları qaytarır. Aşağıdakı şərtlərin hamıs
       "title": "Yay Endirimi",
       "key": "yay_endirimi",
       "image_url": "https://cdn.example.com/ads/yay_endirimi.gif",
-      "link": "https://api.example.com/app/advertisements/yay_endirimi/click"
+      "link": "https://api.example.com/ads/yay_endirimi/click"
     }
   ]
 }
 ```
-
-> `link` field-i birbaşa hədəf URL deyil — click statistikasını qeydləmək üçün backend redirect endpoint-idir. Frontend bu linki olduğu kimi açmalıdır.
 
 ---
 
@@ -59,7 +55,7 @@ Müəyyən `key` ilə tək reklam qaytarır. Eyni aktiv yoxlama tətbiq olunur.
     "title": "Yay Endirimi",
     "key": "yay_endirimi",
     "image_url": "https://cdn.example.com/ads/yay_endirimi.gif",
-    "link": "https://api.example.com/app/advertisements/yay_endirimi/click"
+    "link": "https://api.example.com/ads/yay_endirimi/click"
   }
 }
 ```
@@ -72,56 +68,21 @@ HTTP 404
 
 ---
 
-### Click — Redirect & Statistika
-```
-GET /ads/{key}/click
-```
-
-Click-i qeydləyib orijinal `link`-ə `302 redirect` edir. Frontend bu URL-i birbaşa açmalıdır (`fetch` / `axios` ilə deyil).
-
-Token tələb etmir — web route-dur, həm `site` həm `app` üçün eyni link işləyir.
-
-**Throttle:** dəqiqədə 30 sorğu per-IP (bot müdafiəsi).
-
-**Path params:**
-
-| Param | Açıqlama |
-|---|---|
-| `key` | Reklam key-i |
-
-**Auth konteksti (prioritet sırası):**
-
-| Durum | Qeydlənən məlumat |
-|---|---|
-| `Authorization: Bearer {token}` göndərilibsə | `user_id` qeydlənir |
-| Yalnız `identifier` header göndərilibsə | `guest_identifier` qeydlənir |
-| Heç biri yoxdursa | Yalnız IP + User-Agent |
-
-**Response:** `302 Location: {orijinal link}` (redirect)
-
-**Xəta (reklam tapılmadıqda və ya deaktivdirsə):** HTTP 404
-
----
-
 ## İstifadə nümunəsi
 
-```js
-// 1. Aktiv reklamları yüklə
-const { data } = await axios.get('/site/advertisements/active');
-
-// 2. Şəkli göstər
-// data[0].image_url — birbaşa istifadə et
-
-// 3. Kliklənəndə link-i aç (redirect link-dir, birbaşa aç)
-window.open(data[0].link, '_blank');
-// və ya
-window.location.href = data[0].link;
+```html
+<!-- link-i birbaşa href-ə ver, o qədər -->
+<a href="{{ data.link }}">
+  <img src="{{ data.image_url }}" />
+</a>
 ```
+
+`link` field-i backend redirect URL-idir — frontend başqa heç nə etmir, click statistikası avtomatik qeydlənir.
 
 ---
 
 ## Qeydlər
 
-- `link` field-i **həmişə** backend redirect endpoint-ini göstərir (`/advertisements/{key}/click`). Frontend orijinal linki bilmir və bilməməlidir — bütün click-lər backendən keçir.
-- Reklam deaktiv olduqda, tarixi keçdikdə və ya başqa platform üçün olduqda `by-key` və `click` endpointləri 404 qaytarır.
-- `active` endpoint-i boş massiv qaytara bilər (`"data": []`) — bu normaldır, aktiv reklam yoxdur deməkdir.
+- `link` field-i **həmişə** backend redirect URL-idir (`/ads/{key}/click`). Frontend orijinal linki bilmir — bütün click-lər backendən keçir.
+- Reklam deaktiv olduqda, tarixi keçdikdə və ya başqa platform üçün olduqda `by-key` endpoint-i 404 qaytarır.
+- `active` endpoint-i boş massiv qaytara bilər (`"data": []`) — aktiv reklam yoxdur deməkdir.
