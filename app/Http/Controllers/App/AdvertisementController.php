@@ -31,7 +31,12 @@ class AdvertisementController extends Controller
 
     public function click(Request $request, string $key): RedirectResponse
     {
-        $advertisement = $this->repo->getByKey($key, RouteService::instance()->getName());
+        $advertisement = $this->repo->findActiveByKey($key);
+
+        if (!$advertisement) {
+            abort(404);
+        }
+
         $this->repo->trackClick($advertisement, $request);
 
         return redirect()->away($advertisement->link);

@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\App\AdvertisementController;
 use App\Http\Controllers\App\Auth\EmailVerificationController;
 use App\Http\Controllers\App\Auth\GoogleController;
 use App\Http\Controllers\App\OrderController;
@@ -21,4 +22,9 @@ Route::post('/payment/callback/{paymentMethodName}', [OrderController::class, 'p
 
 Route::get('/auth/google/callback', [GoogleController::class, 'callback'])
     ->name('auth.google.callback')
+    ->withoutMiddleware(VerifyCsrfToken::class);
+
+Route::get('/ads/{key}/click', [AdvertisementController::class, 'click'])
+    ->name('advertisements.click')
+    ->middleware(['throttle:30,1'])
     ->withoutMiddleware(VerifyCsrfToken::class);

@@ -26,9 +26,9 @@ Hal-hazırda aktiv olan reklamları qaytarır. Aşağıdakı şərtlərin hamıs
   "data": [
     {
       "title": "Yay Endirimi",
-      "key": "yay-endirimi",
-      "image_url": "https://cdn.example.com/ads/yay-endirimi.gif",
-      "link": "https://api.example.com/app/advertisements/yay-endirimi/click"
+      "key": "yay_endirimi",
+      "image_url": "https://cdn.example.com/ads/yay_endirimi.gif",
+      "link": "https://api.example.com/app/advertisements/yay_endirimi/click"
     }
   ]
 }
@@ -50,16 +50,16 @@ Müəyyən `key` ilə tək reklam qaytarır. Eyni aktiv yoxlama tətbiq olunur.
 | Param | Açıqlama |
 |---|---|
 | `provider` | `site` və ya `app` |
-| `key` | Reklam key-i (məs. `yay-endirimi`) |
+| `key` | Reklam key-i (məs. `yay_endirimi`) |
 
 **Response:**
 ```json
 {
   "data": {
     "title": "Yay Endirimi",
-    "key": "yay-endirimi",
-    "image_url": "https://cdn.example.com/ads/yay-endirimi.gif",
-    "link": "https://api.example.com/app/advertisements/yay-endirimi/click"
+    "key": "yay_endirimi",
+    "image_url": "https://cdn.example.com/ads/yay_endirimi.gif",
+    "link": "https://api.example.com/app/advertisements/yay_endirimi/click"
   }
 }
 ```
@@ -74,10 +74,12 @@ HTTP 404
 
 ### Click — Redirect & Statistika
 ```
-GET /{provider}/advertisements/{key}/click
+GET /ads/{key}/click
 ```
 
 Click-i qeydləyib orijinal `link`-ə `302 redirect` edir. Frontend bu URL-i birbaşa açmalıdır (`fetch` / `axios` ilə deyil).
+
+Token tələb etmir — web route-dur, həm `site` həm `app` üçün eyni link işləyir.
 
 **Throttle:** dəqiqədə 30 sorğu per-IP (bot müdafiəsi).
 
@@ -85,7 +87,6 @@ Click-i qeydləyib orijinal `link`-ə `302 redirect` edir. Frontend bu URL-i bir
 
 | Param | Açıqlama |
 |---|---|
-| `provider` | `site` və ya `app` |
 | `key` | Reklam key-i |
 
 **Auth konteksti (prioritet sırası):**

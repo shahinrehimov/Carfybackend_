@@ -118,9 +118,6 @@ return static function () {
             Route::group(['prefix' => 'advertisements'], static function () {
                 Route::get('active', [AdvertisementController::class, 'active']);
                 Route::get('by-key/{key}', [AdvertisementController::class, 'byKey']);
-                Route::get('{key}/click', [AdvertisementController::class, 'click'])
-                    ->name('advertisements.click')
-                    ->middleware(['throttle:30,1']);
             });
 
             Route::group(['prefix' => 'basket'], static function () {
