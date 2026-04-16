@@ -5,8 +5,6 @@ namespace App\Repositories;
 use App\Models\Advertisement;
 use App\Models\AdvertisementClick;
 use App\Services\FileUpload;
-use App\Services\GuestService;
-use App\Services\UserService;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
@@ -153,18 +151,9 @@ class AdvertisementRepository
 
     public function trackClick(Advertisement $advertisement, Request $request): void
     {
-        $userId = UserService::instance()->checkUser()
-            ? UserService::instance()->getUser()->id
-            : null;
-        $guestIdentifier = !$userId
-            ? GuestService::instance()->getGuest()?->identifier
-            : null;
-
-        DB::transaction(function () use ($advertisement, $request, $userId, $guestIdentifier) {
+        DB::transaction(function () use ($advertisement, $request) {
             AdvertisementClick::create([
                 'advertisement_id' => $advertisement->id,
-                'user_id'          => $userId,
-                'guest_identifier' => $guestIdentifier,
                 'ip_address'       => $request->ip(),
                 'user_agent'       => $request->userAgent(),
                 'created_at'       => now(),
