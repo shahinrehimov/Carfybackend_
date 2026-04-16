@@ -24,6 +24,7 @@ use App\Http\Controllers\App\ProductReviewController;
 use App\Http\Controllers\App\ProfileController;
 use App\Http\Controllers\App\ServicesController;
 use App\Http\Controllers\App\PageController;
+use App\Http\Controllers\App\AdvertisementController;
 use App\Http\Controllers\App\SliderController;
 use App\Http\Controllers\App\WishlistController;
 use App\Http\Controllers\LocalTranslationsController;
@@ -112,6 +113,14 @@ return static function () {
             Route::group(['prefix' => 'pages'], static function () {
                 Route::get('list', [PageController::class, 'list']);
                 Route::get('show/{slug}', [PageController::class, 'show']);
+            });
+
+            Route::group(['prefix' => 'advertisements'], static function () {
+                Route::get('active', [AdvertisementController::class, 'active']);
+                Route::get('by-key/{key}', [AdvertisementController::class, 'byKey']);
+                Route::get('{key}/click', [AdvertisementController::class, 'click'])
+                    ->name('advertisements.click')
+                    ->middleware(['throttle:30,1']);
             });
 
             Route::group(['prefix' => 'basket'], static function () {

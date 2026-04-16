@@ -38,6 +38,7 @@ use App\Http\Controllers\Admin\SettingController;
 use App\Http\Controllers\Admin\SliderController;
 use App\Http\Controllers\Admin\SocialController;
 use App\Http\Controllers\Admin\TranslationController;
+use App\Http\Controllers\Admin\AdvertisementController;
 use App\Http\Controllers\Admin\UserCarController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\LocalTranslationsController;
@@ -451,6 +452,16 @@ Route::middleware(['general_access:admin', RouteLogMiddleware::class])->prefix('
             Route::post('change-active-status/{page}', [PageController::class, 'changeActiveStatus']);
             Route::post('change-sorting/{page}', [PageController::class, 'changeSorting']);
             Route::post('change-sorting-multiple', [PageController::class, 'changeSortingMultiple']);
+        });
+
+        Route::group(['prefix' => 'advertisements'], static function () {
+            Route::get('load', [AdvertisementController::class, 'index']);
+            Route::get('show/{advertisement}', [AdvertisementController::class, 'show']);
+            Route::post('add', [AdvertisementController::class, 'store']);
+            Route::post('update/{advertisement}', [AdvertisementController::class, 'update']);
+            Route::delete('delete/{advertisement}', [AdvertisementController::class, 'destroy']);
+            Route::post('change-active-status/{advertisement}', [AdvertisementController::class, 'changeActiveStatus']);
+            Route::get('clicks/{advertisement}', [AdvertisementController::class, 'clicks']);
         });
     });
 });
