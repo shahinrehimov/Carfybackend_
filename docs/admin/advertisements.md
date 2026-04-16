@@ -35,9 +35,9 @@ Bütün reklamları filtrlənmiş şəkildə qaytarır. `is_currently_active` fi
     {
       "id": 1,
       "title": "Yay Endirimi",
-      "key": "yay-endirimi",
+      "key": "yay_endirimi",
       "link": "https://example.com/sale",
-      "image_url": "https://cdn.example.com/ads/yay-endirimi.gif",
+      "image_url": "https://cdn.example.com/ads/yay_endirimi.gif",
       "start_date": "2026-06-01",
       "end_date": "2026-08-31",
       "is_active": true,
@@ -65,10 +65,10 @@ GET /control/advertisements/show/{id}
   "data": {
     "id": 1,
     "title": "Yay Endirimi",
-    "key": "yay-endirimi",
+    "key": "yay_endirimi",
     "description": "Admin üçün daxili qeyd",
     "link": "https://example.com/sale",
-    "image_url": "https://cdn.example.com/ads/yay-endirimi.gif",
+    "image_url": "https://cdn.example.com/ads/yay_endirimi.gif",
     "start_date": "2026-06-01",
     "end_date": "2026-08-31",
     "is_active": true,
@@ -103,7 +103,7 @@ Content-Type: multipart/form-data
 | `platform` | required | `site` / `app` / `both` |
 | `image` | nullable | jpg, jpeg, png, webp, gif — max 5MB |
 
-> `key` avtomatik yaradılır: `title` → slug. Əgər eyni key mövcuddursa `-2`, `-3` şəkilçisi əlavə olunur.
+> `key` avtomatik yaradılır: `title` → snake_case. Əgər eyni key mövcuddursa `_2`, `_3` şəkilçisi əlavə olunur.
 
 **Response:**
 ```json

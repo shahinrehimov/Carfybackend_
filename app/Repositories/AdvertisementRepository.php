@@ -176,7 +176,7 @@ class AdvertisementRepository
 
     private function generateKey(string $title, ?int $excludeId = null): string
     {
-        $base = Str::slug($title);
+        $base = Str::slug($title, '_');
         $key = $base;
         $i = 1;
 
@@ -187,7 +187,7 @@ class AdvertisementRepository
                 ->when($excludeId, fn(Builder $q) => $q->where('id', '!=', $excludeId))
                 ->exists()
         ) {
-            $key = $base . '-' . $i;
+            $key = $base . '_' . $i;
             $i++;
         }
 
