@@ -153,7 +153,9 @@ class AdvertisementRepository
 
     public function trackClick(Advertisement $advertisement, Request $request): void
     {
-        $userId = UserService::instance()->getUser()?->id;
+        $userId = UserService::instance()->checkUser()
+            ? UserService::instance()->getUser()->id
+            : null;
         $guestIdentifier = !$userId
             ? GuestService::instance()->getGuest()?->identifier
             : null;
