@@ -353,6 +353,9 @@ Route::middleware(['general_access:admin', RouteLogMiddleware::class])->prefix('
             Route::delete('delete/{company}', [CompanyController::class, 'destroy']);
             Route::post('verify/{company}', [CompanyController::class, 'verify']);
             Route::post('change-active-status/{company}', [CompanyController::class, 'changeActiveStatus']);
+            Route::delete('delete-logo/{company}', [CompanyController::class, 'deleteLogo']);
+            Route::delete('delete-banner/{company}', [CompanyController::class, 'deleteBanner']);
+            Route::post('working-hours/{company}', [CompanyController::class, 'updateWorkingHours']);
 
             Route::group(['prefix' => '{company}/admins'], static function () {
                 Route::get('load', [CompanyAdminController::class, 'index']);

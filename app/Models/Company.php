@@ -44,6 +44,7 @@ class Company extends Model implements TranslatableInterface, HasMedia
         'root_admin_email',
         'verified_at',
         'is_active',
+        'show_reviews',
     ];
 
     protected static function boot(): void
@@ -75,7 +76,7 @@ class Company extends Model implements TranslatableInterface, HasMedia
     public function getSellerLabel(): string
     {
         return LangService::instance()
-                ->setDefault('Mağaza')
+                ->setDefault('Store')
                 ->getLang('seller_label_prefix')
             . ' ' . $this->store_code;
     }
@@ -92,6 +93,7 @@ class Company extends Model implements TranslatableInterface, HasMedia
         'banner' => BannerCast::class,
         'verified_at' => 'datetime',
         'is_active' => 'boolean',
+        'show_reviews' => 'boolean',
     ];
 
     protected array $cascadeDeletes = [

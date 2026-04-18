@@ -3,6 +3,8 @@
 namespace App\Repositories;
 
 use App\Models\Company;
+use App\Models\CompanyWorkingHour;
+use App\Models\ProductReview;
 use App\Services\FileUpload;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
@@ -60,10 +62,19 @@ class CompanyRepository
     {
         $company->load([
             'media',
-            //'admins',
             'city',
             'city.translatable',
+            'workingHours',
         ]);
+
+        $stats = ProductReview::query()
+            ->whereHas('companyProductVariant', fn($q) => $q->where('company_id', $company->id))
+            ->approved()
+            ->selectRaw('AVG(rating) as avg_rating, COUNT(*) as review_count')
+            ->first();
+
+        $company->avg_rating   = $stats->avg_rating ? round((float) $stats->avg_rating, 1) : null;
+        $company->review_count = (int) $stats->review_count;
     }
 
     public function createFromData(array $data, ?FormRequest $request = null): Company
@@ -170,5 +181,33 @@ class CompanyRepository
             'city',
             'city.translatable',
         ]);
+    }
+
+    public function syncWorkingHours(Company $company, array $hours): void
+    {
+        DB::transaction(static function () use ($company, $hours) {
+            foreach ($hours as $hour) {
+                $isClosed = (bool) $hour['is_closed'];
+
+                CompanyWorkingHour::updateOrCreate(
+                    ['company_id' => $company->id, 'day_of_week' => $hour['day_of_week']],
+                    [
+                        'is_closed'  => $isClosed,
+                        'open_time'  => $isClosed ? null : ($hour['open_time'] ?? null),
+                        'close_time' => $isClosed ? null : ($hour['close_time'] ?? null),
+                    ]
+                );
+            }
+        });
+    }
+
+    public function deleteLogo(Company $company): void
+    {
+        $company->clearMediaCollection('companies_logo');
+    }
+
+    public function deleteBanner(Company $company): void
+    {
+        $company->clearMediaCollection('companies_banner');
     }
 }

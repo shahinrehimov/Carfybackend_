@@ -13488,6 +13488,138 @@
                 }
               },
               "response": []
+            },
+            {
+              "name": "Delete Logo",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{token}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "DELETE",
+                "header": [
+                  {
+                    "key": "Token",
+                    "value": "{{app_token}}",
+                    "type": "text"
+                  },
+                  {
+                    "key": "accept",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{url}}/control/companies/delete-logo/{{company_id}}",
+                  "host": [
+                    "{{url}}"
+                  ],
+                  "path": [
+                    "control",
+                    "companies",
+                    "delete-logo",
+                    "{{company_id}}"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Delete Banner",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{token}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "DELETE",
+                "header": [
+                  {
+                    "key": "Token",
+                    "value": "{{app_token}}",
+                    "type": "text"
+                  },
+                  {
+                    "key": "accept",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{url}}/control/companies/delete-banner/{{company_id}}",
+                  "host": [
+                    "{{url}}"
+                  ],
+                  "path": [
+                    "control",
+                    "companies",
+                    "delete-banner",
+                    "{{company_id}}"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Update Working Hours",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{token}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Token",
+                    "value": "{{app_token}}",
+                    "type": "text"
+                  },
+                  {
+                    "key": "accept",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{url}}/control/companies/working-hours/{{company_id}}",
+                  "host": [
+                    "{{url}}"
+                  ],
+                  "path": [
+                    "control",
+                    "companies",
+                    "working-hours",
+                    "{{company_id}}"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"hours\": [\n        {\n            \"day_of_week\": 1,\n            \"is_closed\": false,\n            \"open_time\": \"09:00\",\n            \"close_time\": \"18:00\"\n        },\n        {\n            \"day_of_week\": 2,\n            \"is_closed\": false,\n            \"open_time\": \"09:00\",\n            \"close_time\": \"18:00\"\n        },\n        {\n            \"day_of_week\": 3,\n            \"is_closed\": false,\n            \"open_time\": \"09:00\",\n            \"close_time\": \"18:00\"\n        },\n        {\n            \"day_of_week\": 4,\n            \"is_closed\": false,\n            \"open_time\": \"09:00\",\n            \"close_time\": \"18:00\"\n        },\n        {\n            \"day_of_week\": 5,\n            \"is_closed\": false,\n            \"open_time\": \"09:00\",\n            \"close_time\": \"18:00\"\n        },\n        {\n            \"day_of_week\": 6,\n            \"is_closed\": false,\n            \"open_time\": \"10:00\",\n            \"close_time\": \"16:00\"\n        },\n        {\n            \"day_of_week\": 7,\n            \"is_closed\": true,\n            \"open_time\": null,\n            \"close_time\": null\n        }\n    ]\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "response": []
             }
           ]
         },
@@ -25123,6 +25255,342 @@
                   "response": []
                 }
               ]
+            }
+          ]
+        },
+        {
+          "name": "Store Profile",
+          "item": [
+            {
+              "name": "Show",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Token",
+                    "value": "{{app_seller_token}}",
+                    "type": "text"
+                  },
+                  {
+                    "key": "accept",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{url}}/sellers/store-profile/show",
+                  "host": [
+                    "{{url}}"
+                  ],
+                  "path": [
+                    "sellers",
+                    "store-profile",
+                    "show"
+                  ]
+                },
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{login_token_seller}}",
+                      "type": "string"
+                    }
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Update",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Token",
+                    "value": "{{app_seller_token}}",
+                    "type": "text"
+                  },
+                  {
+                    "key": "accept",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{url}}/sellers/store-profile/update",
+                  "host": [
+                    "{{url}}"
+                  ],
+                  "path": [
+                    "sellers",
+                    "store-profile",
+                    "update"
+                  ]
+                },
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{login_token_seller}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "body": {
+                  "mode": "formdata",
+                  "formdata": [
+                    {
+                      "key": "translations[0][language_id]",
+                      "value": "1",
+                      "type": "text"
+                    },
+                    {
+                      "key": "translations[0][title]",
+                      "value": "Mağaza adı (AZ)",
+                      "type": "text"
+                    },
+                    {
+                      "key": "translations[0][info]",
+                      "value": "",
+                      "type": "text",
+                      "disabled": true
+                    },
+                    {
+                      "key": "translations[0][address]",
+                      "value": "",
+                      "type": "text",
+                      "disabled": true
+                    },
+                    {
+                      "key": "translations[1][language_id]",
+                      "value": "2",
+                      "type": "text"
+                    },
+                    {
+                      "key": "translations[1][title]",
+                      "value": "",
+                      "type": "text"
+                    },
+                    {
+                      "key": "translations[1][info]",
+                      "value": "",
+                      "type": "text",
+                      "disabled": true
+                    },
+                    {
+                      "key": "translations[1][address]",
+                      "value": "",
+                      "type": "text",
+                      "disabled": true
+                    },
+                    {
+                      "key": "translations[2][language_id]",
+                      "value": "3",
+                      "type": "text"
+                    },
+                    {
+                      "key": "translations[2][title]",
+                      "value": "",
+                      "type": "text"
+                    },
+                    {
+                      "key": "translations[2][info]",
+                      "value": "",
+                      "type": "text",
+                      "disabled": true
+                    },
+                    {
+                      "key": "translations[2][address]",
+                      "value": "",
+                      "type": "text",
+                      "disabled": true
+                    },
+                    {
+                      "key": "phone",
+                      "value": "",
+                      "type": "text",
+                      "description": "nullable"
+                    },
+                    {
+                      "key": "email",
+                      "value": "",
+                      "type": "text",
+                      "description": "nullable"
+                    },
+                    {
+                      "key": "website",
+                      "value": "",
+                      "type": "text",
+                      "description": "nullable|url",
+                      "disabled": true
+                    },
+                    {
+                      "key": "city_id",
+                      "value": "1",
+                      "type": "text",
+                      "description": "nullable"
+                    },
+                    {
+                      "key": "latitude",
+                      "value": "",
+                      "type": "text",
+                      "description": "nullable|numeric",
+                      "disabled": true
+                    },
+                    {
+                      "key": "longitude",
+                      "value": "",
+                      "type": "text",
+                      "description": "nullable|numeric",
+                      "disabled": true
+                    },
+                    {
+                      "key": "logo",
+                      "type": "file",
+                      "src": "",
+                      "description": "nullable|image|max:2MB"
+                    },
+                    {
+                      "key": "banner",
+                      "type": "file",
+                      "src": "",
+                      "description": "nullable|image|max:4MB"
+                    }
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Delete Logo",
+              "request": {
+                "method": "DELETE",
+                "header": [
+                  {
+                    "key": "Token",
+                    "value": "{{app_seller_token}}",
+                    "type": "text"
+                  },
+                  {
+                    "key": "accept",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{url}}/sellers/store-profile/logo",
+                  "host": [
+                    "{{url}}"
+                  ],
+                  "path": [
+                    "sellers",
+                    "store-profile",
+                    "logo"
+                  ]
+                },
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{login_token_seller}}",
+                      "type": "string"
+                    }
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Delete Banner",
+              "request": {
+                "method": "DELETE",
+                "header": [
+                  {
+                    "key": "Token",
+                    "value": "{{app_seller_token}}",
+                    "type": "text"
+                  },
+                  {
+                    "key": "accept",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{url}}/sellers/store-profile/banner",
+                  "host": [
+                    "{{url}}"
+                  ],
+                  "path": [
+                    "sellers",
+                    "store-profile",
+                    "banner"
+                  ]
+                },
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{login_token_seller}}",
+                      "type": "string"
+                    }
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Update Working Hours",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Token",
+                    "value": "{{app_seller_token}}",
+                    "type": "text"
+                  },
+                  {
+                    "key": "accept",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{url}}/sellers/store-profile/working-hours",
+                  "host": [
+                    "{{url}}"
+                  ],
+                  "path": [
+                    "sellers",
+                    "store-profile",
+                    "working-hours"
+                  ]
+                },
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{login_token_seller}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"hours\": [\n        {\n            \"day_of_week\": 1,\n            \"is_closed\": false,\n            \"open_time\": \"09:00\",\n            \"close_time\": \"18:00\"\n        },\n        {\n            \"day_of_week\": 2,\n            \"is_closed\": false,\n            \"open_time\": \"09:00\",\n            \"close_time\": \"18:00\"\n        },\n        {\n            \"day_of_week\": 3,\n            \"is_closed\": false,\n            \"open_time\": \"09:00\",\n            \"close_time\": \"18:00\"\n        },\n        {\n            \"day_of_week\": 4,\n            \"is_closed\": false,\n            \"open_time\": \"09:00\",\n            \"close_time\": \"18:00\"\n        },\n        {\n            \"day_of_week\": 5,\n            \"is_closed\": false,\n            \"open_time\": \"09:00\",\n            \"close_time\": \"18:00\"\n        },\n        {\n            \"day_of_week\": 6,\n            \"is_closed\": false,\n            \"open_time\": \"10:00\",\n            \"close_time\": \"16:00\"\n        },\n        {\n            \"day_of_week\": 7,\n            \"is_closed\": true,\n            \"open_time\": null,\n            \"close_time\": null\n        }\n    ]\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "response": []
             }
           ]
         },

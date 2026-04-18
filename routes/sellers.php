@@ -19,6 +19,7 @@ use App\Http\Controllers\Sellers\ProductReviewController;
 use App\Http\Controllers\Sellers\ProductVariantController;
 use App\Http\Controllers\Sellers\ProfileController;
 use App\Http\Controllers\Sellers\SessionController;
+use App\Http\Controllers\Sellers\StoreProfileController;
 use App\Http\Middleware\CompanyAdminMiddleware;
 use App\Http\Middleware\CompanyVerifiedMiddleware;
 use App\Http\Middleware\RouteLogMiddleware;
@@ -55,6 +56,15 @@ Route::middleware(['general_access:sellers', RouteLogMiddleware::class])->prefix
                 Route::get('load', [SessionController::class, 'index']);
                 Route::post('{tokenId}/logout', [SessionController::class, 'logoutSession']);
             });
+        });
+
+        // Store profile routes
+        Route::group(['prefix' => 'store-profile'], static function () {
+            Route::get('show', [StoreProfileController::class, 'show']);
+            Route::post('update', [StoreProfileController::class, 'update']);
+            Route::delete('logo', [StoreProfileController::class, 'deleteLogo']);
+            Route::delete('banner', [StoreProfileController::class, 'deleteBanner']);
+            Route::post('working-hours', [StoreProfileController::class, 'updateWorkingHours']);
         });
 
         // Logout routes

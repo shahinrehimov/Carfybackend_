@@ -3,6 +3,7 @@
 namespace App\Http\Resources\Admin\Companies;
 
 use App\Http\Resources\Admin\Cities\CitiesListResource;
+use App\Http\Resources\Sellers\StoreProfile\StoreProfileWorkingHourResource;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -21,6 +22,8 @@ use Illuminate\Http\Resources\Json\JsonResource;
  * @property mixed $logo
  * @property mixed $banner
  * @property mixed $city_id
+ * @property mixed $avg_rating
+ * @property mixed $review_count
  * @method isActive()
  */
 class CompanyResource extends JsonResource
@@ -48,6 +51,11 @@ class CompanyResource extends JsonResource
                 return $this->banner;
             }),
             'translations' => $this->translations,
+            'working_hours' => StoreProfileWorkingHourResource::collection(
+                $this->whenLoaded('workingHours')
+            ),
+            'avg_rating'   => $this->avg_rating ?? null,
+            'review_count' => $this->review_count ?? 0,
         ];
     }
 }
