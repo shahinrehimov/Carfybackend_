@@ -15,6 +15,7 @@ use App\Http\Controllers\Sellers\Auth\LogoutController;
 use App\Http\Controllers\Sellers\Auth\RegisterController;
 use App\Http\Controllers\Sellers\CompanyProductVariantController;
 use App\Http\Controllers\Sellers\ProductController;
+use App\Http\Controllers\Sellers\StatisticsController;
 use App\Http\Controllers\Sellers\ProductReviewController;
 use App\Http\Controllers\Sellers\ProductVariantController;
 use App\Http\Controllers\Sellers\ProfileController;
@@ -119,6 +120,13 @@ Route::middleware(['general_access:sellers', RouteLogMiddleware::class])->prefix
 
             Route::group(['prefix' => 'reviews'], static function () {
                 Route::get('load', [ProductReviewController::class, 'loadAll']);
+            });
+
+            Route::group(['prefix' => 'statistics'], static function () {
+                Route::get('orders', [StatisticsController::class, 'orderStats']);
+                Route::get('top-selling', [StatisticsController::class, 'topSelling']);
+                Route::get('top-viewed', [StatisticsController::class, 'topViewed']);
+                Route::get('customer-behavior', [StatisticsController::class, 'customerBehavior']);
             });
 
             Route::group(['prefix' => 'countries'], static function () {

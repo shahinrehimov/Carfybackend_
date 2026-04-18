@@ -21,6 +21,7 @@ use App\Http\Controllers\App\OrderController;
 use App\Http\Controllers\App\PaymentController;
 use App\Http\Controllers\App\ProductController;
 use App\Http\Controllers\App\ProductReviewController;
+use App\Http\Controllers\App\ProductViewController;
 use App\Http\Controllers\App\ProfileController;
 use App\Http\Controllers\App\ServicesController;
 use App\Http\Controllers\App\PageController;
@@ -76,6 +77,7 @@ return static function () {
                 Route::get('show/{parentCategorySlug}/{subCategorySlug}/{productSlug}', [ProductController::class, 'showBySlug']);
                 Route::get('show/{subCategorySlug}/{productSlug}', [ProductController::class, 'showBySlugOnlySubCategory']);
                 Route::get('{productVariant}/other-sellers', [ProductController::class, 'otherSellers']);
+                Route::post('{companyProductVariant:uuid}/track-view', [ProductViewController::class, 'track'])->middleware(['throttle:30,1']);
 
                 Route::prefix('{companyProductVariant:uuid}/reviews')->group(function () {
                     Route::post('store', [ProductReviewController::class, 'store'])->middleware(['throttle:2,1']);

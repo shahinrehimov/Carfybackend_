@@ -22921,6 +22921,48 @@
                 "description": "Returns other sellers (CPV cards) offering the same product variant.\n\nRoute param: productVariantId (integer) — the product variant, NOT the CPV.\nExcludes the currently-selected seller listing from the results.\nPaginated — use limit and page query params."
               },
               "response": []
+            },
+            {
+              "name": "Track Product View",
+              "id": "7dac7ee8-68c7-46d0-a30e-3a8f7f4a9e60",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Token",
+                    "value": "{{app_site_token}}"
+                  },
+                  {
+                    "key": "accept",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "X-Guest-Identifier",
+                    "value": "{{guest_identifier}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{url}}/app/products/:cpv_uuid/track-view",
+                  "host": [
+                    "{{url}}"
+                  ],
+                  "path": [
+                    "app",
+                    "products",
+                    ":cpv_uuid",
+                    "track-view"
+                  ],
+                  "variable": [
+                    {
+                      "key": "cpv_uuid",
+                      "value": "",
+                      "description": "CompanyProductVariant UUID"
+                    }
+                  ]
+                },
+                "description": "Müştəri seller məhsulunun detallarını açanda çağır. Throttle: 30/dəq.\n\nPath param: cpv_uuid — CompanyProductVariant UUID-si"
+              },
+              "response": []
             }
           ]
         },
@@ -27875,6 +27917,228 @@
             }
           ],
           "description": "Reviews are at the CompanyProductVariant (seller listing) level — each seller listing has its own independent reviews and ratings.\nThis allows calculating a per-seller average rating in the future.\nSellers can only VIEW their reviews; approval/deletion is admin-only."
+        },
+        {
+          "name": "Statistics",
+          "id": "2d8201ef-7bd8-4b36-a189-42ae5aa90b49",
+          "item": [
+            {
+              "name": "Order Stats",
+              "id": "f3e892f1-03d2-4f5f-9daf-b149eaa516cd",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Token",
+                    "value": "{{app_seller_token}}"
+                  },
+                  {
+                    "key": "accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{url}}/sellers/statistics/orders?period=daily&date_from=2026-04-01&date_to=2026-04-30",
+                  "host": [
+                    "{{url}}"
+                  ],
+                  "path": [
+                    "sellers",
+                    "statistics",
+                    "orders"
+                  ],
+                  "query": [
+                    {
+                      "key": "period",
+                      "value": "daily"
+                    },
+                    {
+                      "key": "date_from",
+                      "value": "2026-04-01"
+                    },
+                    {
+                      "key": "date_to",
+                      "value": "2026-04-30"
+                    }
+                  ]
+                },
+                "description": "Günlük / aylıq sifariş sayı, gəlir və miqdar.\n\nParams: period (daily|monthly), date_from, date_to, status",
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{login_token_seller}}",
+                      "type": "string"
+                    }
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Top Selling Products",
+              "id": "c7f34698-0e97-466f-9969-35d720f1011f",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Token",
+                    "value": "{{app_seller_token}}"
+                  },
+                  {
+                    "key": "accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{url}}/sellers/statistics/top-selling?date_from=2026-04-01&date_to=2026-04-30&limit=10",
+                  "host": [
+                    "{{url}}"
+                  ],
+                  "path": [
+                    "sellers",
+                    "statistics",
+                    "top-selling"
+                  ],
+                  "query": [
+                    {
+                      "key": "date_from",
+                      "value": "2026-04-01"
+                    },
+                    {
+                      "key": "date_to",
+                      "value": "2026-04-30"
+                    },
+                    {
+                      "key": "limit",
+                      "value": "10"
+                    }
+                  ]
+                },
+                "description": "Ən çox satılan məhsullar (miqdar üzrə sıralanmış).\n\nParams: date_from, date_to, limit (5-50)",
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{login_token_seller}}",
+                      "type": "string"
+                    }
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Top Viewed Products",
+              "id": "5ba1f332-bd1e-4d83-a9ba-5e5519e58128",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Token",
+                    "value": "{{app_seller_token}}"
+                  },
+                  {
+                    "key": "accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{url}}/sellers/statistics/top-viewed?date_from=2026-04-01&date_to=2026-04-30&limit=10",
+                  "host": [
+                    "{{url}}"
+                  ],
+                  "path": [
+                    "sellers",
+                    "statistics",
+                    "top-viewed"
+                  ],
+                  "query": [
+                    {
+                      "key": "date_from",
+                      "value": "2026-04-01"
+                    },
+                    {
+                      "key": "date_to",
+                      "value": "2026-04-30"
+                    },
+                    {
+                      "key": "limit",
+                      "value": "10"
+                    }
+                  ]
+                },
+                "description": "Ən çox baxılan məhsullar.\n\nParams: date_from, date_to, limit (5-50)",
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{login_token_seller}}",
+                      "type": "string"
+                    }
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Customer Behavior",
+              "id": "bcac34ee-12c4-4d98-a7d5-fcc87141fd07",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Token",
+                    "value": "{{app_seller_token}}"
+                  },
+                  {
+                    "key": "accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{url}}/sellers/statistics/customer-behavior?date_from=2026-04-01&date_to=2026-04-30&abandoned_limit=10",
+                  "host": [
+                    "{{url}}"
+                  ],
+                  "path": [
+                    "sellers",
+                    "statistics",
+                    "customer-behavior"
+                  ],
+                  "query": [
+                    {
+                      "key": "date_from",
+                      "value": "2026-04-01"
+                    },
+                    {
+                      "key": "date_to",
+                      "value": "2026-04-30"
+                    },
+                    {
+                      "key": "abandoned_limit",
+                      "value": "10"
+                    }
+                  ]
+                },
+                "description": "Müştəri davranış analitikası: baxış→səbət→sifariş konversiya nisbətləri, tərk edilmiş məhsullar.\n\nParams: date_from, date_to, abandoned_limit (5-50)",
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{login_token_seller}}",
+                      "type": "string"
+                    }
+                  ]
+                }
+              },
+              "response": []
+            }
+          ]
         }
       ]
     }
