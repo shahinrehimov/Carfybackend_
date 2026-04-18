@@ -56,7 +56,7 @@ class LoginController extends Controller
                 '@otp' => $otp,
             ]);
 
-        SmsService::instance()->send($validated['phone'], $message);
+        SmsService::instance()->sendOtp($validated['phone'], $message);
 
         return response()->json([
             'step' => 'otp_phone',
