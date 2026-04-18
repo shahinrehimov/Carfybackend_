@@ -39,6 +39,7 @@ use App\Http\Controllers\Admin\SliderController;
 use App\Http\Controllers\Admin\SocialController;
 use App\Http\Controllers\Admin\TranslationController;
 use App\Http\Controllers\Admin\AdvertisementController;
+use App\Http\Controllers\Admin\StatisticsController;
 use App\Http\Controllers\Admin\UserCarController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\LocalTranslationsController;
@@ -396,6 +397,15 @@ Route::middleware(['general_access:admin', RouteLogMiddleware::class])->prefix('
             Route::post('change-status/{order}', [OrderController::class, 'changeStatus']);
             Route::post('update-payment-status/{order}', [OrderController::class, 'updatePaymentStatus']);
             Route::post('refund/{order}', [OrderController::class, 'refund']);
+        });
+
+        Route::group(['prefix' => 'statistics'], static function () {
+            Route::get('orders', [StatisticsController::class, 'orderStats']);
+            Route::get('top-stores', [StatisticsController::class, 'topStores']);
+            Route::get('top-products', [StatisticsController::class, 'topProducts']);
+            Route::get('users', [StatisticsController::class, 'userStats']);
+            Route::get('cancellations', [StatisticsController::class, 'cancellations']);
+            Route::get('commissions', [StatisticsController::class, 'commissions']);
         });
 
         Route::prefix('sliders')->group(function () {

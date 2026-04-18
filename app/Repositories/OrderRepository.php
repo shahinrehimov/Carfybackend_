@@ -111,11 +111,18 @@ class OrderRepository
         return $order;
     }
 
-    public function changeStatus(Order $order, OrderStatusEnum $status): Order
+    public function changeStatus(Order $order, OrderStatusEnum $status, ?string $cancelReason = null): Order
     {
-        $order->update([
-            'status' => $status,
-        ]);
+        $data = ['status' => $status];
+
+        if ($status === OrderStatusEnum::CANCELED) {
+            $actor = auth()->user();
+            $data['cancel_reason']      = $cancelReason;
+            $data['cancelled_by_type']  = $actor?->getMorphClass();
+            $data['cancelled_by_id']    = $actor?->id;
+        }
+
+        $order->update($data);
 
         return $order;
     }

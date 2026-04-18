@@ -46,7 +46,12 @@ class OrderController extends Controller
 
     public function changeStatus(OrderChangeStatusRequest $request, Order $order): JsonResponse
     {
-        $order = $this->repo->changeStatus($order, OrderStatusEnum::from($request->validated()['status']));
+        $validated = $request->validated();
+        $order = $this->repo->changeStatus(
+            $order,
+            OrderStatusEnum::from($validated['status']),
+            $validated['cancel_reason'] ?? null,
+        );
 
         $order = $this->repo->loadRelations($order);
 

@@ -57,6 +57,9 @@ class Order extends Model
         'latitude',
         'longitude',
         'phone',
+        'cancel_reason',
+        'cancelled_by_type',
+        'cancelled_by_id',
     ];
 
     protected $casts = [
