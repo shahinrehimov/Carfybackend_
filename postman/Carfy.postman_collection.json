@@ -16674,6 +16674,377 @@
           ]
         },
         {
+          "name": "Support",
+          "id": "62d516da-cb9f-4a5a-86b2-fd6b9b44ea00",
+          "item": [
+            {
+              "name": "Load",
+              "id": "baf02657-911a-42e2-824a-5eceea231d43",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Token",
+                    "value": "{{app_token}}"
+                  },
+                  {
+                    "key": "accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{url}}/control/support/load?status=open&limit=10",
+                  "host": [
+                    "{{url}}"
+                  ],
+                  "path": [
+                    "control",
+                    "support",
+                    "load"
+                  ],
+                  "query": [
+                    {
+                      "key": "status",
+                      "value": "open",
+                      "description": "open | in_progress | closed"
+                    },
+                    {
+                      "key": "company_id",
+                      "value": "",
+                      "disabled": true
+                    },
+                    {
+                      "key": "assigned_to_admin_id",
+                      "value": "",
+                      "disabled": true
+                    },
+                    {
+                      "key": "search",
+                      "value": "",
+                      "disabled": true
+                    },
+                    {
+                      "key": "limit",
+                      "value": "10"
+                    }
+                  ]
+                },
+                "description": "Bütün ticketlər. unread_count: sellerin oxunmamış mesajları.",
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{token}}",
+                      "type": "string"
+                    }
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Filters",
+              "id": "4f5c487d-71bd-4a61-bcd9-939a1c2283ea",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Token",
+                    "value": "{{app_token}}"
+                  },
+                  {
+                    "key": "accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{url}}/control/support/filters",
+                  "host": [
+                    "{{url}}"
+                  ],
+                  "path": [
+                    "control",
+                    "support",
+                    "filters"
+                  ]
+                },
+                "description": "Filter formu üçün statuslar siyahısı.",
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{token}}",
+                      "type": "string"
+                    }
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Show",
+              "id": "971c8d7f-2cad-46fa-b02d-8902f4dd035f",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Token",
+                    "value": "{{app_token}}"
+                  },
+                  {
+                    "key": "accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{url}}/control/support/show/1",
+                  "host": [
+                    "{{url}}"
+                  ],
+                  "path": [
+                    "control",
+                    "support",
+                    "show",
+                    "1"
+                  ]
+                },
+                "description": "Ticket detalları + mesajlar. Seller mesajları oxunmuş kimi işarələnir.",
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{token}}",
+                      "type": "string"
+                    }
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Add",
+              "id": "a231a133-de6f-4645-8f9e-dd141038a198",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Token",
+                    "value": "{{app_token}}"
+                  },
+                  {
+                    "key": "accept",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "formdata",
+                  "formdata": [
+                    {
+                      "key": "company_id",
+                      "value": "1",
+                      "type": "text"
+                    },
+                    {
+                      "key": "subject",
+                      "value": "Vergi sənədi tələbi",
+                      "type": "text"
+                    },
+                    {
+                      "key": "body",
+                      "value": "Zəhmət olmasa vergi sənədinizi yükləyin.",
+                      "type": "text"
+                    },
+                    {
+                      "key": "files[]",
+                      "type": "file",
+                      "src": [],
+                      "disabled": true
+                    }
+                  ]
+                },
+                "url": {
+                  "raw": "{{url}}/control/support/add",
+                  "host": [
+                    "{{url}}"
+                  ],
+                  "path": [
+                    "control",
+                    "support",
+                    "add"
+                  ]
+                },
+                "description": "Admin seller üçün ticket açır. Ticket avtomatik həmin adminin üzərinə assign edilir.",
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{token}}",
+                      "type": "string"
+                    }
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Reply",
+              "id": "35a653ea-4647-4a94-924d-8a85a17399e4",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Token",
+                    "value": "{{app_token}}"
+                  },
+                  {
+                    "key": "accept",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "formdata",
+                  "formdata": [
+                    {
+                      "key": "body",
+                      "value": "Sənədinizi aldıq, yoxlayırıq.",
+                      "type": "text"
+                    },
+                    {
+                      "key": "files[]",
+                      "type": "file",
+                      "src": [],
+                      "disabled": true
+                    }
+                  ]
+                },
+                "url": {
+                  "raw": "{{url}}/control/support/reply/1",
+                  "host": [
+                    "{{url}}"
+                  ],
+                  "path": [
+                    "control",
+                    "support",
+                    "reply",
+                    "1"
+                  ]
+                },
+                "description": "Ticketə admin cavabı. Reply göndərildikdə status open → in_progress olur.",
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{token}}",
+                      "type": "string"
+                    }
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Assign",
+              "id": "1ac6a076-845b-44e2-867e-321d445683a4",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Token",
+                    "value": "{{app_token}}"
+                  },
+                  {
+                    "key": "accept",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\"admin_id\": 1}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{url}}/control/support/assign/1",
+                  "host": [
+                    "{{url}}"
+                  ],
+                  "path": [
+                    "control",
+                    "support",
+                    "assign",
+                    "1"
+                  ]
+                },
+                "description": "Ticketi konkret adminin üzərinə assign et.",
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{token}}",
+                      "type": "string"
+                    }
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Close",
+              "id": "12d45f6b-4500-44f7-ba62-095b548d8a9f",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Token",
+                    "value": "{{app_token}}"
+                  },
+                  {
+                    "key": "accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{url}}/control/support/close/1",
+                  "host": [
+                    "{{url}}"
+                  ],
+                  "path": [
+                    "control",
+                    "support",
+                    "close",
+                    "1"
+                  ]
+                },
+                "description": "Ticketi bağla. Bağlandıqdan sonra heç kim yeni mesaj göndərə bilməz.",
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{token}}",
+                      "type": "string"
+                    }
+                  ]
+                }
+              },
+              "response": []
+            }
+          ]
+        },
+        {
           "name": "Contact messages",
           "item": [
             {
@@ -28502,6 +28873,268 @@
                   ]
                 },
                 "description": "Müştəri davranış analitikası: baxış→səbət→sifariş konversiya nisbətləri, tərk edilmiş məhsullar.\n\nParams: date_from, date_to, abandoned_limit (5-50)",
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{login_token_seller}}",
+                      "type": "string"
+                    }
+                  ]
+                }
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "Support",
+          "id": "3eb592c1-f96d-41d9-9034-ed148b5e5360",
+          "item": [
+            {
+              "name": "Load",
+              "id": "af63df30-4caa-453a-8eb2-b0b554e3de54",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Token",
+                    "value": "{{app_seller_token}}"
+                  },
+                  {
+                    "key": "accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{url}}/sellers/support/load?status=open&limit=10",
+                  "host": [
+                    "{{url}}"
+                  ],
+                  "path": [
+                    "sellers",
+                    "support",
+                    "load"
+                  ],
+                  "query": [
+                    {
+                      "key": "status",
+                      "value": "open",
+                      "description": "open | in_progress | closed"
+                    },
+                    {
+                      "key": "limit",
+                      "value": "10"
+                    },
+                    {
+                      "key": "search",
+                      "value": "",
+                      "disabled": true
+                    }
+                  ]
+                },
+                "description": "Sellerin ticketlərinin siyahısı. unread_count: adminin oxunmamış mesajları.",
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{login_token_seller}}",
+                      "type": "string"
+                    }
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Show",
+              "id": "701c5c52-3da7-4773-a9cf-6b47a1fe1957",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Token",
+                    "value": "{{app_seller_token}}"
+                  },
+                  {
+                    "key": "accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{url}}/sellers/support/show/1",
+                  "host": [
+                    "{{url}}"
+                  ],
+                  "path": [
+                    "sellers",
+                    "support",
+                    "show",
+                    "1"
+                  ]
+                },
+                "description": "Ticket detalları + mesajlar. Admin mesajları oxunmuş kimi işarələnir.",
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{login_token_seller}}",
+                      "type": "string"
+                    }
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Add",
+              "id": "cef587c2-239f-4d30-abab-c2d0e10e6000",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Token",
+                    "value": "{{app_seller_token}}"
+                  },
+                  {
+                    "key": "accept",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "formdata",
+                  "formdata": [
+                    {
+                      "key": "subject",
+                      "value": "Vergi sənədi haqqında sual",
+                      "type": "text"
+                    },
+                    {
+                      "key": "body",
+                      "value": "Zəhmət olmasa vergi sənədi formatı haqqında məlumat verin.",
+                      "type": "text"
+                    },
+                    {
+                      "key": "files[]",
+                      "type": "file",
+                      "src": [],
+                      "disabled": true
+                    }
+                  ]
+                },
+                "url": {
+                  "raw": "{{url}}/sellers/support/add",
+                  "host": [
+                    "{{url}}"
+                  ],
+                  "path": [
+                    "sellers",
+                    "support",
+                    "add"
+                  ]
+                },
+                "description": "Yeni dəstək ticketi aç. İlk mesaj eyni anda göndərilir.",
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{login_token_seller}}",
+                      "type": "string"
+                    }
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Reply",
+              "id": "de6b3ad3-838f-417e-a1cc-22c837ee15fe",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Token",
+                    "value": "{{app_seller_token}}"
+                  },
+                  {
+                    "key": "accept",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "formdata",
+                  "formdata": [
+                    {
+                      "key": "body",
+                      "value": "Sənədi əlavə edirəm.",
+                      "type": "text"
+                    },
+                    {
+                      "key": "files[]",
+                      "type": "file",
+                      "src": [],
+                      "disabled": true
+                    }
+                  ]
+                },
+                "url": {
+                  "raw": "{{url}}/sellers/support/reply/1",
+                  "host": [
+                    "{{url}}"
+                  ],
+                  "path": [
+                    "sellers",
+                    "support",
+                    "reply",
+                    "1"
+                  ]
+                },
+                "description": "Ticketə cavab mesajı göndər. Closed ticketə cavab vermək olmaz (422).",
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{login_token_seller}}",
+                      "type": "string"
+                    }
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Close",
+              "id": "a4c0661b-2c32-40e0-89f7-d04700e9dace",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Token",
+                    "value": "{{app_seller_token}}"
+                  },
+                  {
+                    "key": "accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{url}}/sellers/support/close/1",
+                  "host": [
+                    "{{url}}"
+                  ],
+                  "path": [
+                    "sellers",
+                    "support",
+                    "close",
+                    "1"
+                  ]
+                },
+                "description": "Ticketi bağla. Bağlandıqdan sonra yeni mesaj göndərmək olmaz.",
                 "auth": {
                   "type": "bearer",
                   "bearer": [
