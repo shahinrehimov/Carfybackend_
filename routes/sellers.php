@@ -21,6 +21,7 @@ use App\Http\Controllers\Sellers\ProductVariantController;
 use App\Http\Controllers\Sellers\ProfileController;
 use App\Http\Controllers\Sellers\SessionController;
 use App\Http\Controllers\Sellers\StoreProfileController;
+use App\Http\Controllers\Sellers\SupportController;
 use App\Http\Middleware\CompanyAdminMiddleware;
 use App\Http\Middleware\CompanyVerifiedMiddleware;
 use App\Http\Middleware\RouteLogMiddleware;
@@ -120,6 +121,14 @@ Route::middleware(['general_access:sellers', RouteLogMiddleware::class])->prefix
 
             Route::group(['prefix' => 'reviews'], static function () {
                 Route::get('load', [ProductReviewController::class, 'loadAll']);
+            });
+
+            Route::group(['prefix' => 'support'], static function () {
+                Route::get('load', [SupportController::class, 'index']);
+                Route::get('show/{supportTicket}', [SupportController::class, 'show']);
+                Route::post('add', [SupportController::class, 'store']);
+                Route::post('reply/{supportTicket}', [SupportController::class, 'reply']);
+                Route::post('close/{supportTicket}', [SupportController::class, 'close']);
             });
 
             Route::group(['prefix' => 'statistics'], static function () {

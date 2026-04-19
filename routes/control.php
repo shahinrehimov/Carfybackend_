@@ -40,6 +40,7 @@ use App\Http\Controllers\Admin\SocialController;
 use App\Http\Controllers\Admin\TranslationController;
 use App\Http\Controllers\Admin\AdvertisementController;
 use App\Http\Controllers\Admin\StatisticsController;
+use App\Http\Controllers\Admin\SupportController;
 use App\Http\Controllers\Admin\UserCarController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\LocalTranslationsController;
@@ -444,6 +445,16 @@ Route::middleware(['general_access:admin', RouteLogMiddleware::class])->prefix('
             Route::get('{productVariant}/revisions', [ProductVariantController::class, 'revisions']);
             Route::post('revisions/{revision}/approve', [ProductVariantController::class, 'approveRevision']);
             Route::post('revisions/{revision}/reject', [ProductVariantController::class, 'rejectRevision']);
+        });
+
+        Route::group(['prefix' => 'support'], static function () {
+            Route::get('load', [SupportController::class, 'index']);
+            Route::get('filters', [SupportController::class, 'getFilters']);
+            Route::get('show/{supportTicket}', [SupportController::class, 'show']);
+            Route::post('add', [SupportController::class, 'store']);
+            Route::post('reply/{supportTicket}', [SupportController::class, 'reply']);
+            Route::post('assign/{supportTicket}', [SupportController::class, 'assign']);
+            Route::post('close/{supportTicket}', [SupportController::class, 'close']);
         });
 
         Route::group(['prefix' => 'contact-messages'], static function () {
