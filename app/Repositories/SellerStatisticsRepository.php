@@ -13,7 +13,11 @@ class SellerStatisticsRepository
 
     public function getOrderStats(int $companyId, array $validated): array
     {
-        $period   = $validated['period'] ?? 'daily';
+        $period   = match($validated['period'] ?? 'daily') {
+            'weekly'  => 'week',
+            'monthly' => 'month',
+            default   => 'day',
+        };
         $dateFrom = $validated['date_from'] ?? null;
         $dateTo   = $validated['date_to'] ?? null;
         $status   = $validated['status'] ?? null;
@@ -46,7 +50,7 @@ class SellerStatisticsRepository
                 'total_quantity' => (int) ($summary->total_quantity ?? 0),
             ],
             'chart' => $chart->map(fn($row) => [
-                'date'        => substr($row->period_date, 0, $period === 'monthly' ? 7 : 10),
+                'date'        => substr($row->period_date, 0, $period === 'month' ? 7 : 10),
                 'order_count' => (int) $row->order_count,
                 'revenue'     => round($row->revenue_cents / 100, 2),
                 'quantity'    => (int) $row->quantity,

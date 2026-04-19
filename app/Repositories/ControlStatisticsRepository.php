@@ -13,7 +13,7 @@ class ControlStatisticsRepository
 
     public function getOrderStats(array $validated): array
     {
-        $period    = $validated['period'] ?? 'daily';
+        $period    = $this->pgPeriod($validated['period'] ?? 'daily');
         $dateFrom  = $validated['date_from'] ?? null;
         $dateTo    = $validated['date_to'] ?? null;
         $status    = $validated['status'] ?? null;
@@ -47,7 +47,7 @@ class ControlStatisticsRepository
                 'total_quantity' => (int) ($summary->total_quantity ?? 0),
             ],
             'chart' => $chart->map(fn($row) => [
-                'date'        => substr($row->period_date, 0, $period === 'monthly' ? 7 : 10),
+                'date'        => substr($row->period_date, 0, $period === 'month' ? 7 : 10),
                 'order_count' => (int) $row->order_count,
                 'revenue'     => round($row->revenue_cents / 100, 2),
                 'quantity'    => (int) $row->quantity,
@@ -174,7 +174,7 @@ class ControlStatisticsRepository
     {
         $dateFrom = $validated['date_from'] ?? null;
         $dateTo   = $validated['date_to'] ?? null;
-        $period   = $validated['period'] ?? 'daily';
+        $period   = $this->pgPeriod($validated['period'] ?? 'daily');
 
         $registeredTotal = DB::table('users')
             ->whereNull('deleted_at')
@@ -218,7 +218,7 @@ class ControlStatisticsRepository
                 'active_via_order'  => $activeViaOrder,
             ],
             'registration_chart' => $chart->map(fn($row) => [
-                'date'  => substr($row->period_date, 0, $period === 'monthly' ? 7 : 10),
+                'date'  => substr($row->period_date, 0, $period === 'month' ? 7 : 10),
                 'count' => (int) $row->count,
             ])->values(),
         ];
@@ -290,6 +290,15 @@ class ControlStatisticsRepository
     }
 
     // ─── Helpers ─────────────────────────────────────────────────────────────
+
+    private function pgPeriod(string $period): string
+    {
+        return match($period) {
+            'weekly'  => 'week',
+            'monthly' => 'month',
+            default   => 'day',
+        };
+    }
 
     private function orderBaseQuery(?string $dateFrom, ?string $dateTo, ?string $status, ?int $companyId): \Illuminate\Database\Query\Builder
     {
