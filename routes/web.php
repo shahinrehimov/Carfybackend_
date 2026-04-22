@@ -4,6 +4,7 @@ use App\Http\Controllers\App\AdvertisementController;
 use App\Http\Controllers\App\Auth\EmailVerificationController;
 use App\Http\Controllers\App\Auth\GoogleController;
 use App\Http\Controllers\App\OrderController;
+use App\Http\Controllers\Webhook\WoltWebhookController;
 use App\Http\Middleware\RouteLogMiddleware;
 use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
 use Illuminate\Support\Facades\Route;
@@ -18,6 +19,10 @@ Route::get('/email/verify/{id}/{hash}', [EmailVerificationController::class, 've
 
 Route::post('/payment/callback/{paymentMethodName}', [OrderController::class, 'paymentProcessCallback'])
     ->name('payment.callback')
+    ->withoutMiddleware(VerifyCsrfToken::class);
+
+Route::post('/webhooks/wolt', [WoltWebhookController::class, 'handle'])
+    ->name('webhooks.wolt')
     ->withoutMiddleware(VerifyCsrfToken::class);
 
 Route::get('/auth/google/callback', [GoogleController::class, 'callback'])

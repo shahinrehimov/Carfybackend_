@@ -3,6 +3,7 @@
 namespace App\Http\Requests\Sellers\CompanyProductVariants;
 
 use App\Enum\DiscountTypeEnum;
+use App\Enum\ProductSizeCategoryEnum;
 use App\Models\City;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -29,6 +30,8 @@ class AttachRequest extends FormRequest
             'discount_start_at' => ['nullable', Rule::excludeIf(fn() => !$this->has_discount), 'date'],
             'discount_end_at' => ['nullable', Rule::excludeIf(fn() => !$this->has_discount), 'date', 'after_or_equal:discount_start_at'],
             'city_id' => ['nullable', 'integer', Rule::exists(City::class, 'id')->where('is_active', true)->whereNull('deleted_at')],
+            'size_category' => ['required', 'string', Rule::in(ProductSizeCategoryEnum::cases())],
+            'weight_gram' => ['required', 'integer', 'min:1', 'max:20000'],
             'images' => ['filled', 'array', 'min:1'],
             'images.*' => ['required', File::image()->max(10 * 1024)],
         ];

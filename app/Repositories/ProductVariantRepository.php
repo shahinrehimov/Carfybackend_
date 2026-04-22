@@ -533,6 +533,8 @@ class ProductVariantRepository
                     'discount_start_at' => $validated['discount_start_at'] ?? null,
                     'discount_end_at' => $validated['discount_end_at'] ?? null,
                     'city_id' => $validated['city_id'] ?? null,
+                    'size_category' => $validated['size_category'] ?? 'small',
+                    'weight_gram' => $validated['weight_gram'] ?? 0,
                     'is_active' => true,
                     'approval_status' => ProductVariantApprovalStatusEnum::PENDING->value,
                 ]);

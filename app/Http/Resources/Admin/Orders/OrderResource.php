@@ -126,11 +126,13 @@ class OrderResource extends JsonResource
             'items' => OrderItemsListResource::collection($this->whenLoaded('items')),
             'shipping_per_seller' => $this->whenLoaded('shippings', fn() =>
                 $this->shippings->map(fn($s) => [
-                    'company_id' => $s->company_id,
-                    'company_name' => $s->company?->title,
-                    'store_code' => $s->company?->store_code,
-                    'amount' => $s->amount,
-                    'refunded_at' => $s->refunded_at?->toDateTimeString(),
+                    'company_id'     => $s->company_id,
+                    'company_name'   => $s->company?->title,
+                    'store_code'     => $s->company?->store_code,
+                    'amount'         => $s->amount,
+                    'refunded_at'    => $s->refunded_at?->toDateTimeString(),
+                    'wolt_status'    => $s->wolt_status,
+                    'wolt_deliveries'=> $s->wolt_deliveries,
                 ])
             ),
             'payment_logs' => $this->whenLoaded('paymentLogs', fn() =>

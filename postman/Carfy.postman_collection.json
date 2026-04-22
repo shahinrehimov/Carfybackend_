@@ -9674,6 +9674,63 @@
               "response": []
             },
             {
+              "name": "Request Wolt Delivery",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{token}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Token",
+                    "value": "{{app_token}}",
+                    "type": "text"
+                  },
+                  {
+                    "key": "accept",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{url}}/control/orders/request-wolt-delivery/:orderId",
+                  "host": [
+                    "{{url}}"
+                  ],
+                  "path": [
+                    "control",
+                    "orders",
+                    "request-wolt-delivery",
+                    ":orderId"
+                  ],
+                  "variable": [
+                    {
+                      "key": "orderId",
+                      "value": "1"
+                    }
+                  ]
+                },
+                "description": "Seçilmiş satıcı üçün Wolt kuryer sifarişi yaradır. Əgər ümumi çəki 20 kq-dan çoxdursa, avtomatik bölünür. Order statusu courier_assigned olur.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"company_id\": 1\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "response": []
+            },
+            {
               "name": "Payment Logs",
               "request": {
                 "auth": {
@@ -24781,7 +24838,7 @@
                   }
                 ],
                 "url": {
-                  "raw": "{{url}}/:provider/orders/checkout-preview",
+                  "raw": "{{url}}/:provider/orders/checkout-preview?address_id=",
                   "host": [
                     "{{url}}"
                   ],
@@ -24796,9 +24853,17 @@
                       "value": "site",
                       "description": "site or app"
                     }
+                  ],
+                  "query": [
+                    {
+                      "key": "address_id",
+                      "value": "",
+                      "description": "İstəyə bağlı. Göndərilsə real Wolt qiyməti qaytarılır.",
+                      "disabled": true
+                    }
                   ]
                 },
-                "description": "Ödənişdən əvvəl göstərilən sifariş xülasəsi. Hər seller üçün ayrı catdırılma haqqı, subtotal və ümumi məbləğ."
+                "description": "Ödənişdən əvvəl göstərilən sifariş xülasəsi. address_id göndərilsə hər seller üçün real Wolt çatdırılma haqqı qaytarılır. Göndərilməsə is_estimate:true ilə fallback qiymət verilir. weight_warning:true olduqda çəki 20 kq-dan çoxdur."
               },
               "response": []
             },
@@ -26962,6 +27027,18 @@
                       "description": ""
                     },
                     {
+                      "key": "size_category",
+                      "value": "small",
+                      "type": "text",
+                      "description": "required|small|medium|large"
+                    },
+                    {
+                      "key": "weight_gram",
+                      "value": "500",
+                      "type": "text",
+                      "description": "required|integer|min:1|max:20000 — qramla"
+                    },
+                    {
                       "key": "images[0]",
                       "type": "file",
                       "src": "",
@@ -27533,6 +27610,18 @@
                       "type": "file",
                       "src": "",
                       "description": ""
+                    },
+                    {
+                      "key": "size_category",
+                      "value": "small",
+                      "type": "text",
+                      "description": "required|small|medium|large"
+                    },
+                    {
+                      "key": "weight_gram",
+                      "value": "500",
+                      "type": "text",
+                      "description": "required|integer|min:1|max:20000 — qramla"
                     },
                     {
                       "key": "images[0]",
@@ -28440,6 +28529,18 @@
                       "description": "nullable|integer"
                     },
                     {
+                      "key": "size_category",
+                      "value": "small",
+                      "type": "text",
+                      "description": "required|small|medium|large"
+                    },
+                    {
+                      "key": "weight_gram",
+                      "value": "500",
+                      "type": "text",
+                      "description": "required|integer|min:1|max:20000 — qramla"
+                    },
+                    {
                       "key": "images[0]",
                       "type": "file",
                       "src": "",
@@ -28522,6 +28623,18 @@
                       "value": "",
                       "type": "text",
                       "description": "nullable|integer"
+                    },
+                    {
+                      "key": "size_category",
+                      "value": "small",
+                      "type": "text",
+                      "description": "required|small|medium|large"
+                    },
+                    {
+                      "key": "weight_gram",
+                      "value": "500",
+                      "type": "text",
+                      "description": "required|integer|min:1|max:20000 — qramla"
                     }
                   ]
                 }
@@ -29536,6 +29649,58 @@
               "response": []
             }
           ]
+        }
+      ]
+    },
+    {
+      "name": "Webhooks",
+      "item": [
+        {
+          "name": "Wolt Delivery Status",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "accept",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer <wolt_jwt>",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{url}}/webhooks/wolt",
+              "host": [
+                "{{url}}"
+              ],
+              "path": [
+                "webhooks",
+                "wolt"
+              ]
+            },
+            "description": "Wolt-dan gələn webhook. Authorization başlığında Wolt HS256 JWT göndərir. Dəstəklənən eventlər: order.received, order.pickup_started, order.picked_up, order.delivered, order.dropoff_completed, order.rejected, order.pickup_eta_updated, order.dropoff_eta_updated.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"dispatched_at\": \"2026-04-22T10:00:00Z\",\n    \"type\": \"order.delivered\",\n    \"details\": {\n        \"wolt_order_reference_id\": \"abc-123\",\n        \"merchant_order_reference_id\": \"ORDER-uuid-COMPANY-5-PART-1\",\n        \"price\": {\n            \"amount\": 350,\n            \"currency\": \"AZN\"\n        },\n        \"courier\": {\n            \"id\": \"courier-uuid\",\n            \"vehicle_type\": \"car\"\n        },\n        \"dropoff\": {\n            \"completed_at\": \"2026-04-22T10:45:00Z\"\n        }\n    }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
         }
       ]
     }

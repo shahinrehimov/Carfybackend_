@@ -8,14 +8,17 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\Orders\AssignCourierRequest;
 use App\Http\Requests\Admin\Orders\OrderChangeStatusRequest;
 use App\Http\Requests\Admin\Orders\OrderSearchRequest;
+use App\Http\Requests\Admin\Orders\RequestWoltDeliveryRequest;
 use App\Http\Requests\Admin\Orders\SetFinalStatusRequest;
 use App\Http\Resources\Admin\Orders\OrderResource;
 use App\Http\Resources\Admin\Orders\OrdersResource;
 use App\Http\Resources\GeneralResource;
+use App\Models\Company;
 use App\Models\Order;
 use App\Repositories\OrderRepository;
 use App\Services\LangService;
 use App\Services\OrderService;
+use App\Services\WoltDriveService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 
@@ -160,6 +163,91 @@ class OrderController extends Controller
             'message' => LangService::instance()
                 ->setDefault('Courier assigned successfully!')
                 ->getLang('courier_assigned_successfully'),
+            'data' => OrdersResource::make($order),
+        ]));
+    }
+
+    public function requestWoltDelivery(RequestWoltDeliveryRequest $request, Order $order): JsonResponse
+    {
+        $companyId = $request->integer('company_id');
+        $company   = Company::findOrFail($companyId);
+
+        $shipping = $order->shippings()->where('company_id', $companyId)->first();
+
+        if (!$shipping) {
+            return response()->json([
+                'message' => LangService::instance()
+                    ->setDefault('No shipping record found for this company.')
+                    ->getLang('wolt_no_shipping_record'),
+            ], 422);
+        }
+
+        $orderItems = $order->items()
+            ->where('company_product_variant_id', '!=', null)
+            ->whereHas('companyProductVariant', fn($q) => $q->where('company_id', $companyId))
+            ->where('status', '!=', \App\Enum\OrderItemStatusEnum::CANCELED)
+            ->with('companyProductVariant')
+            ->get();
+
+        if ($orderItems->isEmpty()) {
+            return response()->json([
+                'message' => LangService::instance()
+                    ->setDefault('No active items found for this company.')
+                    ->getLang('wolt_no_active_items'),
+            ], 422);
+        }
+
+        if (!config('wolt.enabled')) {
+            return response()->json([
+                'message' => LangService::instance()
+                    ->setDefault('Wolt integration is not enabled.')
+                    ->getLang('wolt_not_enabled'),
+            ], 503);
+        }
+
+        $wolt   = WoltDriveService::instance();
+        $groups = $wolt->splitItemsByWeight($orderItems);
+
+        $order->load('user');
+        $woltDeliveries = $shipping->wolt_deliveries ?? [];
+
+        foreach ($groups as $index => $groupItems) {
+            try {
+                $result = $wolt->createDeliveryOrder($company, $order, $groupItems, $index + 1);
+
+                $woltDeliveries[] = [
+                    'wolt_order_reference_id' => $result['wolt_order_reference_id'],
+                    'tracking_url'            => $result['tracking_url'],
+                    'status'                  => 'pending',
+                    'part'                    => $index + 1,
+                ];
+            } catch (\RuntimeException $e) {
+                return response()->json([
+                    'message' => LangService::instance()
+                        ->setDefault('Wolt delivery request failed. Please try again.')
+                        ->getLang('wolt_delivery_request_failed'),
+                    'detail' => $e->getMessage(),
+                ], 502);
+            }
+        }
+
+        $shipping->update([
+            'wolt_deliveries' => $woltDeliveries,
+            'wolt_status'     => 'pending',
+        ]);
+
+        $order->update(['status' => \App\Enum\OrderStatusEnum::COURIER_ASSIGNED]);
+        $order->statuses()->create(['status' => \App\Enum\OrderStatusEnum::COURIER_ASSIGNED]);
+
+        $order = $this->repo->loadRelations($order);
+
+        // TODO: Notify sellers - courier assigned via Wolt
+        // TODO: Notify user - courier assigned
+
+        return response()->json(GeneralResource::make([
+            'message' => LangService::instance()
+                ->setDefault('Wolt delivery requested successfully!')
+                ->getLang('wolt_delivery_requested_successfully'),
             'data' => OrdersResource::make($order),
         ]));
     }

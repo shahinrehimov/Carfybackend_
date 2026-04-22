@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\App;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\App\Orders\CheckoutPreviewRequest;
 use App\Http\Requests\App\Orders\OrderStoreRequest;
 use App\Http\Requests\GeneralListRequest;
 use App\Http\Resources\App\Orders\OrderDetailsResource;
@@ -17,9 +18,9 @@ use Illuminate\Http\Request;
 
 class OrderController extends Controller
 {
-    public function checkoutPreview(): JsonResponse
+    public function checkoutPreview(CheckoutPreviewRequest $request): JsonResponse
     {
-        $data = OrderService::instance()->checkoutPreview();
+        $data = OrderService::instance()->checkoutPreview($request->integer('address_id') ?: null);
 
         return response()->json($data);
     }

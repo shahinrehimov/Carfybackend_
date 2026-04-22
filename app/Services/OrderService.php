@@ -18,6 +18,7 @@ use App\Models\Setting;
 use App\Models\User;
 use App\Services\LoggerService;
 use App\Services\Payment\PaymentService;
+use App\Services\WoltDriveService;
 use Carbon\Carbon;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
@@ -68,8 +69,16 @@ class OrderService
         return $this->user;
     }
 
-    public function checkoutPreview(): array
+    public function checkoutPreview(?int $addressId = null): array
     {
+        if (!config('wolt.enabled')) {
+            throw new BadRequestHttpException(
+                LangService::instance()
+                    ->setDefault('Delivery service is not available. Please contact us.')
+                    ->getLang('delivery_service_unavailable')
+            );
+        }
+
         $user = $this->getUser();
         $productVariants = BasketService::instance()->loadProducts($user);
 
@@ -81,12 +90,15 @@ class OrderService
             );
         }
 
-        $shippingService = new FakeShippingService();
+        $address = $addressId
+            ? $user->addresses()->find($addressId)
+            : null;
+
         $sellers = [];
 
         foreach ($productVariants as $productVariant) {
-            $cpvId = $productVariant->pivot->company_product_variant_id ?? null;
-            $cpv = $productVariant->seller_listing ?? null;
+            $cpvId     = $productVariant->pivot->company_product_variant_id ?? null;
+            $cpv       = $productVariant->seller_listing ?? null;
             $companyId = $cpv?->company_id;
 
             if (!$companyId) {
@@ -95,44 +107,98 @@ class OrderService
 
             if (!isset($sellers[$companyId])) {
                 $sellers[$companyId] = [
-                    'company_id' => $companyId,
-                    'store_code' => $cpv->company?->store_code ?? '',
-                    'items' => [],
-                    'subtotal' => 0,
-                    'shipping' => $shippingService->calculateForCompany($companyId),
+                    'company_id'   => $companyId,
+                    'store_code'   => $cpv->company?->store_code ?? '',
+                    '_company'     => $cpv->company,
+                    'items'        => [],
+                    '_wolt_items'  => [],
+                    'subtotal'     => 0,
                 ];
             }
 
             $sellers[$companyId]['items'][] = [
-                'product_variant_id' => $productVariant->id,
+                'product_variant_id'         => $productVariant->id,
                 'company_product_variant_id' => $cpvId,
-                'title' => $productVariant->title,
-                'quantity' => $productVariant->basket_quantity,
-                'price' => round($productVariant->price_final_in_basket, 2),
+                'title'                      => $productVariant->title,
+                'quantity'                   => $productVariant->basket_quantity,
+                'price'                      => round($productVariant->price_final_in_basket, 2),
+            ];
+
+            $sellers[$companyId]['_wolt_items'][] = [
+                'weight_gram'   => $cpv->weight_gram ?? 0,
+                'size_category' => $cpv->size_category,
+                'quantity'      => $productVariant->basket_quantity,
+                'amount_cents'  => (int) round($productVariant->price_final_in_basket * 100),
             ];
 
             $sellers[$companyId]['subtotal'] += $productVariant->price_final_in_basket;
         }
 
-        $totalShipping = 0;
-        $subtotal = 0;
+        $wolt = WoltDriveService::instance();
 
-        foreach ($sellers as &$seller) {
+        // Build batch specs for parallel Wolt fee calls (only if address provided)
+        $batchSpecs = [];
+        if ($address) {
+            foreach ($sellers as $companyId => $seller) {
+                $batchSpecs[$companyId] = [
+                    'company'  => $seller['_company'],
+                    'dropLat'  => (float) $address->latitude,
+                    'dropLon'  => (float) $address->longitude,
+                    'dropAddr' => $address->address_line_1,
+                    'items'    => $seller['_wolt_items'],
+                ];
+            }
+        }
+
+        $fees = $address
+            ? $wolt->getDeliveryFeesBatch($batchSpecs)
+            : [];
+
+        $totalShipping = 0;
+        $subtotal      = 0;
+
+        foreach ($sellers as $companyId => &$seller) {
             $seller['subtotal'] = round($seller['subtotal'], 2);
-            $totalShipping += $seller['shipping'];
             $subtotal += $seller['subtotal'];
+
+            $totalWeight             = $wolt->totalWeightGram($seller['_wolt_items']);
+            $seller['weight_warning'] = $totalWeight > config('wolt.max_weight_gram');
+
+            $fee = $fees[$companyId] ?? [
+                'amount_cents' => (int) config('wolt.fallback_fee'),
+                'eta_minutes'  => null,
+                'is_sedan'     => false,
+                'is_estimate'  => true,
+            ];
+
+            $seller['shipping']             = round($fee['amount_cents'] / 100, 2);
+            $seller['shipping_eta_minutes'] = $fee['eta_minutes'];
+            $seller['shipping_is_estimate'] = $fee['is_estimate'];
+            $seller['is_sedan']             = $fee['is_sedan'];
+
+            unset($seller['_company'], $seller['_wolt_items']);
+
+            $totalShipping += $seller['shipping'];
         }
 
         return [
-            'sellers' => array_values($sellers),
-            'subtotal' => round($subtotal, 2),
+            'sellers'        => array_values($sellers),
+            'subtotal'       => round($subtotal, 2),
             'total_shipping' => round($totalShipping, 2),
-            'grand_total' => round($subtotal + $totalShipping, 2),
+            'grand_total'    => round($subtotal + $totalShipping, 2),
         ];
     }
 
     public function checkout(array $validated): PaymentResult
     {
+        if (!config('wolt.enabled')) {
+            throw new BadRequestHttpException(
+                LangService::instance()
+                    ->setDefault('Delivery service is not available. Please contact us.')
+                    ->getLang('delivery_service_unavailable')
+            );
+        }
+
         $user = $this->getUser();
 
         $productVariants = BasketService::instance()->loadProducts($user);
@@ -155,11 +221,42 @@ class OrderService
             );
         }
 
+        // Calculate Wolt fees per company BEFORE the transaction (external HTTP call)
+        $wolt = WoltDriveService::instance();
+        $woltFeeSpecs = [];
+
+        foreach ($productVariants as $productVariant) {
+            $cpv       = $productVariant->seller_listing ?? null;
+            $companyId = $cpv?->company_id;
+
+            if (!$companyId || !$cpv->company) {
+                continue;
+            }
+
+            if (!isset($woltFeeSpecs[$companyId])) {
+                $woltFeeSpecs[$companyId] = [
+                    'company'  => $cpv->company,
+                    'dropLat'  => (float) $address->latitude,
+                    'dropLon'  => (float) $address->longitude,
+                    'dropAddr' => $address->address_line_1,
+                    'items'    => [],
+                ];
+            }
+
+            $woltFeeSpecs[$companyId]['items'][] = [
+                'weight_gram'   => $cpv->weight_gram ?? 0,
+                'size_category' => $cpv->size_category,
+                'quantity'      => $productVariant->basket_quantity,
+                'amount_cents'  => (int) round($productVariant->price_final_in_basket * 100),
+            ];
+        }
+
+        $woltFees = $wolt->getDeliveryFeesBatch($woltFeeSpecs);
+
         /** @var Order $order */
-        $order = DB::transaction(function () use ($user, $validated, $productVariants, $address) {
+        $order = DB::transaction(function () use ($user, $validated, $productVariants, $address, $woltFees) {
             $items = [];
             $shippingPerCompany = [];
-            $shippingService = new FakeShippingService();
 
             // Batch load all CPVs for stock validation (single query)
             $cpvIds = $productVariants
@@ -205,9 +302,12 @@ class OrderService
                     // Decrement stock atomically
                     $cpv->decrement('stock', $productVariant->basket_quantity);
 
-                    // Collect per-company shipping (one entry per unique company)
+                    // Collect per-company shipping from Wolt fee (one entry per unique company)
                     if ($cpv->company_id && !isset($shippingPerCompany[$cpv->company_id])) {
-                        $shippingPerCompany[$cpv->company_id] = $shippingService->calculateForCompany($cpv->company_id);
+                        $fee = $woltFees[$cpv->company_id] ?? null;
+                        $shippingPerCompany[$cpv->company_id] = $fee
+                            ? round($fee['amount_cents'] / 100, 2)
+                            : round(config('wolt.fallback_fee') / 100, 2);
                     }
                 }
 
@@ -340,6 +440,7 @@ class OrderService
                 if ($shipping) {
                     $refundAmount += $shipping->getRawOriginal('amount');
                     $shipping->update(['refunded_at' => Carbon::now()]);
+                    $this->cancelWoltDeliveries($shipping, "Bütün məhsullar ləğv edildi");
                 }
             }
         }
@@ -428,6 +529,10 @@ class OrderService
                 'payment_status' => $result->amount >= $order->getRawOriginal('amount_final') ? OrderPaymentStatusEnum::REFUNDED : OrderPaymentStatusEnum::PARTIALLY_REFUNDED,
                 'refund_at' => Carbon::now(),
             ]);
+
+            $order->shippings()->get()->each(function ($shipping) {
+                $this->cancelWoltDeliveries($shipping, "Sifariş geri qaytarıldı");
+            });
         }
 
         $order->paymentLogs()->create([
@@ -441,6 +546,32 @@ class OrderService
         ]);
 
         return $result;
+    }
+
+    private function cancelWoltDeliveries(\App\Models\OrderShipping $shipping, string $reason): void
+    {
+        $deliveries = $shipping->wolt_deliveries ?? [];
+
+        if (empty($deliveries)) {
+            return;
+        }
+
+        $wolt = WoltDriveService::instance();
+
+        foreach ($deliveries as &$delivery) {
+            $woltId = $delivery['wolt_order_reference_id'] ?? null;
+            $status = $delivery['status'] ?? null;
+
+            if ($woltId && !in_array($status, ['delivered', 'canceled', 'rejected'])) {
+                $wolt->cancelDelivery($woltId, $reason);
+                $delivery['status'] = 'canceled';
+            }
+        }
+
+        $shipping->update([
+            'wolt_deliveries' => $deliveries,
+            'wolt_status'     => 'canceled',
+        ]);
     }
 
     public function load(array $validated = []): LengthAwarePaginator

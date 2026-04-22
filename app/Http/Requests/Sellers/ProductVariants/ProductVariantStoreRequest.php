@@ -3,6 +3,7 @@
 namespace App\Http\Requests\Sellers\ProductVariants;
 
 use App\Enum\DiscountTypeEnum;
+use App\Enum\ProductSizeCategoryEnum;
 use App\Models\BrandModel;
 use App\Models\City;
 use App\Models\ProductOption;
@@ -50,6 +51,9 @@ class ProductVariantStoreRequest extends FormRequest
             'images.*' => ['required', File::image()->max(10 * 1024)],
 
             'city_id' => ['required', 'integer', Rule::exists(City::class, 'id')->where('is_active', true)->whereNull('deleted_at')],
+
+            'size_category' => ['required', 'string', Rule::in(ProductSizeCategoryEnum::cases())],
+            'weight_gram'   => ['required', 'integer', 'min:1', 'max:20000'],
 
             'brand_model_ids' => ['required', 'array', 'min:1'],
             'brand_model_ids.*' => ['required', 'integer',

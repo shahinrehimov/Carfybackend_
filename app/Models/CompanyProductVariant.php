@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Casts\CompanyProductVariants\DiscountCast;
 use App\Casts\CompanyProductVariants\PriceCast;
 use App\Casts\CompanyProductVariants\PriceFinalCast;
+use App\Enum\ProductSizeCategoryEnum;
 use App\Traits\ActionBy;
 use App\Traits\ActionUser;
 use Dyrynda\Database\Support\CascadeSoftDeletes;
@@ -50,6 +51,8 @@ class CompanyProductVariant extends Model implements HasMedia
         'discount_start_at',
         'discount_end_at',
         'city_id',
+        'size_category',
+        'weight_gram',
         'is_active',
         'approval_status',
         'approval_status_message',
@@ -62,6 +65,7 @@ class CompanyProductVariant extends Model implements HasMedia
         'discount_start_at' => 'datetime',
         'discount_end_at' => 'datetime',
         'is_active' => 'boolean',
+        'size_category' => ProductSizeCategoryEnum::class,
     ];
 
     protected array $cascadeDeletes = [

@@ -99,6 +99,8 @@ class CompanyProductVariantResource extends JsonResource
                     'title' => $this->company->getLang('title'),
                 ];
             }),
+            'size_category' => $this->size_category,
+            'weight_gram' => $this->weight_gram,
             'created_date' => $this->created_at?->toDateTimeString(),
         ];
     }

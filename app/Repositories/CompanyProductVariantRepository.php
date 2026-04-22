@@ -90,6 +90,8 @@ class CompanyProductVariantRepository
                 'discount_start_at' => $validated['discount_start_at'] ?? null,
                 'discount_end_at' => $validated['discount_end_at'] ?? null,
                 'city_id' => $validated['city_id'] ?? null,
+                'size_category' => $validated['size_category'],
+                'weight_gram' => $validated['weight_gram'],
                 'is_active' => true,
                 'approval_status' => ProductVariantApprovalStatusEnum::PENDING->value,
             ]);
@@ -120,6 +122,8 @@ class CompanyProductVariantRepository
                 'discount_start_at' => $validated['discount_start_at'] ?? $cpv->discount_start_at,
                 'discount_end_at' => $validated['discount_end_at'] ?? $cpv->discount_end_at,
                 'city_id' => $validated['city_id'] ?? $cpv->city_id,
+                'size_category' => $validated['size_category'],
+                'weight_gram' => $validated['weight_gram'],
             ]);
 
             return $cpv;

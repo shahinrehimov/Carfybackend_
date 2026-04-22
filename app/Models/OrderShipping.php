@@ -20,11 +20,14 @@ class OrderShipping extends Model
         'company_id',
         'amount',
         'refunded_at',
+        'wolt_deliveries',
+        'wolt_status',
     ];
 
     protected $casts = [
-        'amount' => AmountCast::class,
-        'refunded_at' => 'datetime',
+        'amount'          => AmountCast::class,
+        'refunded_at'     => 'datetime',
+        'wolt_deliveries' => 'array',
     ];
 
     public function order(): BelongsTo
