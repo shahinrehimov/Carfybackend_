@@ -2,8 +2,10 @@
 
 namespace App\Http\Resources\Sellers\Orders;
 
+use App\Services\LangService;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
+use Illuminate\Support\Str;
 
 class SellerOrderItemResource extends JsonResource
 {
@@ -12,6 +14,9 @@ class SellerOrderItemResource extends JsonResource
         return [
             'id' => $this->id,
             'status' => $this->status,
+            'status_label' => LangService::instance()
+                ->setDefault(Str::title($this->status->value))
+                ->getLang('order_item_status_' . $this->status->value),
             'cancel_reason' => $this->cancel_reason,
             'quantity' => $this->quantity,
             'amount' => $this->amount,
