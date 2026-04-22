@@ -74,6 +74,19 @@ class OrderDetailsResource extends JsonResource
                 return OrderService::instance()->makeStatusesTree($this->statuses);
             }),
             'statuses' => OrderStatusesResource::collection($this->whenLoaded('statuses')),
+            'delivery_tracking' => $this->whenLoaded('shippings', function () {
+                return $this->shippings
+                    ->filter(fn($s) => !empty($s->wolt_deliveries))
+                    ->map(fn($s) => [
+                        'store_code' => $s->company?->store_code,
+                        'deliveries' => collect($s->wolt_deliveries)->map(fn($d) => [
+                            'tracking_url' => $d['tracking_url'] ?? null,
+                            'dropoff_eta'  => $d['dropoff_eta'] ?? null,
+                            'status'       => $d['status'] ?? null,
+                        ])->values(),
+                    ])
+                    ->values();
+            }),
             'items' => OrderItemsListResource::collection($this->whenLoaded('items')),
         ];
     }

@@ -638,6 +638,7 @@ class OrderService
                         },
                     ]);
                 },
+                'shippings.company',
                 'addressType',
                 'addressType.translatable',
                 'city',
