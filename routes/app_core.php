@@ -220,6 +220,7 @@ return static function () {
                     ->withoutMiddleware(CheckActiveUserMiddleware::class);
 
                 Route::group(['prefix' => 'orders'], static function () {
+                    Route::get('checkout-preview', [OrderController::class, 'checkoutPreview']);
                     Route::post('checkout', [OrderController::class, 'checkout']);
                     Route::get('check-payment-status/{orderUuid}/{paymentMethod}/{token}', [OrderController::class, 'checkPaymentStatus'])->middleware(['throttle:5,1']);
                     Route::get('load', [OrderController::class, 'load']);

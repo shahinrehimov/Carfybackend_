@@ -16,6 +16,7 @@ enum OrderStatusEnum: string
     case DELIVERED = 'delivered';
     case CANCELED = 'canceled';
     case RETURNED = 'returned';
+    case COURIER_ASSIGNED = 'courier_assigned';
 
     public static function getList(): array
     {

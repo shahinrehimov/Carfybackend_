@@ -60,6 +60,7 @@ class Order extends Model
         'cancel_reason',
         'cancelled_by_type',
         'cancelled_by_id',
+        'courier_info',
     ];
 
     protected $casts = [
@@ -72,12 +73,14 @@ class Order extends Model
         'amount_final' => AmountCast::class,
         'total_discount_in_basket' => AmountCast::class,
         'shipping' => AmountCast::class,
+        'courier_info' => 'array',
     ];
 
     protected array $cascadeDeletes = [
         'items',
         'statuses',
         'paymentStatuses',
+        'shippings',
     ];
 
     protected static function boot(): void
@@ -120,6 +123,11 @@ class Order extends Model
     public function paymentStatuses(): HasMany
     {
         return $this->hasMany(OrderPaymentStatus::class);
+    }
+
+    public function shippings(): HasMany
+    {
+        return $this->hasMany(OrderShipping::class);
     }
 
     public function paymentLogs(): HasMany

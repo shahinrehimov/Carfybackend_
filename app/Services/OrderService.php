@@ -3,13 +3,20 @@
 namespace App\Services;
 
 use App\DTOs\Payment\PaymentResult;
+use App\Enum\OrderItemStatusEnum;
 use App\Enum\OrderPaymentStatusEnum;
 use App\Enum\OrderStatusEnum;
+use App\Enum\PaymentLogActionEnum;
 use App\Models\Order;
+use App\Models\OrderItem;
+use App\Models\OrderItemStatus;
+use App\Models\OrderShipping;
 use App\Models\OrderStatus;
 use App\Models\CompanyProductVariant;
 use App\Models\ProductVariant;
+use App\Models\Setting;
 use App\Models\User;
+use App\Services\LoggerService;
 use App\Services\Payment\PaymentService;
 use Carbon\Carbon;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -61,6 +68,69 @@ class OrderService
         return $this->user;
     }
 
+    public function checkoutPreview(): array
+    {
+        $user = $this->getUser();
+        $productVariants = BasketService::instance()->loadProducts($user);
+
+        if ($productVariants->isEmpty()) {
+            throw new BadRequestHttpException(
+                LangService::instance()
+                    ->setDefault('Your basket is empty')
+                    ->getLang('basket_empty')
+            );
+        }
+
+        $shippingService = new FakeShippingService();
+        $sellers = [];
+
+        foreach ($productVariants as $productVariant) {
+            $cpvId = $productVariant->pivot->company_product_variant_id ?? null;
+            $cpv = $productVariant->seller_listing ?? null;
+            $companyId = $cpv?->company_id;
+
+            if (!$companyId) {
+                continue;
+            }
+
+            if (!isset($sellers[$companyId])) {
+                $sellers[$companyId] = [
+                    'company_id' => $companyId,
+                    'company_name' => $cpv->company?->title ?? '',
+                    'items' => [],
+                    'subtotal' => 0,
+                    'shipping' => $shippingService->calculateForCompany($companyId),
+                ];
+            }
+
+            $sellers[$companyId]['items'][] = [
+                'product_variant_id' => $productVariant->id,
+                'company_product_variant_id' => $cpvId,
+                'title' => $productVariant->title,
+                'quantity' => $productVariant->basket_quantity,
+                'price' => round($productVariant->price_final_in_basket, 2),
+            ];
+
+            $sellers[$companyId]['subtotal'] += $productVariant->price_final_in_basket;
+        }
+
+        $totalShipping = 0;
+        $subtotal = 0;
+
+        foreach ($sellers as &$seller) {
+            $seller['subtotal'] = round($seller['subtotal'], 2);
+            $totalShipping += $seller['shipping'];
+            $subtotal += $seller['subtotal'];
+        }
+
+        return [
+            'sellers' => array_values($sellers),
+            'subtotal' => round($subtotal, 2),
+            'total_shipping' => round($totalShipping, 2),
+            'grand_total' => round($subtotal + $totalShipping, 2),
+        ];
+    }
+
     public function checkout(array $validated): PaymentResult
     {
         $user = $this->getUser();
@@ -88,6 +158,8 @@ class OrderService
         /** @var Order $order */
         $order = DB::transaction(function () use ($user, $validated, $productVariants, $address) {
             $items = [];
+            $shippingPerCompany = [];
+            $shippingService = new FakeShippingService();
 
             // Batch load all CPVs for stock validation (single query)
             $cpvIds = $productVariants
@@ -132,6 +204,11 @@ class OrderService
 
                     // Decrement stock atomically
                     $cpv->decrement('stock', $productVariant->basket_quantity);
+
+                    // Collect per-company shipping (one entry per unique company)
+                    if ($cpv->company_id && !isset($shippingPerCompany[$cpv->company_id])) {
+                        $shippingPerCompany[$cpv->company_id] = $shippingService->calculateForCompany($cpv->company_id);
+                    }
                 }
 
                 $items[] = [
@@ -144,10 +221,12 @@ class OrderService
                     'is_set' => $productVariant->isSet(),
                     'quantity' => $productVariant->basket_quantity,
                     'sets' => $productVariant->pivot?->sets ?? [],
+                    'status' => OrderItemStatusEnum::PENDING,
                 ];
             }
 
             $basketData = BasketService::instance()->calculateBasketData($productVariants);
+            $totalShipping = array_sum($shippingPerCompany);
 
             /** @var Order $order */
             $order = $user->orders()->create([
@@ -155,9 +234,9 @@ class OrderService
                 'payment_status' => OrderPaymentStatusEnum::PENDING,
                 'payment_method' => $validated['payment_method'],
                 'amount' => $basketData['total_price_in_basket'],
-                'amount_final' => $basketData['total_price_final_in_basket'],
+                'amount_final' => $basketData['total_price_final_in_basket'] + $totalShipping,
                 'total_discount_in_basket' => $basketData['total_discount_in_basket'],
-                'shipping' => $basketData['shipping'],
+                'shipping' => $totalShipping,
                 'total_quantity' => $basketData['total_basket_quantity'],
                 'address_type_id' => $address->address_type_id,
                 'city_id' => $address->city_id,
@@ -170,7 +249,18 @@ class OrderService
 
             $order->items()->createMany($items);
 
+            // Create per-seller shipping records for reporting and refund tracking
+            foreach ($shippingPerCompany as $companyId => $shippingAmount) {
+                $order->shippings()->create([
+                    'company_id' => $companyId,
+                    'amount' => $shippingAmount,
+                ]);
+            }
+
             BasketService::instance()->clearBasket($user);
+
+            // TODO: Notify sellers - new order received
+            // TODO: Notify admin - new order received
 
             return $order;
         });
@@ -224,9 +314,103 @@ class OrderService
         return $result;
     }
 
+    public function processItemCancellation(OrderItem $item): void
+    {
+        $order = $item->order;
+
+        if (!$order || $order->payment_status !== OrderPaymentStatusEnum::PAID) {
+            return;
+        }
+
+        // Refund the item's amount
+        $refundAmount = $item->getRawOriginal('amount_final');
+
+        // Check if all items for this company are now canceled → also refund shipping
+        $companyId = $item->companyProductVariant?->company_id;
+
+        if ($companyId) {
+            $hasActiveItemsForCompany = $order->items()
+                ->where('id', '!=', $item->id)
+                ->whereHas('companyProductVariant', fn($q) => $q->where('company_id', $companyId))
+                ->where('status', '!=', OrderItemStatusEnum::CANCELED)
+                ->exists();
+
+            if (!$hasActiveItemsForCompany) {
+                $shipping = $order->shippings()->where('company_id', $companyId)->whereNull('refunded_at')->first();
+                if ($shipping) {
+                    $refundAmount += $shipping->getRawOriginal('amount');
+                    $shipping->update(['refunded_at' => Carbon::now()]);
+                }
+            }
+        }
+
+        if ($refundAmount <= 0) {
+            return;
+        }
+
+        $paymentService = app(PaymentService::class);
+
+        $result = $paymentService->refund(
+            $order,
+            $refundAmount,
+            "Item #{$item->id} canceled: {$item->cancel_reason}"
+        );
+
+        if ($result->success) {
+            $allItemsCanceled = $order->items()
+                ->where('id', '!=', $item->id)
+                ->where('status', '!=', OrderItemStatusEnum::CANCELED)
+                ->doesntExist();
+
+            $order->update([
+                'refund_at' => Carbon::now(),
+                'payment_status' => $allItemsCanceled
+                    ? OrderPaymentStatusEnum::REFUNDED
+                    : OrderPaymentStatusEnum::PARTIALLY_REFUNDED,
+            ]);
+
+            LoggerService::instance()->log(
+                "Partial refund processed for item #{$item->id}, amount: {$refundAmount} cents",
+                ['item_id' => $item->id, 'order_id' => $order->id, 'amount' => $refundAmount],
+                true,
+                'info'
+            );
+
+            $order->paymentLogs()->create([
+                'payment_method' => $order->payment_method,
+                'action' => PaymentLogActionEnum::PARTIAL_REFUND,
+                'transaction_id' => $result->transactionId,
+                'status' => 'success',
+                'order_status' => $order->status->value,
+                'request' => ['item_id' => $item->id, 'amount' => $refundAmount],
+                'response' => $result->metadata ?? [],
+            ]);
+
+            // TODO: Notify user - item canceled, refund initiated
+        } else {
+            LoggerService::instance()->log(
+                "Partial refund FAILED for item #{$item->id}: {$result->message}",
+                ['item_id' => $item->id, 'order_id' => $order->id, 'amount' => $refundAmount],
+                true,
+                'error'
+            );
+        }
+    }
+
     public function refund(Order $order, ?int $amount = null, string $comment = ''): PaymentResult
     {
-        if ($order->payment_status !== OrderPaymentStatusEnum::PAID || in_array($order->status, [OrderStatusEnum::RETURNED, OrderPaymentStatusEnum::PARTIALLY_REFUNDED, OrderStatusEnum::CANCELED, OrderStatusEnum::DELIVERED])) {
+        $blockedOrderStatus = in_array($order->status, [
+            OrderStatusEnum::RETURNED,
+            OrderStatusEnum::CANCELED,
+            OrderStatusEnum::DELIVERED,
+        ]);
+
+        $alreadyRefunded = in_array($order->payment_status, [
+            OrderPaymentStatusEnum::REFUNDED,
+            OrderPaymentStatusEnum::PARTIALLY_REFUNDED,
+        ]);
+
+        if ($order->payment_status !== OrderPaymentStatusEnum::PAID || $blockedOrderStatus || $alreadyRefunded) {
             throw new BadRequestHttpException(
                 LangService::instance()
                     ->setDefault('Order cannot be refund')
@@ -245,6 +429,16 @@ class OrderService
                 'refund_at' => Carbon::now(),
             ]);
         }
+
+        $order->paymentLogs()->create([
+            'payment_method' => $order->payment_method,
+            'action' => PaymentLogActionEnum::REFUND,
+            'transaction_id' => $result->transactionId,
+            'status' => $result->success ? 'success' : 'failed',
+            'order_status' => $order->status->value,
+            'request' => ['amount' => $amount, 'comment' => $comment],
+            'response' => $result->metadata ?? [],
+        ]);
 
         return $result;
     }

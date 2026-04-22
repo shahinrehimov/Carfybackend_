@@ -17,6 +17,13 @@ use Illuminate\Http\Request;
 
 class OrderController extends Controller
 {
+    public function checkoutPreview(): JsonResponse
+    {
+        $data = OrderService::instance()->checkoutPreview();
+
+        return response()->json($data);
+    }
+
     public function checkout(OrderStoreRequest $request): JsonResponse
     {
         $result = OrderService::instance()->checkout($request->validated());

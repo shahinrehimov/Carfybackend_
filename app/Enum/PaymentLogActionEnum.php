@@ -10,6 +10,7 @@ enum PaymentLogActionEnum: string
     case CALLBACK = 'callback';
     case CHECK_STATUS = 'check_status';
     case REFUND = 'refund';
+    case PARTIAL_REFUND = 'partial_refund';
 
     public static function getList(): array
     {

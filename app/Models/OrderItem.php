@@ -3,17 +3,20 @@
 namespace App\Models;
 
 use App\Casts\Orders\AmountCast;
+use App\Enum\OrderItemStatusEnum;
 use App\Traits\ActionBy;
 use App\Traits\ActionUser;
+use Dyrynda\Database\Support\CascadeSoftDeletes;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class OrderItem extends Model
 {
-    use SoftDeletes, ActionBy, ActionUser;
+    use SoftDeletes, ActionBy, ActionUser, CascadeSoftDeletes;
 
     protected $fillable = [
         'order_id',
@@ -26,6 +29,10 @@ class OrderItem extends Model
         'is_set',
         'quantity',
         'sets', // [id, quantity]
+        'status',
+        'cancel_reason',
+        'cancelled_by_type',
+        'cancelled_by_id',
     ];
 
     protected $casts = [
@@ -34,7 +41,10 @@ class OrderItem extends Model
         'is_set' => 'boolean',
         'quantity' => 'integer',
         'sets' => 'array',
+        'status' => OrderItemStatusEnum::class,
     ];
+
+    protected array $cascadeDeletes = ['itemStatuses'];
 
     public function scopeIsSet(Builder $builder): void
     {
@@ -74,5 +84,20 @@ class OrderItem extends Model
     public function basket(): HasOne
     {
         return $this->hasOne(Basket::class);
+    }
+
+    public function itemStatuses(): HasMany
+    {
+        return $this->hasMany(OrderItemStatus::class)->orderBy('id');
+    }
+
+    public function isCanceled(): bool
+    {
+        return $this->status === OrderItemStatusEnum::CANCELED;
+    }
+
+    public function isActive(): bool
+    {
+        return $this->status !== OrderItemStatusEnum::CANCELED;
     }
 }

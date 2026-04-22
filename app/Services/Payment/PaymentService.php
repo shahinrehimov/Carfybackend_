@@ -4,7 +4,9 @@ namespace App\Services\Payment;
 
 use App\Enum\OrderPaymentStatusEnum;
 use App\Enum\OrderStatusEnum;
+use App\Enum\PaymentLogActionEnum;
 use App\Models\Order;
+use App\Models\PaymentLog;
 use App\DTOs\Payment\PaymentResult;
 use App\Services\LangService;
 use App\Services\LoggerService;
@@ -71,6 +73,16 @@ readonly class PaymentService
                 ], true, 'warning');
             }
 
+            PaymentLog::create([
+                'order_id' => $order->id,
+                'payment_method' => $order->payment_method,
+                'action' => PaymentLogActionEnum::CHECKOUT,
+                'transaction_id' => $result->transactionId,
+                'status' => $result->success ? 'success' : ($result->isPending() ? 'pending' : 'failed'),
+                'order_status' => $order->status->value,
+                'response' => $result->metadata ?? [],
+            ]);
+
             DB::commit();
             return $result;
         } catch (\Exception $e) {
@@ -94,7 +106,28 @@ readonly class PaymentService
             return PaymentResult::failed(LangService::instance()->setDefault('Payment method is disabled')->getLang('payment_method_disabled'));
         }
 
-        return $paymentMethod->processCallback($data);
+        $result = $paymentMethod->processCallback($data);
+
+        if ($result->order) {
+            LoggerService::instance()->log("Payment callback received for order {$result->order->uuid}", [
+                'payment_method' => $paymentMethodName,
+                'transaction_id' => $result->transactionId,
+                'success' => $result->success,
+            ], true);
+
+            PaymentLog::create([
+                'order_id' => $result->order->id,
+                'payment_method' => $paymentMethodName,
+                'action' => PaymentLogActionEnum::CALLBACK,
+                'transaction_id' => $result->transactionId,
+                'status' => $result->success ? 'success' : 'failed',
+                'order_status' => $result->order->status->value,
+                'request' => $data,
+                'response' => $result->metadata ?? [],
+            ]);
+        }
+
+        return $result;
     }
 
     public function checkStatus(Order $order): PaymentResult
@@ -110,10 +143,27 @@ readonly class PaymentService
             return PaymentResult::failed(LangService::instance()->setDefault('Payment method is disabled')->getLang('payment_method_disabled'));
         }
 
-        return $paymentMethod->checkStatus($order);
+        $result = $paymentMethod->checkStatus($order);
+
+        LoggerService::instance()->log("Payment status checked for order {$order->uuid}", [
+            'transaction_id' => $result->transactionId,
+            'status' => $result->success ? 'success' : 'failed',
+        ], true);
+
+        PaymentLog::create([
+            'order_id' => $order->id,
+            'payment_method' => $order->payment_method,
+            'action' => PaymentLogActionEnum::CHECK_STATUS,
+            'transaction_id' => $result->transactionId,
+            'status' => $result->success ? 'success' : 'failed',
+            'order_status' => $order->status->value,
+            'response' => $result->metadata ?? [],
+        ]);
+
+        return $result;
     }
 
-    public function refund(Order $order, int $amount = null, string $comment = ''): PaymentResult
+    public function refund(Order $order, ?int $amount = null, string $comment = ''): PaymentResult
     {
         try {
             $paymentMethod = $this->factory->createMethod($order->payment_method);
@@ -126,7 +176,18 @@ readonly class PaymentService
             return PaymentResult::failed(LangService::instance()->setDefault('Payment method is disabled')->getLang('payment_method_disabled'));
         }
 
-        return $paymentMethod->refund($order, $amount, $comment);
+        $result = $paymentMethod->refund($order, $amount, $comment);
+
+        LoggerService::instance()->log("Refund processed for order {$order->uuid}", [
+            'amount' => $amount,
+            'comment' => $comment,
+            'success' => $result->success,
+        ], true, $result->success ? 'info' : 'error');
+
+        // DB log is written by the caller (OrderService::refund or processItemCancellation)
+        // with the correct action (REFUND vs PARTIAL_REFUND).
+
+        return $result;
     }
 
     public function getAvailablePaymentMethods(): array

@@ -90,11 +90,16 @@ class OrderRepository
                 'addressType.translatable',
                 'city',
                 'city.translatable',
+                'shippings.company',
                 'items' => function ($query) use ($productVariantRelations) {
                     $query->with([
                         'productVariant' => function ($q) use ($productVariantRelations) {
                             $q->withTrashed();
                             $q->when(count($productVariantRelations['with']) > 0, fn($q) => $q->with($productVariantRelations['with']));
+                        },
+                        'companyProductVariant.company',
+                        'itemStatuses' => function ($q) {
+                            $q->orderBy('id');
                         },
                     ]);
                 },
@@ -105,7 +110,10 @@ class OrderRepository
                             $q->withTrashed();
                         }
                     ]);
-                }
+                },
+                'paymentLogs' => function ($query) {
+                    $query->orderBy('id');
+                },
             ]);
 
         return $order;

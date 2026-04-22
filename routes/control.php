@@ -396,6 +396,9 @@ Route::middleware(['general_access:admin', RouteLogMiddleware::class])->prefix('
             Route::get('load', [OrderController::class, 'index']);
             Route::get('show/{order}', [OrderController::class, 'show']);
             Route::post('change-status/{order}', [OrderController::class, 'changeStatus']);
+            Route::post('set-final-status/{order}', [OrderController::class, 'setFinalStatus']);
+            Route::post('assign-courier/{order}', [OrderController::class, 'assignCourier']);
+            Route::get('payment-logs/{order}', [OrderController::class, 'getPaymentLogs']);
             Route::post('update-payment-status/{order}', [OrderController::class, 'updatePaymentStatus']);
             Route::post('refund/{order}', [OrderController::class, 'refund']);
         });

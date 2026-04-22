@@ -21,6 +21,7 @@ use App\Http\Controllers\Sellers\ProductVariantController;
 use App\Http\Controllers\Sellers\ProfileController;
 use App\Http\Controllers\Sellers\SessionController;
 use App\Http\Controllers\Sellers\StoreProfileController;
+use App\Http\Controllers\Sellers\OrderController as SellerOrderController;
 use App\Http\Controllers\Sellers\SupportController;
 use App\Http\Middleware\CompanyAdminMiddleware;
 use App\Http\Middleware\CompanyVerifiedMiddleware;
@@ -129,6 +130,13 @@ Route::middleware(['general_access:sellers', RouteLogMiddleware::class])->prefix
                 Route::post('add', [SupportController::class, 'store']);
                 Route::post('reply/{supportTicket}', [SupportController::class, 'reply']);
                 Route::post('close/{supportTicket}', [SupportController::class, 'close']);
+            });
+
+            Route::group(['prefix' => 'orders'], static function () {
+                Route::get('load', [SellerOrderController::class, 'index']);
+                Route::get('show/{order:uuid}', [SellerOrderController::class, 'show']);
+                Route::post('items/{orderItem}/status', [SellerOrderController::class, 'changeItemStatus']);
+                Route::post('{order:uuid}/items/bulk-status', [SellerOrderController::class, 'bulkChangeItemStatus']);
             });
 
             Route::group(['prefix' => 'statistics'], static function () {

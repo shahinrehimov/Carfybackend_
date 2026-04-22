@@ -9570,6 +9570,150 @@
                 }
               },
               "response": []
+            },
+            {
+              "name": "Set Final Status",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{token}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Token",
+                    "value": "{{app_token}}",
+                    "type": "text"
+                  },
+                  {
+                    "key": "accept",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{url}}/control/orders/set-final-status/:orderId",
+                  "host": [
+                    "{{url}}"
+                  ],
+                  "path": [
+                    "control",
+                    "orders",
+                    "set-final-status",
+                    ":orderId"
+                  ]
+                },
+                "description": "Admin tərəfindən sifarişə final status verilir. courier_assigned — ən az 1 ready_for_delivery item olmalı. canceled — bütün items cancel olubsa.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"status\": \"courier_assigned\",\n    \"cancel_reason\": null\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Assign Courier",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{token}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Token",
+                    "value": "{{app_token}}",
+                    "type": "text"
+                  },
+                  {
+                    "key": "accept",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{url}}/control/orders/assign-courier/:orderId",
+                  "host": [
+                    "{{url}}"
+                  ],
+                  "path": [
+                    "control",
+                    "orders",
+                    "assign-courier",
+                    ":orderId"
+                  ]
+                },
+                "description": "Kuryeri təyin et. Order statusu courier_assigned olur. courier_info JSON olaraq saxlanılır.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"courier_info\": {\n        \"name\": \"Əli Məmmədov\",\n        \"phone\": \"+994501234567\",\n        \"eta\": \"14:30\",\n        \"notes\": \"\"\n    }\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Payment Logs",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{token}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Token",
+                    "value": "{{app_token}}",
+                    "type": "text"
+                  },
+                  {
+                    "key": "accept",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{url}}/control/orders/payment-logs/:orderId",
+                  "host": [
+                    "{{url}}"
+                  ],
+                  "path": [
+                    "control",
+                    "orders",
+                    "payment-logs",
+                    ":orderId"
+                  ]
+                },
+                "description": "Sifarişin bütün ödəniş əməliyyatlarının loqu (checkout, callback, refund, partial_refund)."
+              },
+              "response": []
             }
           ]
         },
@@ -24611,6 +24755,54 @@
           "name": "Orders",
           "item": [
             {
+              "name": "Checkout Preview",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{login_token_site}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Token",
+                    "value": "{{app_site_token}}",
+                    "type": "text"
+                  },
+                  {
+                    "key": "accept",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{url}}/:provider/orders/checkout-preview",
+                  "host": [
+                    "{{url}}"
+                  ],
+                  "path": [
+                    ":provider",
+                    "orders",
+                    "checkout-preview"
+                  ],
+                  "variable": [
+                    {
+                      "key": "provider",
+                      "value": "site",
+                      "description": "site or app"
+                    }
+                  ]
+                },
+                "description": "Ödənişdən əvvəl göstərilən sifariş xülasəsi. Hər seller üçün ayrı catdırılma haqqı, subtotal və ümumi məbləğ."
+              },
+              "response": []
+            },
+            {
               "name": "Checkout",
               "request": {
                 "auth": {
@@ -28665,6 +28857,201 @@
             }
           ],
           "description": "Reviews are at the CompanyProductVariant (seller listing) level — each seller listing has its own independent reviews and ratings.\nThis allows calculating a per-seller average rating in the future.\nSellers can only VIEW their reviews; approval/deletion is admin-only."
+        },
+        {
+          "name": "Orders",
+          "item": [
+            {
+              "name": "Load",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{login_token_seller}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Token",
+                    "value": "{{app_seller_token}}"
+                  },
+                  {
+                    "key": "accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{url}}/sellers/orders/load?limit=15",
+                  "host": [
+                    "{{url}}"
+                  ],
+                  "path": [
+                    "sellers",
+                    "orders",
+                    "load"
+                  ],
+                  "query": [
+                    {
+                      "key": "limit",
+                      "value": "15"
+                    },
+                    {
+                      "key": "page",
+                      "value": "1",
+                      "disabled": true
+                    }
+                  ]
+                },
+                "description": "Sellerin məhsulları olan sifarişlərin siyahısı. Yalnız bu sellerin items-ları göstərilir."
+              },
+              "response": []
+            },
+            {
+              "name": "Show",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{login_token_seller}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Token",
+                    "value": "{{app_seller_token}}"
+                  },
+                  {
+                    "key": "accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{url}}/sellers/orders/show/:orderUuid",
+                  "host": [
+                    "{{url}}"
+                  ],
+                  "path": [
+                    "sellers",
+                    "orders",
+                    "show",
+                    ":orderUuid"
+                  ]
+                },
+                "description": "Sifariş detayları. Yalnız bu sellerin items-ları daxildir."
+              },
+              "response": []
+            },
+            {
+              "name": "Change Item Status",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{login_token_seller}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Token",
+                    "value": "{{app_seller_token}}"
+                  },
+                  {
+                    "key": "accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{url}}/sellers/orders/items/:orderItemId/status",
+                  "host": [
+                    "{{url}}"
+                  ],
+                  "path": [
+                    "sellers",
+                    "orders",
+                    "items",
+                    ":orderItemId",
+                    "status"
+                  ]
+                },
+                "description": "Item statusunu dəyişdir. Statuslar: pending → processing → ready_for_delivery → handed_to_courier. İstənilən anda → canceled (cancel_reason məcburi).",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"status\": \"processing\",\n    \"cancel_reason\": null\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Bulk Change Item Status",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{login_token_seller}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Token",
+                    "value": "{{app_seller_token}}"
+                  },
+                  {
+                    "key": "accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{url}}/sellers/orders/:orderUuid/items/bulk-status",
+                  "host": [
+                    "{{url}}"
+                  ],
+                  "path": [
+                    "sellers",
+                    "orders",
+                    ":orderUuid",
+                    "items",
+                    "bulk-status"
+                  ]
+                },
+                "description": "Eyni sifarişdəki bir neçə item-ı birdən dəyişdir.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"item_ids\": [\n        1,\n        2,\n        3\n    ],\n    \"status\": \"processing\",\n    \"cancel_reason\": null\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "response": []
+            }
+          ]
         },
         {
           "name": "Statistics",

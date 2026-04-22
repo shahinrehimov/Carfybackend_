@@ -9,6 +9,7 @@ use App\Services\LangService;
 use App\Services\OrderService;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 
 /**
@@ -42,6 +43,43 @@ class OrderResource extends JsonResource
      * @return array
      */
 
+    private function groupItemsBySeller(Collection $items): array
+    {
+        $grouped = [];
+
+        foreach ($items as $item) {
+            $company = $item->companyProductVariant?->company;
+            $companyId = $company?->id ?? 0;
+
+            if (!isset($grouped[$companyId])) {
+                $grouped[$companyId] = [
+                    'company_id' => $companyId,
+                    'company_name' => $company?->title,
+                    'store_code' => $company?->store_code,
+                    'items' => [],
+                ];
+            }
+
+            $grouped[$companyId]['items'][] = [
+                'id' => $item->id,
+                'status' => $item->status,
+                'cancel_reason' => $item->cancel_reason,
+                'quantity' => $item->quantity,
+                'amount' => $item->amount,
+                'amount_final' => $item->amount_final,
+                'product_title' => $item->productVariant?->title,
+                'status_history' => $item->relationLoaded('itemStatuses')
+                    ? $item->itemStatuses->map(fn($s) => [
+                        'status' => $s->status,
+                        'date' => $s->created_at?->format('d.m.Y, H:i'),
+                    ])
+                    : [],
+            ];
+        }
+
+        return array_values($grouped);
+    }
+
     public function toArray(Request $request): array
     {
         return [
@@ -74,11 +112,40 @@ class OrderResource extends JsonResource
                 'longitude' => $this->longitude,
                 'phone' => $this->phone,
             ],
+            'payment_method' => $this->payment_method,
+            'payment_method_display' => $this->resource->getPaymentMethodDisplayName(),
+            'courier_info' => $this->courier_info,
+            'cancel_reason' => $this->cancel_reason,
             'status_tree' => $this->whenLoaded('statuses', function () {
                 return OrderService::instance()->makeStatusesTree($this->statuses);
             }),
             'statuses' => OrderStatusesResource::collection($this->whenLoaded('statuses')),
+            'items_by_seller' => $this->whenLoaded('items', function () {
+                return $this->groupItemsBySeller($this->items);
+            }),
             'items' => OrderItemsListResource::collection($this->whenLoaded('items')),
+            'shipping_per_seller' => $this->whenLoaded('shippings', fn() =>
+                $this->shippings->map(fn($s) => [
+                    'company_id' => $s->company_id,
+                    'company_name' => $s->company?->title,
+                    'store_code' => $s->company?->store_code,
+                    'amount' => $s->amount,
+                    'refunded_at' => $s->refunded_at?->toDateTimeString(),
+                ])
+            ),
+            'payment_logs' => $this->whenLoaded('paymentLogs', fn() =>
+                $this->paymentLogs->map(fn($log) => [
+                    'id' => $log->id,
+                    'action' => $log->action,
+                    'payment_method' => $log->payment_method,
+                    'transaction_id' => $log->transaction_id,
+                    'status' => $log->status,
+                    'order_status' => $log->order_status,
+                    'request' => $log->request,
+                    'response' => $log->response,
+                    'created_at' => $log->created_at?->toDateTimeString(),
+                ])
+            ),
             'created_at' => $this->created_at?->toDateTimeString(),
         ];
     }
