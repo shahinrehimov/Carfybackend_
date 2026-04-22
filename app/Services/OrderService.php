@@ -96,7 +96,7 @@ class OrderService
             if (!isset($sellers[$companyId])) {
                 $sellers[$companyId] = [
                     'company_id' => $companyId,
-                    'company_name' => $cpv->company?->title ?? '',
+                    'store_code' => $cpv->company?->store_code ?? '',
                     'items' => [],
                     'subtotal' => 0,
                     'shipping' => $shippingService->calculateForCompany($companyId),
