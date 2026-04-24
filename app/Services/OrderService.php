@@ -122,6 +122,7 @@ class OrderService
                 'title'                      => $productVariant->title,
                 'quantity'                   => $productVariant->basket_quantity,
                 'price'                      => round($productVariant->price_final_in_basket, 2),
+                'hover_image'                => $cpv->listing_hover_image,
             ];
 
             $sellers[$companyId]['_wolt_items'][] = [
