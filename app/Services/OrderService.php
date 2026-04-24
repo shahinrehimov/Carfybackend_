@@ -117,12 +117,9 @@ class OrderService
             }
 
             $sellers[$companyId]['items'][] = [
-                'product_variant_id'         => $productVariant->id,
-                'company_product_variant_id' => $cpvId,
-                'title'                      => $productVariant->title,
-                'quantity'                   => $productVariant->basket_quantity,
-                'price'                      => round($productVariant->price_final_in_basket, 2),
-                'hover_image'                => $cpv->listing_hover_image,
+                'quantity' => $productVariant->basket_quantity,
+                'price'    => round($productVariant->price_final_in_basket, 2),
+                '_cpv'     => $cpv,
             ];
 
             $sellers[$companyId]['_wolt_items'][] = [

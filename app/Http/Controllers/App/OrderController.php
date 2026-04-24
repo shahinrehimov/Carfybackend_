@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\App\Orders\CheckoutPreviewRequest;
 use App\Http\Requests\App\Orders\OrderStoreRequest;
 use App\Http\Requests\GeneralListRequest;
+use App\Http\Resources\App\CompanyProductVariants\CompanyProductVariantListResource;
 use App\Http\Resources\App\Orders\OrderDetailsResource;
 use App\Http\Resources\App\Orders\OrderShowResource;
 use App\Http\Resources\App\Orders\OrdersListResource;
@@ -21,6 +22,15 @@ class OrderController extends Controller
     public function checkoutPreview(CheckoutPreviewRequest $request): JsonResponse
     {
         $data = OrderService::instance()->checkoutPreview($request->integer('address_id') ?: null);
+
+        foreach ($data['sellers'] as &$seller) {
+            $seller['items'] = array_map(fn($item) => [
+                'quantity' => $item['quantity'],
+                'price'    => $item['price'],
+                'product'  => CompanyProductVariantListResource::make($item['_cpv']),
+            ], $seller['items']);
+        }
+        unset($seller);
 
         return response()->json($data);
     }
