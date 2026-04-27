@@ -226,7 +226,7 @@ class FlittPaymentMethod extends AbstractPaymentMethod
         }
     }
 
-    public function refund(Order $order, int $amount = null, string $comment = ''): PaymentResult
+    public function refund(Order $order, ?int $amount = null, string $comment = ''): PaymentResult
     {
         try {
             $refundData = [

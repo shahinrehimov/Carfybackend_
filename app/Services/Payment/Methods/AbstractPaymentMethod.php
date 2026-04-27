@@ -114,7 +114,7 @@ abstract class AbstractPaymentMethod implements PaymentMethodInterface
 
     public function processCallback(array $data): PaymentResult
     {
-
+        return PaymentResult::failed('Not implemented');
     }
 
     public function checkStatus(Order $order): PaymentResult
@@ -122,7 +122,7 @@ abstract class AbstractPaymentMethod implements PaymentMethodInterface
         return PaymentResult::failed('Not implemented');
     }
 
-    public function refund(Order $order, int $amount = null, string $comment = ''): PaymentResult
+    public function refund(Order $order, ?int $amount = null, string $comment = ''): PaymentResult
     {
         return PaymentResult::failed('Not implemented');
     }

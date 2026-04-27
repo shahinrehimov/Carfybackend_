@@ -50,7 +50,7 @@ class DatabaseConfigProvider
         return array_merge($dbConfig, $fileConfig);
     }
 
-    public function clearCache(string $methodName = null): void
+    public function clearCache(?string $methodName = null): void
     {
         if ($methodName) {
             Cache::forget("payment_db_config_{$methodName}");

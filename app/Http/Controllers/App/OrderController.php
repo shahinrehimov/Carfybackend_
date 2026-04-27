@@ -14,6 +14,7 @@ use App\Models\Order;
 use App\Services\LangService;
 use App\Services\OrderService;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Http\Request;
 
@@ -76,6 +77,32 @@ class OrderController extends Controller
         return response()->json([
             'status' => OrderService::instance()->checkPaymentStatusFromDatabase($order, $paymentMethod, $token),
         ]);
+    }
+
+    public function fpayReturn(string $paymentKey): RedirectResponse
+    {
+        $order = Order::where('transaction_id', $paymentKey)
+            ->where('payment_method', 'fpay')
+            ->first();
+
+        if (!$order) {
+            return redirect(config('app.frontend_url') . '/payment-status?status=failed');
+        }
+
+        OrderService::instance()->updatePaymentStatus($order);
+
+        $order->refresh();
+
+        $token = OrderService::instance()->getPaymentToken($order, 'fpay');
+        $lang = LangService::instance()->getCurrentLang();
+
+        $frontendUrl = config('app.frontend_url')
+            . '/' . $lang
+            . '/payment-status?order=' . $order->uuid
+            . '&method=fpay'
+            . '&token=' . $token;
+
+        return redirect($frontendUrl);
     }
 
     public function load(GeneralListRequest $request): AnonymousResourceCollection

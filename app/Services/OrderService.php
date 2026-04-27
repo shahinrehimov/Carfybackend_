@@ -675,7 +675,7 @@ class OrderService
         return $statusesTree;
     }
 
-    public function pay(Order $order, OrderPaymentStatusEnum $paymentStatusEnum, string $transactionId): void
+    public function pay(Order $order, OrderPaymentStatusEnum $paymentStatusEnum, ?string $transactionId): void
     {
         if ($order->status !== OrderStatusEnum::PAYMENT_PENDING || $order->payment_status !== OrderPaymentStatusEnum::PENDING) {
             throw new BadRequestHttpException(
@@ -685,7 +685,7 @@ class OrderService
             );
         }
 
-        if ($order->transaction_id !== $transactionId) {
+        if ($transactionId !== null && $order->transaction_id !== $transactionId) {
             throw new BadRequestHttpException(
                 LangService::instance()
                     ->setDefault('Invalid transaction ID')

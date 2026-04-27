@@ -20,7 +20,7 @@ interface PaymentMethodInterface
     public function processPayment(Order $order, array $data = []): PaymentResult;
     public function processCallback(array $data): PaymentResult;
     public function checkStatus(Order $order): PaymentResult;
-    public function refund(Order $order, int $amount = null, string $comment = ''): PaymentResult;
+    public function refund(Order $order, ?int $amount = null, string $comment = ''): PaymentResult;
 
     public function validatePaymentData(array $data): bool;
 

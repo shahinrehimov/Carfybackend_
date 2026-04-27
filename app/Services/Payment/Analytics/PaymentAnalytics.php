@@ -69,7 +69,7 @@ class PaymentAnalytics
             ->get();
     }
 
-    public function getHourlyPaymentStats(string $date = null): Collection
+    public function getHourlyPaymentStats(?string $date = null): Collection
     {
         $date = $date ?? now()->toDateString();
 

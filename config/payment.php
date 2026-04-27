@@ -4,6 +4,7 @@ use App\Services\Payment\Methods\Bank1PaymentMethod;
 use App\Services\Payment\Methods\Bank2PaymentMethod;
 use App\Services\Payment\Methods\CashPaymentMethod;
 use App\Services\Payment\Methods\FlittPaymentMethod;
+use App\Services\Payment\Methods\FpayPaymentMethod;
 use App\Services\Payment\Testing\MockPaymentMethod;
 
 return [
@@ -59,6 +60,21 @@ return [
             'min_amount' => env('BANK2_MIN_AMOUNT', 100),
             'max_amount' => env('BANK2_MAX_AMOUNT', 1000000),
             'test_mode' => env('BANK2_TEST_MODE', false),
+        ],
+
+        'fpay' => [
+            'class' => FpayPaymentMethod::class,
+            'priority' => 2,
+            'enabled' => env('FPAY_ENABLED', false),
+            'api_url' => env('FPAY_API_URL', 'https://payments.fpay.az'),
+            'username' => env('FPAY_USERNAME'),
+            'password' => env('FPAY_PASSWORD'),
+            'secret_key' => env('FPAY_SECRET_KEY'),
+            'merchant_name' => env('FPAY_MERCHANT_NAME'),
+            'icon' => 'fa-credit-card',
+            'min_amount' => env('FPAY_MIN_AMOUNT', 50),
+            'max_amount' => env('FPAY_MAX_AMOUNT', 10000000),
+            'test_mode' => env('FPAY_TEST_MODE', false),
         ],
 
         'flitt' => [
