@@ -111,8 +111,6 @@ class SellerOrderRepository
             OrderService::instance()->processItemCancellation($item);
         }
 
-        // TODO: Notify admin - item status changed by seller
-
         return $item->fresh();
     }
 

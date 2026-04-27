@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Enum\NotificationActionTypeEnum;
 use App\Enum\NotificationEventTypeEnum;
 use App\Models\Order;
+use App\Models\OrderItem;
 use App\Models\Notification;
 
 class NotificationDispatchService
@@ -144,6 +145,31 @@ class NotificationDispatchService
         // Handle via separate in-app mechanism if needed
     }
 
+    public function orderItemCancelled(OrderItem $item): void
+    {
+        $order = $item->order ?? $item->load('order')->order;
+        $user = $order?->user;
+
+        if (!$user) {
+            return;
+        }
+
+        $translations = $this->buildTranslations(
+            NotificationEventTypeEnum::ORDER_ITEM_CANCELLED,
+            ['@code' => $order->code ?? $order->uuid]
+        );
+
+        NotificationService::instance()->createAuto(
+            NotificationEventTypeEnum::ORDER_ITEM_CANCELLED,
+            $translations,
+            $user,
+            [
+                'action_type' => NotificationActionTypeEnum::ORDER->value,
+                'action_id' => $order->uuid,
+            ]
+        );
+    }
+
     public function notificationPendingApproval(Notification $notification): void
     {
         // Notify all active admins about pending seller notification
@@ -192,6 +218,10 @@ class NotificationDispatchService
                 NotificationEventTypeEnum::ORDER_DELIVERED => [
                     $langService->setDefault('Order delivered!')->getLang('notification_title_order_delivered', $replacements),
                     $langService->setDefault('Your order #@code has been delivered. Thank you for shopping with us!')->getLang('notification_body_order_delivered', $replacements),
+                ],
+                NotificationEventTypeEnum::ORDER_ITEM_CANCELLED => [
+                    $langService->setDefault('Item cancelled')->getLang('notification_title_order_item_cancelled', $replacements),
+                    $langService->setDefault('An item in your order #@code has been cancelled and a refund has been initiated.')->getLang('notification_body_order_item_cancelled', $replacements),
                 ],
                 default => ['Notification', 'You have a new notification.'],
             };

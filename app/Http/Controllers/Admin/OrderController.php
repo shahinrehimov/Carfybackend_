@@ -135,8 +135,6 @@ class OrderController extends Controller
 
         $order = $this->repo->loadRelations($order);
 
-        // TODO: Notify user - order final status changed
-
         return response()->json(GeneralResource::make([
             'message' => LangService::instance()
                 ->setDefault('Status changed successfully!')
@@ -155,9 +153,6 @@ class OrderController extends Controller
         $order->statuses()->create(['status' => OrderStatusEnum::COURIER_ASSIGNED]);
 
         $order = $this->repo->loadRelations($order);
-
-        // TODO: Notify sellers - courier assigned
-        // TODO: Notify user - courier assigned
 
         return response()->json(GeneralResource::make([
             'message' => LangService::instance()
@@ -240,9 +235,6 @@ class OrderController extends Controller
         $order->statuses()->create(['status' => \App\Enum\OrderStatusEnum::COURIER_ASSIGNED]);
 
         $order = $this->repo->loadRelations($order);
-
-        // TODO: Notify sellers - courier assigned via Wolt
-        // TODO: Notify user - courier assigned
 
         return response()->json(GeneralResource::make([
             'message' => LangService::instance()

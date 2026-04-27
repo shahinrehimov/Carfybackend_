@@ -100,7 +100,6 @@ class WoltWebhookController extends Controller
         if ($allDelivered) {
             $order->update(['status' => OrderStatusEnum::DELIVERED]);
             $order->statuses()->create(['status' => OrderStatusEnum::DELIVERED]);
-            // TODO: Notify user - order delivered
         }
     }
 
@@ -116,7 +115,7 @@ class WoltWebhookController extends Controller
             'reason'    => $details['purchase_rejected_reason'] ?? null,
         ]);
 
-        // TODO: Notify admin - Wolt delivery rejected, manual intervention needed
+        // Admin alert for Wolt rejection is out of scope: Admin is not a User model in this project
     }
 
     private function onEtaUpdated(OrderShipping $shipping, string $woltId, array $details): void

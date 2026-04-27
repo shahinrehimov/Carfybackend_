@@ -17,6 +17,7 @@ use App\Models\ProductVariant;
 use App\Models\Setting;
 use App\Models\User;
 use App\Services\LoggerService;
+use App\Services\NotificationDispatchService;
 use App\Services\Payment\PaymentService;
 use App\Services\WoltDriveService;
 use Carbon\Carbon;
@@ -357,8 +358,8 @@ class OrderService
 
             BasketService::instance()->clearBasket($user);
 
-            // TODO: Notify sellers - new order received
-            // TODO: Notify admin - new order received
+            // Seller/admin alerts handled by OrderObserver via NotificationDispatchService::newOrderReceived()
+            // (CompanyAdmin and Admin are not User models — separate mechanism needed)
 
             return $order;
         });
@@ -485,7 +486,7 @@ class OrderService
                 'response' => $result->metadata ?? [],
             ]);
 
-            // TODO: Notify user - item canceled, refund initiated
+            NotificationDispatchService::instance()->orderItemCancelled($item);
         } else {
             LoggerService::instance()->log(
                 "Partial refund FAILED for item #{$item->id}: {$result->message}",
