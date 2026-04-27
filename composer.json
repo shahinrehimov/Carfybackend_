@@ -13,6 +13,7 @@
         "dyrynda/laravel-cascade-soft-deletes": "^4.5",
         "flittpayments/php-sdk": "^1.0",
         "jenssegers/agent": "^2.6",
+        "kreait/laravel-firebase": "^7.1",
         "laravel/framework": "^12.0",
         "laravel/sanctum": "^4.0",
         "laravel/socialite": "^5.23",

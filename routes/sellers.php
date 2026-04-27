@@ -9,6 +9,7 @@ use App\Http\Controllers\Admin\DiscountTypeController;
 use App\Http\Controllers\Admin\ProductOptionController;
 use App\Http\Controllers\Admin\ProductOptionItemController;
 use App\Http\Controllers\LocalTranslationsController;
+use App\Http\Controllers\Sellers\NotificationController;
 use App\Http\Controllers\Sellers\Auth\ForgotPasswordController;
 use App\Http\Controllers\Sellers\Auth\LoginController;
 use App\Http\Controllers\Sellers\Auth\LogoutController;
@@ -186,6 +187,16 @@ Route::middleware(['general_access:sellers', RouteLogMiddleware::class])->prefix
 
             Route::group(['prefix' => 'discount-types'], static function () {
                 Route::get('list', [DiscountTypeController::class, 'list']);
+            });
+
+            Route::group(['prefix' => 'notifications'], static function () {
+                Route::get('load', [NotificationController::class, 'index']);
+                Route::get('show/{notification}', [NotificationController::class, 'show']);
+                Route::post('add', [NotificationController::class, 'store']);
+                Route::post('update/{notification}', [NotificationController::class, 'update']);
+                Route::delete('delete/{notification}', [NotificationController::class, 'destroy']);
+                Route::post('resend/{notification}', [NotificationController::class, 'resend']);
+                Route::get('targeting-preview', [NotificationController::class, 'targetingPreview']);
             });
         });
     });

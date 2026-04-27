@@ -17,6 +17,8 @@ use App\Http\Controllers\App\CategoryController;
 use App\Http\Controllers\App\GroupController;
 use App\Http\Controllers\App\GuestController;
 use App\Http\Controllers\App\MetaController;
+use App\Http\Controllers\App\DeviceTokenController;
+use App\Http\Controllers\App\NotificationController;
 use App\Http\Controllers\App\OrderController;
 use App\Http\Controllers\App\PaymentController;
 use App\Http\Controllers\App\ProductController;
@@ -230,6 +232,20 @@ return static function () {
 
                 Route::prefix('payment')->group(function () {
                     Route::get('methods', [PaymentController::class, 'getPaymentMethods']);
+                });
+
+                Route::group(['prefix' => 'notifications'], static function () {
+                    Route::get('load', [NotificationController::class, 'index']);
+                    Route::get('unread-count', [NotificationController::class, 'unreadCount']);
+                    Route::post('{notification}/read', [NotificationController::class, 'read']);
+                    Route::post('read-all', [NotificationController::class, 'readAll']);
+                    Route::delete('{notification}/delete', [NotificationController::class, 'destroy']);
+                    Route::delete('delete-all', [NotificationController::class, 'destroyAll']);
+                });
+
+                Route::group(['prefix' => 'device-token'], static function () {
+                    Route::post('register', [DeviceTokenController::class, 'store']);
+                    Route::delete('unregister', [DeviceTokenController::class, 'destroy']);
                 });
             });
         });

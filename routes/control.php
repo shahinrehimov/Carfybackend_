@@ -1,6 +1,8 @@
 <?php
 
 use App\Enum\RoleEnum;
+use App\Http\Controllers\Admin\NotificationController;
+use App\Http\Controllers\Admin\NotificationSettingController;
 use App\Http\Controllers\Admin\AddressController;
 use App\Http\Controllers\Admin\ContactMessageController;
 use App\Http\Controllers\Admin\PageController;
@@ -490,6 +492,27 @@ Route::middleware(['general_access:admin', RouteLogMiddleware::class])->prefix('
             Route::delete('delete/{advertisement}', [AdvertisementController::class, 'destroy']);
             Route::post('change-active-status/{advertisement}', [AdvertisementController::class, 'changeActiveStatus']);
             Route::get('clicks/{advertisement}', [AdvertisementController::class, 'clicks']);
+        });
+
+        Route::group(['prefix' => 'notifications'], static function () {
+            Route::get('load', [NotificationController::class, 'index']);
+            Route::get('pending', [NotificationController::class, 'pending']);
+            Route::get('show/{notification}', [NotificationController::class, 'show']);
+            Route::post('add', [NotificationController::class, 'store']);
+            Route::post('update/{notification}', [NotificationController::class, 'update']);
+            Route::delete('delete/{notification}', [NotificationController::class, 'destroy']);
+            Route::post('send/{notification}', [NotificationController::class, 'send']);
+            Route::post('schedule/{notification}', [NotificationController::class, 'schedule']);
+            Route::post('resend/{notification}', [NotificationController::class, 'resend']);
+            Route::post('approve/{notification}', [NotificationController::class, 'approve']);
+            Route::post('reject/{notification}', [NotificationController::class, 'reject']);
+            Route::post('targeting-preview', [NotificationController::class, 'targetingPreview']);
+        });
+
+        Route::group(['prefix' => 'notification-settings'], static function () {
+            Route::get('load', [NotificationSettingController::class, 'index']);
+            Route::post('update', [NotificationSettingController::class, 'update']);
+            Route::post('sync', [NotificationSettingController::class, 'sync']);
         });
     });
 });

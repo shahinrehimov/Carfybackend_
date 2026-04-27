@@ -9,3 +9,5 @@ Artisan::command('inspire', function () {
 })->purpose('Display an inspiring quote');
 
 Schedule::command('orders:check-seller-timeout')->everyMinute();
+Schedule::command('notifications:cleanup')->weekly();
+Schedule::command('notifications:send-scheduled')->everyMinute();
