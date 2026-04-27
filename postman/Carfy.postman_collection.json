@@ -18641,6 +18641,739 @@
               "response": []
             }
           ]
+        },
+        {
+          "id": "7205105f-d3cc-4eba-bd76-bb6ebd8fbd17",
+          "name": "Notifications",
+          "item": [
+            {
+              "id": "13fc0f07-b673-435c-8c23-84d6b2f8b909",
+              "name": "Load",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{token}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Token",
+                    "value": "{{app_token}}"
+                  },
+                  {
+                    "key": "accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{url}}/control/notifications/load",
+                  "host": [
+                    "{{url}}"
+                  ],
+                  "path": [
+                    "control",
+                    "notifications",
+                    "load"
+                  ],
+                  "query": [
+                    {
+                      "key": "source",
+                      "value": "manual",
+                      "disabled": true
+                    },
+                    {
+                      "key": "status",
+                      "value": "draft",
+                      "disabled": true
+                    },
+                    {
+                      "key": "date_from",
+                      "value": "2026-01-01",
+                      "disabled": true
+                    },
+                    {
+                      "key": "date_to",
+                      "value": "2026-12-31",
+                      "disabled": true
+                    }
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "id": "fd74bcd2-88d1-4ca0-94b4-ee3159bb8f37",
+              "name": "Pending",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{token}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Token",
+                    "value": "{{app_token}}"
+                  },
+                  {
+                    "key": "accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{url}}/control/notifications/pending",
+                  "host": [
+                    "{{url}}"
+                  ],
+                  "path": [
+                    "control",
+                    "notifications",
+                    "pending"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "id": "6d8f1bb7-ae7f-4ec8-b1b8-29d4eef95be0",
+              "name": "Show",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{token}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Token",
+                    "value": "{{app_token}}"
+                  },
+                  {
+                    "key": "accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{url}}/control/notifications/show/:notification",
+                  "host": [
+                    "{{url}}"
+                  ],
+                  "path": [
+                    "control",
+                    "notifications",
+                    "show",
+                    ":notification"
+                  ],
+                  "variable": [
+                    {
+                      "key": "notification",
+                      "value": "{{notification_uuid}}"
+                    }
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "id": "e7bb33aa-e7d1-4565-a2c9-9d057fc12659",
+              "name": "Add",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{token}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Token",
+                    "value": "{{app_token}}"
+                  },
+                  {
+                    "key": "accept",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"target_type\": \"bulk\",\n    \"target_filters\": {},\n    \"channels\": [\n        \"in_app\",\n        \"push\"\n    ],\n    \"action_type\": \"order\",\n    \"action_id\": \"uuid-here\",\n    \"image\": null,\n    \"scheduled_at\": null,\n    \"translations\": [\n        {\n            \"language_id\": 1,\n            \"title\": \"Title AZ\",\n            \"body\": \"Body AZ\"\n        },\n        {\n            \"language_id\": 2,\n            \"title\": \"Title EN\",\n            \"body\": \"Body EN\"\n        },\n        {\n            \"language_id\": 3,\n            \"title\": \"Title RU\",\n            \"body\": \"Body RU\"\n        }\n    ]\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{url}}/control/notifications/add",
+                  "host": [
+                    "{{url}}"
+                  ],
+                  "path": [
+                    "control",
+                    "notifications",
+                    "add"
+                  ]
+                },
+                "description": "target_type: bulk|individual. channels: in_app, push, sms, email"
+              },
+              "response": []
+            },
+            {
+              "id": "0192793b-83ff-47a2-b76c-e292debbb796",
+              "name": "Update",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{token}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Token",
+                    "value": "{{app_token}}"
+                  },
+                  {
+                    "key": "accept",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"channels\": [\n        \"in_app\",\n        \"push\"\n    ],\n    \"translations\": [\n        {\n            \"language_id\": 1,\n            \"title\": \"Updated Title\",\n            \"body\": \"Updated body\"\n        }\n    ]\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{url}}/control/notifications/update/:notification",
+                  "host": [
+                    "{{url}}"
+                  ],
+                  "path": [
+                    "control",
+                    "notifications",
+                    "update",
+                    ":notification"
+                  ],
+                  "variable": [
+                    {
+                      "key": "notification",
+                      "value": "{{notification_uuid}}"
+                    }
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "id": "c0140162-6a8b-43f9-96f8-99455dcfdfa6",
+              "name": "Delete",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{token}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "DELETE",
+                "header": [
+                  {
+                    "key": "Token",
+                    "value": "{{app_token}}"
+                  },
+                  {
+                    "key": "accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{url}}/control/notifications/delete/:notification",
+                  "host": [
+                    "{{url}}"
+                  ],
+                  "path": [
+                    "control",
+                    "notifications",
+                    "delete",
+                    ":notification"
+                  ],
+                  "variable": [
+                    {
+                      "key": "notification",
+                      "value": "{{notification_uuid}}"
+                    }
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "id": "b72ee15b-60f4-44af-8e6a-527aa4f010cd",
+              "name": "Send",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{token}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Token",
+                    "value": "{{app_token}}"
+                  },
+                  {
+                    "key": "accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{url}}/control/notifications/send/:notification",
+                  "host": [
+                    "{{url}}"
+                  ],
+                  "path": [
+                    "control",
+                    "notifications",
+                    "send",
+                    ":notification"
+                  ],
+                  "variable": [
+                    {
+                      "key": "notification",
+                      "value": "{{notification_uuid}}"
+                    }
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "id": "187a16e8-4058-4371-96b6-6f645404a924",
+              "name": "Schedule",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{token}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Token",
+                    "value": "{{app_token}}"
+                  },
+                  {
+                    "key": "accept",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"scheduled_at\": \"2026-05-01 10:00:00\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{url}}/control/notifications/schedule/:notification",
+                  "host": [
+                    "{{url}}"
+                  ],
+                  "path": [
+                    "control",
+                    "notifications",
+                    "schedule",
+                    ":notification"
+                  ],
+                  "variable": [
+                    {
+                      "key": "notification",
+                      "value": "{{notification_uuid}}"
+                    }
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "id": "d2ffff7c-777d-46db-ab15-bba710c61768",
+              "name": "Resend",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{token}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Token",
+                    "value": "{{app_token}}"
+                  },
+                  {
+                    "key": "accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{url}}/control/notifications/resend/:notification",
+                  "host": [
+                    "{{url}}"
+                  ],
+                  "path": [
+                    "control",
+                    "notifications",
+                    "resend",
+                    ":notification"
+                  ],
+                  "variable": [
+                    {
+                      "key": "notification",
+                      "value": "{{notification_uuid}}"
+                    }
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "id": "5bb59d92-c666-402e-81f6-9ed2365d2b56",
+              "name": "Approve",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{token}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Token",
+                    "value": "{{app_token}}"
+                  },
+                  {
+                    "key": "accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{url}}/control/notifications/approve/:notification",
+                  "host": [
+                    "{{url}}"
+                  ],
+                  "path": [
+                    "control",
+                    "notifications",
+                    "approve",
+                    ":notification"
+                  ],
+                  "variable": [
+                    {
+                      "key": "notification",
+                      "value": "{{notification_uuid}}"
+                    }
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "id": "f9cf7d28-07fe-497a-bf07-e63a4452531a",
+              "name": "Reject",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{token}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Token",
+                    "value": "{{app_token}}"
+                  },
+                  {
+                    "key": "accept",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"rejection_reason\": \"Inappropriate content\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{url}}/control/notifications/reject/:notification",
+                  "host": [
+                    "{{url}}"
+                  ],
+                  "path": [
+                    "control",
+                    "notifications",
+                    "reject",
+                    ":notification"
+                  ],
+                  "variable": [
+                    {
+                      "key": "notification",
+                      "value": "{{notification_uuid}}"
+                    }
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "id": "831e580f-12a9-46ae-805d-48db0db969d3",
+              "name": "Targeting Preview",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{token}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Token",
+                    "value": "{{app_token}}"
+                  },
+                  {
+                    "key": "accept",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"target_type\": \"bulk\",\n    \"target_filters\": {\n        \"company_id\": 1\n    }\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{url}}/control/notifications/targeting-preview",
+                  "host": [
+                    "{{url}}"
+                  ],
+                  "path": [
+                    "control",
+                    "notifications",
+                    "targeting-preview"
+                  ]
+                },
+                "description": "Returns count of users matching the targeting criteria"
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "id": "c455b874-3bad-4ac5-81b1-994ff8b0b018",
+          "name": "Notification Settings",
+          "item": [
+            {
+              "id": "25ba9e5c-8380-4874-80d9-7b1c02fda647",
+              "name": "Load",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{token}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Token",
+                    "value": "{{app_token}}"
+                  },
+                  {
+                    "key": "accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{url}}/control/notification-settings/load",
+                  "host": [
+                    "{{url}}"
+                  ],
+                  "path": [
+                    "control",
+                    "notification-settings",
+                    "load"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "id": "bf55c7eb-3e17-4086-afce-ae6800c7d48a",
+              "name": "Update",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{token}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Token",
+                    "value": "{{app_token}}"
+                  },
+                  {
+                    "key": "accept",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"settings\": [\n        {\n            \"id\": 1,\n            \"is_active\": true,\n            \"channels\": [\n                \"in_app\",\n                \"push\"\n            ]\n        },\n        {\n            \"id\": 2,\n            \"is_active\": true,\n            \"channels\": [\n                \"in_app\"\n            ]\n        }\n    ]\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{url}}/control/notification-settings/update",
+                  "host": [
+                    "{{url}}"
+                  ],
+                  "path": [
+                    "control",
+                    "notification-settings",
+                    "update"
+                  ]
+                },
+                "description": "Bulk update notification type settings"
+              },
+              "response": []
+            },
+            {
+              "id": "cd5d9fb8-8539-4371-a6ff-289ab1e2a6ac",
+              "name": "Sync Event Types",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{token}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Token",
+                    "value": "{{app_token}}"
+                  },
+                  {
+                    "key": "accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{url}}/control/notification-settings/sync",
+                  "host": [
+                    "{{url}}"
+                  ],
+                  "path": [
+                    "control",
+                    "notification-settings",
+                    "sync"
+                  ]
+                },
+                "description": "Adds missing notification_type_settings rows for any new event types in code"
+              },
+              "response": []
+            }
+          ]
         }
       ]
     },
@@ -25640,6 +26373,433 @@
               "response": []
             }
           ]
+        },
+        {
+          "id": "193e4037-2af5-4288-b82c-45c5abd17c83",
+          "name": "Notifications",
+          "item": [
+            {
+              "id": "7bf3c220-7af4-476b-9c24-277bd71c1bb9",
+              "name": "Load",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{login_token_site}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Token",
+                    "value": "{{app_site_token}}",
+                    "type": "text"
+                  },
+                  {
+                    "key": "accept",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{url}}/:provider/notifications/load",
+                  "host": [
+                    "{{url}}"
+                  ],
+                  "path": [
+                    ":provider",
+                    "notifications",
+                    "load"
+                  ],
+                  "variable": [
+                    {
+                      "key": "provider",
+                      "value": "site",
+                      "description": "site or app"
+                    }
+                  ]
+                },
+                "description": "Paginated list of in-app notifications for the authenticated user"
+              },
+              "response": []
+            },
+            {
+              "id": "bffba974-45ad-4c89-b1f9-81a81a32841c",
+              "name": "Unread Count",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{login_token_site}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Token",
+                    "value": "{{app_site_token}}",
+                    "type": "text"
+                  },
+                  {
+                    "key": "accept",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{url}}/:provider/notifications/unread-count",
+                  "host": [
+                    "{{url}}"
+                  ],
+                  "path": [
+                    ":provider",
+                    "notifications",
+                    "unread-count"
+                  ],
+                  "variable": [
+                    {
+                      "key": "provider",
+                      "value": "site",
+                      "description": "site or app"
+                    }
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "id": "2ec0f512-1cb1-43cc-9e56-80ce51348e3e",
+              "name": "Mark as Read",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{login_token_site}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Token",
+                    "value": "{{app_site_token}}",
+                    "type": "text"
+                  },
+                  {
+                    "key": "accept",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{url}}/:provider/notifications/:notification/read",
+                  "host": [
+                    "{{url}}"
+                  ],
+                  "path": [
+                    ":provider",
+                    "notifications",
+                    ":notification",
+                    "read"
+                  ],
+                  "variable": [
+                    {
+                      "key": "provider",
+                      "value": "site",
+                      "description": "site or app"
+                    },
+                    {
+                      "key": "notification",
+                      "value": "{{notification_uuid}}"
+                    }
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "id": "9840349e-bba8-40a8-be10-b45481a978e9",
+              "name": "Mark All as Read",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{login_token_site}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Token",
+                    "value": "{{app_site_token}}",
+                    "type": "text"
+                  },
+                  {
+                    "key": "accept",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{url}}/:provider/notifications/read-all",
+                  "host": [
+                    "{{url}}"
+                  ],
+                  "path": [
+                    ":provider",
+                    "notifications",
+                    "read-all"
+                  ],
+                  "variable": [
+                    {
+                      "key": "provider",
+                      "value": "site",
+                      "description": "site or app"
+                    }
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "id": "4b86b5ff-b2c6-41c0-ae49-23667fdbd609",
+              "name": "Delete",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{login_token_site}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "DELETE",
+                "header": [
+                  {
+                    "key": "Token",
+                    "value": "{{app_site_token}}",
+                    "type": "text"
+                  },
+                  {
+                    "key": "accept",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{url}}/:provider/notifications/:notification/delete",
+                  "host": [
+                    "{{url}}"
+                  ],
+                  "path": [
+                    ":provider",
+                    "notifications",
+                    ":notification",
+                    "delete"
+                  ],
+                  "variable": [
+                    {
+                      "key": "provider",
+                      "value": "site",
+                      "description": "site or app"
+                    },
+                    {
+                      "key": "notification",
+                      "value": "{{notification_uuid}}"
+                    }
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "id": "3e7dc8d5-1988-4ab6-a7f1-67a4f7ff73e7",
+              "name": "Delete All",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{login_token_site}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "DELETE",
+                "header": [
+                  {
+                    "key": "Token",
+                    "value": "{{app_site_token}}",
+                    "type": "text"
+                  },
+                  {
+                    "key": "accept",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{url}}/:provider/notifications/delete-all",
+                  "host": [
+                    "{{url}}"
+                  ],
+                  "path": [
+                    ":provider",
+                    "notifications",
+                    "delete-all"
+                  ],
+                  "variable": [
+                    {
+                      "key": "provider",
+                      "value": "site",
+                      "description": "site or app"
+                    }
+                  ]
+                }
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "id": "04b308ad-7b52-4c3f-8127-80f7122762da",
+          "name": "Device Token",
+          "item": [
+            {
+              "id": "f9f22918-96ca-4df9-b676-99f7e305fd0a",
+              "name": "Register",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{login_token_site}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Token",
+                    "value": "{{app_site_token}}",
+                    "type": "text"
+                  },
+                  {
+                    "key": "accept",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"token\": \"fcm-token-here\",\n    \"device_type\": \"android\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{url}}/:provider/device-token/register",
+                  "host": [
+                    "{{url}}"
+                  ],
+                  "path": [
+                    ":provider",
+                    "device-token",
+                    "register"
+                  ],
+                  "variable": [
+                    {
+                      "key": "provider",
+                      "value": "site",
+                      "description": "site or app"
+                    }
+                  ]
+                },
+                "description": "Register FCM/APNs device token. device_type: ios, android, web"
+              },
+              "response": []
+            },
+            {
+              "id": "7bb99643-84e9-48e3-bc50-2274331db70e",
+              "name": "Unregister",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{login_token_site}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "DELETE",
+                "header": [
+                  {
+                    "key": "Token",
+                    "value": "{{app_site_token}}",
+                    "type": "text"
+                  },
+                  {
+                    "key": "accept",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"token\": \"fcm-token-here\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{url}}/:provider/device-token/unregister",
+                  "host": [
+                    "{{url}}"
+                  ],
+                  "path": [
+                    ":provider",
+                    "device-token",
+                    "unregister"
+                  ],
+                  "variable": [
+                    {
+                      "key": "provider",
+                      "value": "site",
+                      "description": "site or app"
+                    }
+                  ]
+                },
+                "description": "Unregister device token on logout"
+              },
+              "response": []
+            }
+          ]
         }
       ]
     },
@@ -29645,6 +30805,334 @@
                     }
                   ]
                 }
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "id": "1e8e8b57-67eb-4685-9ede-9abd095e8263",
+          "name": "Notifications",
+          "item": [
+            {
+              "id": "1b95cff9-fe69-4871-98f0-635c09b1619f",
+              "name": "Load",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{login_token_seller}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Token",
+                    "value": "{{app_seller_token}}"
+                  },
+                  {
+                    "key": "accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{url}}/sellers/notifications/load",
+                  "host": [
+                    "{{url}}"
+                  ],
+                  "path": [
+                    "sellers",
+                    "notifications",
+                    "load"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "id": "e98ab54f-8b5b-43f7-b29b-b3347fadd269",
+              "name": "Show",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{login_token_seller}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Token",
+                    "value": "{{app_seller_token}}"
+                  },
+                  {
+                    "key": "accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{url}}/sellers/notifications/show/:notification",
+                  "host": [
+                    "{{url}}"
+                  ],
+                  "path": [
+                    "sellers",
+                    "notifications",
+                    "show",
+                    ":notification"
+                  ],
+                  "variable": [
+                    {
+                      "key": "notification",
+                      "value": "{{notification_uuid}}"
+                    }
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "id": "e3b3e82f-1be5-4068-adaf-a44a2404604c",
+              "name": "Add",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{login_token_seller}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Token",
+                    "value": "{{app_seller_token}}"
+                  },
+                  {
+                    "key": "accept",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"target_type\": \"bulk\",\n    \"channels\": [\n        \"in_app\",\n        \"push\"\n    ],\n    \"action_type\": \"order\",\n    \"action_id\": null,\n    \"image\": null,\n    \"translations\": [\n        {\n            \"language_id\": 1,\n            \"title\": \"Title AZ\",\n            \"body\": \"Body AZ\"\n        },\n        {\n            \"language_id\": 2,\n            \"title\": \"Title EN\",\n            \"body\": \"Body EN\"\n        },\n        {\n            \"language_id\": 3,\n            \"title\": \"Title RU\",\n            \"body\": \"Body RU\"\n        }\n    ]\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{url}}/sellers/notifications/add",
+                  "host": [
+                    "{{url}}"
+                  ],
+                  "path": [
+                    "sellers",
+                    "notifications",
+                    "add"
+                  ]
+                },
+                "description": "Seller creates notification. Goes to pending_approval status. target_type: bulk (own customers only) or individual (user_ids)"
+              },
+              "response": []
+            },
+            {
+              "id": "ba53acaa-cbae-4e75-82ae-680218610df4",
+              "name": "Update",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{login_token_seller}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Token",
+                    "value": "{{app_seller_token}}"
+                  },
+                  {
+                    "key": "accept",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"channels\": [\n        \"in_app\"\n    ],\n    \"translations\": [\n        {\n            \"language_id\": 1,\n            \"title\": \"Updated Title\",\n            \"body\": \"Updated body\"\n        }\n    ]\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{url}}/sellers/notifications/update/:notification",
+                  "host": [
+                    "{{url}}"
+                  ],
+                  "path": [
+                    "sellers",
+                    "notifications",
+                    "update",
+                    ":notification"
+                  ],
+                  "variable": [
+                    {
+                      "key": "notification",
+                      "value": "{{notification_uuid}}"
+                    }
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "id": "3b0a26b1-8ce3-4553-9986-7c18000db990",
+              "name": "Delete",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{login_token_seller}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "DELETE",
+                "header": [
+                  {
+                    "key": "Token",
+                    "value": "{{app_seller_token}}"
+                  },
+                  {
+                    "key": "accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{url}}/sellers/notifications/delete/:notification",
+                  "host": [
+                    "{{url}}"
+                  ],
+                  "path": [
+                    "sellers",
+                    "notifications",
+                    "delete",
+                    ":notification"
+                  ],
+                  "variable": [
+                    {
+                      "key": "notification",
+                      "value": "{{notification_uuid}}"
+                    }
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "id": "667e4796-e947-4ff2-9d42-bd04918fdb8f",
+              "name": "Resend",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{login_token_seller}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Token",
+                    "value": "{{app_seller_token}}"
+                  },
+                  {
+                    "key": "accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{url}}/sellers/notifications/resend/:notification",
+                  "host": [
+                    "{{url}}"
+                  ],
+                  "path": [
+                    "sellers",
+                    "notifications",
+                    "resend",
+                    ":notification"
+                  ],
+                  "variable": [
+                    {
+                      "key": "notification",
+                      "value": "{{notification_uuid}}"
+                    }
+                  ]
+                },
+                "description": "Clones and resubmits for approval"
+              },
+              "response": []
+            },
+            {
+              "id": "c4d6f6ee-7f3d-41fe-a46d-87c52120ffce",
+              "name": "Targeting Preview",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{login_token_seller}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Token",
+                    "value": "{{app_seller_token}}"
+                  },
+                  {
+                    "key": "accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{url}}/sellers/notifications/targeting-preview",
+                  "host": [
+                    "{{url}}"
+                  ],
+                  "path": [
+                    "sellers",
+                    "notifications",
+                    "targeting-preview"
+                  ]
+                },
+                "description": "Returns count of this seller's customers who will receive the notification"
               },
               "response": []
             }
