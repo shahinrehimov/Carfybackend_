@@ -79,6 +79,11 @@ abstract class AbstractPaymentMethod implements PaymentMethodInterface
         }
     }
 
+    public function getMetadata(): array
+    {
+        return [];
+    }
+
     /**
      * Default verify implementation
      */

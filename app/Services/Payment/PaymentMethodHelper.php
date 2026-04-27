@@ -24,6 +24,7 @@ class PaymentMethodHelper
                 'label' => $method->getDisplayName(),
                 'icon' => $method->getIcon(),
                 'required_fields' => $method->getRequiredFields(),
+                'metadata' => $method->getMetadata(),
                 //'min_amount' => $method->getMinimumAmount(),
                 //'max_amount' => $method->getMaximumAmount(),
             ];

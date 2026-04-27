@@ -26,6 +26,8 @@ interface PaymentMethodInterface
 
     public function getRequiredFields(): array;
 
+    public function getMetadata(): array;
+
     public function getConfigurationFields(): array;
 
     // with cents

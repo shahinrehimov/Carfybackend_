@@ -5,6 +5,8 @@ use App\Services\Payment\Methods\Bank2PaymentMethod;
 use App\Services\Payment\Methods\CashPaymentMethod;
 use App\Services\Payment\Methods\FlittPaymentMethod;
 use App\Services\Payment\Methods\FpayPaymentMethod;
+use App\Services\Payment\Methods\KapitalbankPaymentMethod;
+use App\Services\Payment\Methods\KapitalbankInstallmentPaymentMethod;
 use App\Services\Payment\Testing\MockPaymentMethod;
 
 return [
@@ -75,6 +77,39 @@ return [
             'min_amount' => env('FPAY_MIN_AMOUNT', 50),
             'max_amount' => env('FPAY_MAX_AMOUNT', 10000000),
             'test_mode' => env('FPAY_TEST_MODE', false),
+        ],
+
+        'kapitalbank' => [
+            'class' => KapitalbankPaymentMethod::class,
+            'priority' => 3,
+            'enabled' => env('KAPITALBANK_ENABLED', false),
+            'api_url' => env('KAPITALBANK_API_URL', 'https://txpgtst.kapitalbank.az/api'),
+            'hpp_url' => env('KAPITALBANK_HPP_URL', 'https://txpgtst.kapitalbank.az/flex'),
+            'username' => env('KAPITALBANK_USERNAME'),
+            'password' => env('KAPITALBANK_PASSWORD'),
+            'language' => env('KAPITALBANK_LANGUAGE', 'az'),
+            'title' => env('KAPITALBANK_TITLE', 'Carfy'),
+            'icon' => 'fa-credit-card',
+            'min_amount' => env('KAPITALBANK_MIN_AMOUNT', 50),
+            'max_amount' => env('KAPITALBANK_MAX_AMOUNT', 10000000),
+            'test_mode' => env('KAPITALBANK_TEST_MODE', true),
+        ],
+
+        'kapitalbank_installment' => [
+            'class' => KapitalbankInstallmentPaymentMethod::class,
+            'priority' => 4,
+            'enabled' => env('KAPITALBANK_INSTALLMENT_ENABLED', false),
+            'api_url' => env('KAPITALBANK_API_URL', 'https://txpgtst.kapitalbank.az/api'),
+            'hpp_url' => env('KAPITALBANK_HPP_URL', 'https://txpgtst.kapitalbank.az/flex'),
+            'username' => env('KAPITALBANK_USERNAME'),
+            'password' => env('KAPITALBANK_PASSWORD'),
+            'language' => env('KAPITALBANK_LANGUAGE', 'az'),
+            'title' => env('KAPITALBANK_TITLE', 'Carfy'),
+            'available_months' => [3, 6, 12, 24],
+            'icon' => 'fa-credit-card',
+            'min_amount' => env('KAPITALBANK_MIN_AMOUNT', 50),
+            'max_amount' => env('KAPITALBANK_MAX_AMOUNT', 10000000),
+            'test_mode' => env('KAPITALBANK_TEST_MODE', true),
         ],
 
         'flitt' => [

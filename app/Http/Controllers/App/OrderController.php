@@ -105,6 +105,35 @@ class OrderController extends Controller
         return redirect($frontendUrl);
     }
 
+    public function kapitalbankReturn(Request $request): RedirectResponse
+    {
+        $kapitalOrderId = $request->get('ID');
+
+        $order = Order::where('transaction_id', (string) $kapitalOrderId)
+            ->whereIn('payment_method', ['kapitalbank', 'kapitalbank_installment'])
+            ->first();
+
+        if (!$order) {
+            return redirect(config('app.frontend_url') . '/payment-status?status=failed');
+        }
+
+        // STATUS param from Kapital Bank may be temporary — always verify via API
+        OrderService::instance()->updatePaymentStatus($order);
+
+        $order->refresh();
+
+        $token = OrderService::instance()->getPaymentToken($order, $order->payment_method);
+        $lang = LangService::instance()->getCurrentLang();
+
+        $frontendUrl = config('app.frontend_url')
+            . '/' . $lang
+            . '/payment-status?order=' . $order->uuid
+            . '&method=' . $order->payment_method
+            . '&token=' . $token;
+
+        return redirect($frontendUrl);
+    }
+
     public function load(GeneralListRequest $request): AnonymousResourceCollection
     {
         return OrdersListResource::collection(OrderService::instance()->load($request->validated()));

@@ -25,6 +25,10 @@ Route::get('/payment/fpay-return/{paymentKey}', [OrderController::class, 'fpayRe
     ->name('payment.fpay.return')
     ->withoutMiddleware(VerifyCsrfToken::class);
 
+Route::get('/payment/kapitalbank-return', [OrderController::class, 'kapitalbankReturn'])
+    ->name('payment.kapitalbank.return')
+    ->withoutMiddleware(VerifyCsrfToken::class);
+
 Route::post('/webhooks/wolt', [WoltWebhookController::class, 'handle'])
     ->name('webhooks.wolt')
     ->withoutMiddleware(VerifyCsrfToken::class);
