@@ -14,11 +14,15 @@ use Throwable;
 class FirebaseService
 {
     private static ?FirebaseService $instance = null;
-    private Messaging $messaging;
+    private ?Messaging $messaging = null;
 
     private function __construct()
     {
-        $this->messaging = app(Messaging::class);
+        try {
+            $this->messaging = app(Messaging::class);
+        } catch (Throwable) {
+            // kreait not installed — push notifications silently skipped
+        }
     }
 
     public static function instance(): FirebaseService
@@ -36,6 +40,10 @@ class FirebaseService
      */
     public function sendToUser(User $user, Notification $notification): array
     {
+        if ($this->messaging === null) {
+            return ['sent_at' => null, 'error' => 'firebase_unavailable'];
+        }
+
         $tokens = UserDeviceToken::query()
             ->where('user_id', $user->id)
             ->where('is_active', true)
@@ -54,6 +62,10 @@ class FirebaseService
      */
     public function sendMulticast(array $tokens, Notification $notification): array
     {
+        if ($this->messaging === null) {
+            return ['sent_at' => null, 'error' => 'firebase_unavailable'];
+        }
+
         if (empty($tokens)) {
             return ['sent_at' => null, 'error' => 'empty_tokens'];
         }
