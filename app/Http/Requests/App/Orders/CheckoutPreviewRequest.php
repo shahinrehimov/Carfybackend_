@@ -11,7 +11,7 @@ class CheckoutPreviewRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'address_id' => ['nullable', 'integer', Rule::exists(Address::class, 'id')],
+            'address_id' => ['required', 'integer', Rule::exists(Address::class, 'id')],
         ];
     }
 }

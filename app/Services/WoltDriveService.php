@@ -13,6 +13,7 @@ use Illuminate\Http\Client\RequestException;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use App\Exceptions\WoltException;
 
 class WoltDriveService
 {
@@ -274,14 +275,6 @@ class WoltDriveService
             return $results;
         }
 
-        if (!config('wolt.enabled')) {
-            foreach (array_keys($toFetch) as $companyId) {
-                $results[$companyId] = $this->fallbackFee();
-            }
-
-            return $results;
-        }
-
         $responses = Http::pool(function ($pool) use ($toFetch) {
             $requests = [];
             foreach ($toFetch as $companyId => $spec) {
@@ -309,17 +302,22 @@ class WoltDriveService
             $response = $responses[(string) $companyId] ?? null;
 
             if ($response instanceof \Throwable || !$response || $response->failed()) {
-                $this->logError('delivery-fee-batch', $response instanceof \Throwable ? 0 : ($response?->status() ?? 0), $response instanceof \Throwable ? $response->getMessage() : ($response?->body() ?? ''));
-                $result = $this->fallbackFee();
-            } else {
-                $data   = $response->json();
-                $result = [
-                    'amount_cents' => $data['fee']['amount'] ?? config('wolt.fallback_fee'),
-                    'eta_minutes'  => $data['time_estimate_minutes'] ?? null,
-                    'is_sedan'     => $spec['is_sedan'],
-                    'is_estimate'  => false,
-                ];
+                $status   = $response instanceof \Throwable ? 0 : ($response?->status() ?? 0);
+                $body     = $response instanceof \Throwable ? $response->getMessage() : ($response?->body() ?? '');
+                $this->logError('delivery-fee-batch', $status, $body);
+                $woltData = json_decode($body, true);
+                $reason   = $woltData['reason'] ?? $woltData['details'] ?? $body;
+                $prefix = LangService::instance()->setDefault('Delivery error')->getLang('delivery_error');
+                throw new WoltException("{$prefix}: {$reason}");
             }
+
+            $data   = $response->json();
+            $result = [
+                'amount_cents' => $data['fee']['amount'],
+                'eta_minutes'  => $data['time_estimate_minutes'] ?? null,
+                'is_sedan'     => $spec['is_sedan'],
+                'is_estimate'  => false,
+            ];
 
             Cache::put($spec['cache_key'], $result, config('wolt.fee_cache_ttl'));
             $results[$companyId] = $result;
@@ -357,16 +355,6 @@ class WoltDriveService
         $sedanKey = $isSedan ? '1' : '0';
 
         return "wolt_fee_{$companyId}_{$latKey}_{$lonKey}_{$sedanKey}";
-    }
-
-    private function fallbackFee(): array
-    {
-        return [
-            'amount_cents' => (int) config('wolt.fallback_fee'),
-            'eta_minutes'  => null,
-            'is_sedan'     => false,
-            'is_estimate'  => true,
-        ];
     }
 
     private function buildPickupLocation(Company $company): array

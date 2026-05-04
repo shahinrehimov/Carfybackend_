@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\App;
 
+use App\Exceptions\WoltException;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\App\Orders\CheckoutPreviewRequest;
 use App\Http\Requests\App\Orders\OrderStoreRequest;
@@ -22,7 +23,11 @@ class OrderController extends Controller
 {
     public function checkoutPreview(CheckoutPreviewRequest $request): JsonResponse
     {
-        $data = OrderService::instance()->checkoutPreview($request->integer('address_id') ?: null);
+        try {
+            $data = OrderService::instance()->checkoutPreview($request->integer('address_id'));
+        } catch (WoltException $e) {
+            return response()->json(['message' => $e->getMessage()], 400);
+        }
 
         foreach ($data['sellers'] as &$seller) {
             $seller['items'] = array_map(fn($item) => [
@@ -38,7 +43,11 @@ class OrderController extends Controller
 
     public function checkout(OrderStoreRequest $request): JsonResponse
     {
-        $result = OrderService::instance()->checkout($request->validated());
+        try {
+            $result = OrderService::instance()->checkout($request->validated());
+        } catch (WoltException $e) {
+            return response()->json(['message' => $e->getMessage()], 400);
+        }
 
         $response = [
             'message' => $result->message,

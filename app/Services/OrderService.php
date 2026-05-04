@@ -70,7 +70,7 @@ class OrderService
         return $this->user;
     }
 
-    public function checkoutPreview(?int $addressId = null): array
+    public function checkoutPreview(int $addressId): array
     {
         if (!config('wolt.enabled')) {
             throw new BadRequestHttpException(
@@ -91,9 +91,7 @@ class OrderService
             );
         }
 
-        $address = $addressId
-            ? $user->addresses()->find($addressId)
-            : null;
+        $address = $user->addresses()->findOrFail($addressId);
 
         $sellers = [];
 
@@ -135,23 +133,18 @@ class OrderService
 
         $wolt = WoltDriveService::instance();
 
-        // Build batch specs for parallel Wolt fee calls (only if address provided)
         $batchSpecs = [];
-        if ($address) {
-            foreach ($sellers as $companyId => $seller) {
-                $batchSpecs[$companyId] = [
-                    'company'  => $seller['_company'],
-                    'dropLat'  => (float) $address->latitude,
-                    'dropLon'  => (float) $address->longitude,
-                    'dropAddr' => $address->address_line_1,
-                    'items'    => $seller['_wolt_items'],
-                ];
-            }
+        foreach ($sellers as $companyId => $seller) {
+            $batchSpecs[$companyId] = [
+                'company'  => $seller['_company'],
+                'dropLat'  => (float) $address->latitude,
+                'dropLon'  => (float) $address->longitude,
+                'dropAddr' => $address->address_line_1,
+                'items'    => $seller['_wolt_items'],
+            ];
         }
 
-        $fees = $address
-            ? $wolt->getDeliveryFeesBatch($batchSpecs)
-            : [];
+        $fees = $wolt->getDeliveryFeesBatch($batchSpecs);
 
         $totalShipping = 0;
         $subtotal      = 0;
@@ -163,12 +156,7 @@ class OrderService
             $totalWeight             = $wolt->totalWeightGram($seller['_wolt_items']);
             $seller['weight_warning'] = $totalWeight > config('wolt.max_weight_gram');
 
-            $fee = $fees[$companyId] ?? [
-                'amount_cents' => (int) config('wolt.fallback_fee'),
-                'eta_minutes'  => null,
-                'is_sedan'     => false,
-                'is_estimate'  => true,
-            ];
+            $fee = $fees[$companyId];
 
             $seller['shipping']             = round($fee['amount_cents'] / 100, 2);
             $seller['shipping_eta_minutes'] = $fee['eta_minutes'];
@@ -303,10 +291,7 @@ class OrderService
 
                     // Collect per-company shipping from Wolt fee (one entry per unique company)
                     if ($cpv->company_id && !isset($shippingPerCompany[$cpv->company_id])) {
-                        $fee = $woltFees[$cpv->company_id] ?? null;
-                        $shippingPerCompany[$cpv->company_id] = $fee
-                            ? round($fee['amount_cents'] / 100, 2)
-                            : round(config('wolt.fallback_fee') / 100, 2);
+                        $shippingPerCompany[$cpv->company_id] = round($woltFees[$cpv->company_id]['amount_cents'] / 100, 2);
                     }
                 }
 
