@@ -14,9 +14,11 @@ class WoltWebhookController extends Controller
 {
     public function handle(Request $request): JsonResponse
     {
-        $token = $request->bearerToken()
-            ?? $request->header('X-Wolt-Signature')
-            ?? $request->getContent();
+        $token = $request->input('token');
+
+        if (!$token) {
+            return response()->json(['message' => 'ok']);
+        }
 
         $wolt = WoltDriveService::instance();
 
@@ -51,6 +53,7 @@ class WoltWebhookController extends Controller
             'order.dropoff_completed',
             'order.delivered'          => $this->onDelivered($shipping, $woltId),
             'order.rejected'           => $this->onRejected($shipping, $woltId, $details),
+            'order.canceled'           => $this->onCanceled($shipping, $woltId),
             'order.pickup_eta_updated',
             'order.dropoff_eta_updated'=> $this->onEtaUpdated($shipping, $woltId, $details),
             default                    => null,
@@ -101,6 +104,18 @@ class WoltWebhookController extends Controller
             $order->update(['status' => OrderStatusEnum::DELIVERED]);
             $order->statuses()->create(['status' => OrderStatusEnum::DELIVERED]);
         }
+    }
+
+    private function onCanceled(OrderShipping $shipping, string $woltId): void
+    {
+        $this->updateDeliveryStatus($shipping, $woltId, 'canceled');
+        $shipping->update(['wolt_status' => 'canceled']);
+
+        Log::warning('Wolt delivery CANCELED — no courier found', [
+            'wolt_id'    => $woltId,
+            'order_id'   => $shipping->order_id,
+            'company_id' => $shipping->company_id,
+        ]);
     }
 
     private function onRejected(OrderShipping $shipping, string $woltId, array $details): void
