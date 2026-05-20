@@ -726,4 +726,9 @@ class OrderService
             );
         }
     }
+
+    public function getOrderStatusesList(): array
+    {
+        return OrderStatusEnum::getList();
+    }
 }

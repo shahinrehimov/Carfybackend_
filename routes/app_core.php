@@ -225,6 +225,7 @@ return static function () {
                     Route::get('checkout-preview', [OrderController::class, 'checkoutPreview']);
                     Route::post('checkout', [OrderController::class, 'checkout']);
                     Route::get('check-payment-status/{orderUuid}/{paymentMethod}/{token}', [OrderController::class, 'checkPaymentStatus'])->middleware(['throttle:5,1']);
+                    Route::get('statuses/list', [OrderController::class, 'getOrderStatusesList']);
                     Route::get('load', [OrderController::class, 'load']);
                     Route::get('show/{order}', [OrderController::class, 'show']);
                     Route::get('details/{order}', [OrderController::class, 'details']);

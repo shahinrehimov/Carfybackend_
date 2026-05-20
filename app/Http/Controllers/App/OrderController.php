@@ -143,6 +143,13 @@ class OrderController extends Controller
         return redirect($frontendUrl);
     }
 
+    public function getOrderStatusesList(): JsonResponse
+    {
+        return response()->json([
+            'data' => OrderService::instance()->getOrderStatusesList(),
+        ]);
+    }
+
     public function load(GeneralListRequest $request): AnonymousResourceCollection
     {
         return OrdersListResource::collection(OrderService::instance()->load($request->validated()));
