@@ -9399,7 +9399,8 @@
                       "value": "2"
                     }
                   ]
-                }
+                },
+                "description": "Returns full order details.\n\n**`companies` field** — list of sellers in this order. Use this to populate the selector before calling `request-wolt-delivery`.\n\n```json\n\"companies\": [\n  {\n    \"id\": 12,\n    \"title\": \"Store A\",\n    \"store_code\": \"STA\",\n    \"wolt_status\": null,\n    \"has_active_items\": true\n  }\n]\n```\n\n`wolt_status` — `null` (not requested), `pending`, `delivering`, `delivered`, `canceled`.\n`has_active_items` — `false` means all items for this seller are canceled, so Wolt delivery is pointless."
               },
               "response": []
             },
@@ -9697,6 +9698,11 @@
                     "key": "accept",
                     "value": "application/json",
                     "type": "text"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json",
+                    "type": "text"
                   }
                 ],
                 "url": {
@@ -9717,7 +9723,7 @@
                     }
                   ]
                 },
-                "description": "Seçilmiş satıcı üçün Wolt kuryer sifarişi yaradır. Əgər ümumi çəki 20 kq-dan çoxdursa, avtomatik bölünür. Order statusu courier_assigned olur.",
+                "description": "Creates a Wolt courier order for the selected seller.\n\nIf total weight > 20 kg, automatically splits into multiple deliveries.\nOrder status becomes `courier_assigned`.\n\n**`company_id`** — get available companies from `GET /control/orders/show/:orderId` → `companies[].id`.\nOnly send for companies where `has_active_items = true` and `wolt_status` is `null` or `canceled`.",
                 "body": {
                   "mode": "raw",
                   "raw": "{\n    \"company_id\": 1\n}",

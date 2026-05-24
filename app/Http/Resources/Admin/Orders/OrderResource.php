@@ -135,6 +135,9 @@ class OrderResource extends JsonResource
                     'wolt_deliveries'=> $s->wolt_deliveries,
                 ])
             ),
+            'companies' => $this->whenLoaded('shippings', fn() =>
+                OrderService::instance()->buildCompaniesList($this->resource)
+            ),
             'payment_logs' => $this->whenLoaded('paymentLogs', fn() =>
                 $this->paymentLogs->map(fn($log) => [
                     'id' => $log->id,

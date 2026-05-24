@@ -633,6 +633,33 @@ class OrderService
         return $order;
     }
 
+    public function buildCompaniesList(Order $order): array
+    {
+        $activeItemCompanyIds = [];
+        if ($order->relationLoaded('items')) {
+            foreach ($order->items as $item) {
+                if ($item->status === OrderItemStatusEnum::CANCELED) {
+                    continue;
+                }
+                $companyId = $item->companyProductVariant?->company_id;
+                if ($companyId) {
+                    $activeItemCompanyIds[$companyId] = true;
+                }
+            }
+        }
+
+        return $order->shippings
+            ->map(fn(OrderShipping $shipping) => [
+                'id'                => $shipping->company_id,
+                'title'             => $shipping->company?->title,
+                'store_code'        => $shipping->company?->store_code,
+                'wolt_status'       => $shipping->wolt_status,
+                'has_active_items'  => isset($activeItemCompanyIds[$shipping->company_id]),
+            ])
+            ->values()
+            ->all();
+    }
+
     public function makeStatusesTree(Collection $statues): array
     {
         $statusesTree = [];

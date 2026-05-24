@@ -5,6 +5,7 @@ namespace App\Http\Resources\Admin\Orders;
 use App\Http\Resources\Admin\AddressTypes\AddressTypesListResource;
 use App\Http\Resources\Admin\Cities\CitiesListResource;
 use App\Services\LangService;
+use App\Services\OrderService;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\Str;
@@ -71,6 +72,9 @@ class OrdersResource extends JsonResource
                 'longitude' => $this->longitude,
                 'phone' => $this->phone,
             ],
+            'companies' => $this->whenLoaded('shippings', fn() =>
+                OrderService::instance()->buildCompaniesList($this->resource)
+            ),
             'created_at' => $this->created_at?->toDateTimeString(),
         ];
     }

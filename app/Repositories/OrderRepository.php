@@ -20,6 +20,9 @@ class OrderRepository
                 'addressType.translatable',
                 'city',
                 'city.translatable',
+                'shippings.company',
+                'items:id,order_id,company_product_variant_id,status',
+                'items.companyProductVariant:id,company_id',
             ])
             ->withCount([
                 'items',
