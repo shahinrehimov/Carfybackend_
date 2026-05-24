@@ -374,7 +374,7 @@ class WoltDriveService
     {
         return array_filter([
             'name'         => $company->getLang('title') ?? '',
-            'phone_number' => $company->phone ?? null,
+            'phone_number' => $this->normalizePhone($company->phone),
         ]);
     }
 
@@ -382,8 +382,54 @@ class WoltDriveService
     {
         return array_filter([
             'name'         => $order->user?->full_name ?? '',
-            'phone_number' => $order->phone ?? null,
+            'phone_number' => $this->normalizePhone($order->phone),
         ]);
+    }
+
+    /**
+     * Normalize a phone number to E.164 format (+994XXXXXXXXX).
+     * Wolt Drive API rejects any number not in E.164 format.
+     * Returns null if the number is empty or cannot be normalized.
+     */
+    private function normalizePhone(?string $phone): ?string
+    {
+        if (empty($phone)) {
+            return null;
+        }
+
+        // Strip all non-digit characters except leading +
+        $digits = preg_replace('/[^\d]/', '', $phone);
+
+        if (empty($digits)) {
+            return null;
+        }
+
+        // Already has country code 994 (Azerbaijan)
+        if (str_starts_with($digits, '994') && strlen($digits) >= 12) {
+            return '+' . $digits;
+        }
+
+        // Local format starting with 0 (e.g. 0501234567 → +994501234567)
+        if (str_starts_with($digits, '0') && strlen($digits) === 10) {
+            return '+994' . substr($digits, 1);
+        }
+
+        // 9-digit local number without leading 0 (e.g. 501234567)
+        if (strlen($digits) === 9) {
+            return '+994' . $digits;
+        }
+
+        // Already a full number with + sign (e.g. +994501234567 stripped to 994501234567)
+        if (strlen($digits) === 12 && str_starts_with($digits, '994')) {
+            return '+' . $digits;
+        }
+
+        // Return with + prefix as a best-effort fallback for other country codes
+        if (str_starts_with($phone, '+')) {
+            return '+' . $digits;
+        }
+
+        return null;
     }
 
     /**
