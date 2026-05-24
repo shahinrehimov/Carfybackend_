@@ -16,6 +16,7 @@ use Illuminate\Http\Resources\Json\JsonResource;
  * @property mixed $created_at
  * @property mixed $creatable
  * @property mixed $logo
+ * @property mixed $store_code
  * @method getLang(string $string)
  * @method isActive()
  */
@@ -36,6 +37,7 @@ class CompaniesResource extends JsonResource
             'phone' => $this->phone,
             'email' => $this->email,
             'title' => $this->getLang('title'),
+            'store_code' => $this->store_code,
             'logo' => $this->whenLoaded('media', function () {
                 return $this->logo;
             }),

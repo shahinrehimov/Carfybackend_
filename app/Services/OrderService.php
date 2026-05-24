@@ -651,7 +651,7 @@ class OrderService
         return $order->shippings
             ->map(fn(OrderShipping $shipping) => [
                 'id'                => $shipping->company_id,
-                'title'             => $shipping->company?->title,
+                'title'             => $shipping->company?->getLang('title'),
                 'store_code'        => $shipping->company?->store_code,
                 'wolt_status'       => $shipping->wolt_status,
                 'has_active_items'  => isset($activeItemCompanyIds[$shipping->company_id]),
