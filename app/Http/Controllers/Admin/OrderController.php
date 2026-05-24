@@ -244,6 +244,15 @@ class OrderController extends Controller
         ]));
     }
 
+    public function getCompanies(Order $order): JsonResponse
+    {
+        $order->load('shippings.company', 'items:id,order_id,company_product_variant_id,status', 'items.companyProductVariant:id,company_id');
+
+        return response()->json([
+            'data' => OrderService::instance()->buildCompaniesList($order),
+        ]);
+    }
+
     public function getPaymentLogs(Order $order): JsonResponse
     {
         $order->load(['paymentLogs' => fn($q) => $q->orderBy('id')]);

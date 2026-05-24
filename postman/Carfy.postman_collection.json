@@ -9405,6 +9405,54 @@
               "response": []
             },
             {
+              "name": "Get Companies",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{token}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Token",
+                    "value": "{{app_token}}",
+                    "type": "text"
+                  },
+                  {
+                    "key": "accept",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{url}}/control/orders/companies/:orderId",
+                  "host": [
+                    "{{url}}"
+                  ],
+                  "path": [
+                    "control",
+                    "orders",
+                    "companies",
+                    ":orderId"
+                  ],
+                  "variable": [
+                    {
+                      "key": "orderId",
+                      "value": "1"
+                    }
+                  ]
+                },
+                "description": "Returns the list of sellers in this order. Use this as a lightweight call to populate the company selector before calling `request-wolt-delivery`.\n\n```json\n{\n  \"data\": [\n    {\n      \"id\": 12,\n      \"title\": \"Store A\",\n      \"store_code\": \"STA\",\n      \"wolt_status\": null,\n      \"has_active_items\": true\n    }\n  ]\n}\n```\n\n`wolt_status` — `null` (not requested), `pending`, `delivering`, `delivered`, `canceled`.\n`has_active_items` — `false` if all items for this seller are canceled."
+              },
+              "response": []
+            },
+            {
               "name": "Change status",
               "request": {
                 "auth": {
