@@ -87,7 +87,7 @@ class WoltDriveService
             'merchant_order_reference_id'   => $refId,
             'order_number'                  => (string) $order->id,
             'is_no_contact'                 => false,
-            'tips'                          => ['amount' => 0, 'currency' => 'AZN'],
+            'tips'                          => [['amount' => 0, 'currency' => 'AZN']],
             'min_preparation_time_minutes'  => config('wolt.min_preparation_time', 0),
             'contents'                      => $this->buildContents($items),
             'customer_support'              => !empty($customerSupport) ? $customerSupport : new \stdClass(),

@@ -21,6 +21,7 @@ use App\Services\OrderService;
 use App\Services\WoltDriveService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Support\Facades\Log;
 
 class OrderController extends Controller
 {
@@ -217,10 +218,23 @@ class OrderController extends Controller
                     'part'                    => $index + 1,
                 ];
             } catch (\App\Exceptions\WoltException $e) {
+                Log::error('Wolt delivery order failed', [
+                    'order_id'   => $order->id,
+                    'company_id' => $companyId,
+                    'part'       => $index + 1,
+                    'message'    => $e->getMessage(),
+                ]);
+
                 return response()->json([
                     'message' => 'Wolt message: ' . $e->getMessage(),
                 ], 422);
             } catch (\RuntimeException $e) {
+                Log::error('Wolt delivery request runtime error', [
+                    'order_id'   => $order->id,
+                    'company_id' => $companyId,
+                    'message'    => $e->getMessage(),
+                ]);
+
                 return response()->json([
                     'message' => LangService::instance()
                         ->setDefault('Wolt delivery request failed. Please try again.')
