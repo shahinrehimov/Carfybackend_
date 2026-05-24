@@ -55,30 +55,48 @@ class WoltDriveService
         $refId       = "ORDER-{$order->uuid}-COMPANY-{$company->id}-PART-{$partNumber}";
         $dropComment = $needsSedan ? config('wolt.sedan_note') : null;
 
+        // Build pickup block
+        $pickup = array_merge(
+            $this->buildPickupLocation($company),
+            ['contact_details' => $this->buildCompanyContact($company),
+             'comment'         => "Order #{$order->id}"],
+        );
+
+        // Build dropoff block — only include comment when sedan is needed
+        $dropoff = [
+            'location'        => [
+                'formatted_address' => $order->address_line_1,
+                'coordinates'       => ['lat' => (float) $order->latitude, 'lon' => (float) $order->longitude],
+            ],
+            'contact_details' => $this->buildCustomerContact($order),
+        ];
+        if ($dropComment !== null) {
+            $dropoff['comment'] = $dropComment;
+        }
+
+        // Build optional customer_support block
+        $customerSupport = array_filter([
+            'phone_number' => config('wolt.support_phone') ?: null,
+            'email'        => config('wolt.support_email') ?: null,
+        ]);
+
+        // Build root payload — no array_filter at root to preserve boolean/zero values
+        $payload = [
+            'pickup'                        => $pickup,
+            'dropoff'                       => $dropoff,
+            'merchant_order_reference_id'   => $refId,
+            'order_number'                  => (string) $order->id,
+            'is_no_contact'                 => false,
+            'contents'                      => $this->buildContents($items),
+        ];
+
+        if (!empty($customerSupport)) {
+            $payload['customer_support'] = $customerSupport;
+        }
+
         $response = $this->client()
             ->retry(3, 1000, fn($e) => $e instanceof ConnectionException || ($e instanceof RequestException && $e->response?->serverError()))
-            ->post($this->url("/merchants/{$this->merchantId()}/delivery-order"), array_filter([
-                'pickup'   => array_merge(
-                    $this->buildPickupLocation($company),
-                    ['contact_details' => $this->buildCompanyContact($company),
-                     'comment'         => "Sifariş #{$order->id}"],
-                ),
-                'dropoff'  => array_filter([
-                    'location'        => [
-                        'formatted_address' => $order->address_line_1,
-                        'coordinates'       => ['lat' => (float) $order->latitude, 'lon' => (float) $order->longitude],
-                    ],
-                    'contact_details' => $this->buildCustomerContact($order),
-                    'comment'         => $dropComment,
-                ]),
-                'merchant_order_reference_id' => $refId,
-                'order_number'                => (string) $order->id,
-                'customer_support'            => array_filter([
-                    'phone_number' => config('wolt.support_phone') ?: null,
-                    'email'        => config('wolt.support_email') ?: null,
-                ]),
-                'contents' => $this->buildContents($items),
-            ]));
+            ->post($this->url("/merchants/{$this->merchantId()}/delivery-order"), $payload);
 
         if ($response->failed()) {
             $this->logError('delivery-order', $response->status(), $response->body());
