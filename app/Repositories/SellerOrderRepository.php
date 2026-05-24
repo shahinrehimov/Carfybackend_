@@ -30,7 +30,7 @@ class SellerOrderRepository
                 'items' => function ($q) use ($company) {
                     $q->whereHas('companyProductVariant', function ($q2) use ($company) {
                         $q2->where('company_id', $company->id);
-                    })->with(['productVariant.translatable', 'companyProductVariant']);
+                    })->with(['productVariant', 'companyProductVariant']);
                 },
                 'shippings' => function ($q) use ($company) {
                     $q->where('company_id', $company->id);
@@ -61,7 +61,7 @@ class SellerOrderRepository
                 $q->whereHas('companyProductVariant', function ($q2) use ($company) {
                     $q2->where('company_id', $company->id);
                 })->with([
-                    'productVariant.translatable',
+                    'productVariant',
                     'companyProductVariant',
                     'itemStatuses',
                 ]);
