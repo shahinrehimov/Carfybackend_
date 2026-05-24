@@ -372,18 +372,32 @@ class WoltDriveService
 
     private function buildCompanyContact(Company $company): array
     {
-        return array_filter([
-            'name'         => $company->getLang('title') ?? '',
-            'phone_number' => $this->normalizePhone($company->phone),
-        ]);
+        $contact = [
+            'name'                  => $company->getLang('title') ?? '',
+            'send_tracking_link_sms' => false,
+        ];
+
+        $phone = $this->normalizePhone($company->phone);
+        if ($phone !== null) {
+            $contact['phone_number'] = $phone;
+        }
+
+        return $contact;
     }
 
     private function buildCustomerContact(Order $order): array
     {
-        return array_filter([
-            'name'         => $order->user?->full_name ?? '',
-            'phone_number' => $this->normalizePhone($order->phone),
-        ]);
+        $contact = [
+            'name'                  => $order->user?->full_name ?? '',
+            'send_tracking_link_sms' => true,
+        ];
+
+        $phone = $this->normalizePhone($order->phone);
+        if ($phone !== null) {
+            $contact['phone_number'] = $phone;
+        }
+
+        return $contact;
     }
 
     /**
