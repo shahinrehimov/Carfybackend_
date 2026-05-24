@@ -87,7 +87,7 @@ class WoltDriveService
             'merchant_order_reference_id'   => $refId,
             'order_number'                  => (string) $order->id,
             'is_no_contact'                 => false,
-            'tips'                          => [['amount' => 0, 'currency' => 'AZN']],
+            'tips'                          => [],
             'min_preparation_time_minutes'  => config('wolt.min_preparation_time', 0),
             'contents'                      => $this->buildContents($items),
             'customer_support'              => !empty($customerSupport) ? $customerSupport : new \stdClass(),
@@ -98,13 +98,21 @@ class WoltDriveService
                 ->retry(3, 1000, fn($e) => $e instanceof ConnectionException || ($e instanceof RequestException && $e->response?->serverError()))
                 ->post($this->url("/merchants/{$this->merchantId()}/delivery-order"), $payload);
         } catch (RequestException $e) {
-            // 4xx errors: parse Wolt error body and throw WoltException for the controller
-            $this->logError('delivery-order', $e->response->status(), $e->response->body());
+            // 4xx errors: log full payload + response body, then throw WoltException for the controller
+            Log::error('Wolt delivery-order request failed', [
+                'status'   => $e->response->status(),
+                'body'     => $e->response->body(),
+                'payload'  => $payload,
+            ]);
             throw new WoltException($this->parseWoltError($e->response->body()));
         }
 
         if ($response->failed()) {
-            $this->logError('delivery-order', $response->status(), $response->body());
+            Log::error('Wolt delivery-order response failed', [
+                'status'  => $response->status(),
+                'body'    => $response->body(),
+                'payload' => $payload,
+            ]);
             throw new WoltException($this->parseWoltError($response->body()));
         }
 
