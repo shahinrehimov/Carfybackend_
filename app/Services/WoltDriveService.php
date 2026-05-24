@@ -93,9 +93,15 @@ class WoltDriveService
             'customer_support'              => !empty($customerSupport) ? $customerSupport : new \stdClass(),
         ];
 
-        $response = $this->client()
-            ->retry(3, 1000, fn($e) => $e instanceof ConnectionException || ($e instanceof RequestException && $e->response?->serverError()))
-            ->post($this->url("/merchants/{$this->merchantId()}/delivery-order"), $payload);
+        try {
+            $response = $this->client()
+                ->retry(3, 1000, fn($e) => $e instanceof ConnectionException || ($e instanceof RequestException && $e->response?->serverError()))
+                ->post($this->url("/merchants/{$this->merchantId()}/delivery-order"), $payload);
+        } catch (RequestException $e) {
+            // 4xx errors: parse Wolt error body and throw WoltException for the controller
+            $this->logError('delivery-order', $e->response->status(), $e->response->body());
+            throw new WoltException($this->parseWoltError($e->response->body()));
+        }
 
         if ($response->failed()) {
             $this->logError('delivery-order', $response->status(), $response->body());
@@ -253,6 +259,7 @@ class WoltDriveService
 
             return [
                 'count'       => $item['quantity'] ?? 1,
+                'identifier'  => $item['identifier'] ?? '',
                 'description' => $item['description'] ?? 'Auto part',
                 'price'       => [
                     'amount'   => $item['amount_cents'] ?? 0,
@@ -490,6 +497,7 @@ class WoltDriveService
                 'quantity'      => $item->quantity,
                 'amount_cents'  => $item->getRawOriginal('amount_final') ?? 0,
                 'description'   => $title ? (string) $title : 'Auto part',
+                'identifier'    => $cpv?->uuid ?? (string) $item->id,
             ];
         })->all();
     }
