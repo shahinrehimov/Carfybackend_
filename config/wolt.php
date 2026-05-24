@@ -12,5 +12,6 @@ return [
     'timeout'        => 5,
     'fee_cache_ttl'  => 900, // 15 minutes
     'fallback_fee'   => env('WOLT_FALLBACK_FEE', 300), // cents — Wolt unavailable olduqda
-    'sedan_note'     => 'Məhsul maşınla daşınmalıdır və böyük həcmli bağlamadır.',
+    'sedan_note'             => 'Məhsul maşınla daşınmalıdır və böyük həcmli bağlamadır.',
+    'min_preparation_time'   => env('WOLT_MIN_PREPARATION_TIME', 0), // minutes; items are already ready_for_delivery
 ];

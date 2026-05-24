@@ -74,7 +74,7 @@ class WoltDriveService
             $dropoff['comment'] = $dropComment;
         }
 
-        // Build optional customer_support block
+        // customer_support is required by Wolt API
         $customerSupport = array_filter([
             'phone_number' => config('wolt.support_phone') ?: null,
             'email'        => config('wolt.support_email') ?: null,
@@ -87,12 +87,11 @@ class WoltDriveService
             'merchant_order_reference_id'   => $refId,
             'order_number'                  => (string) $order->id,
             'is_no_contact'                 => false,
+            'tips'                          => ['amount' => 0, 'currency' => 'AZN'],
+            'min_preparation_time_minutes'  => config('wolt.min_preparation_time', 0),
             'contents'                      => $this->buildContents($items),
+            'customer_support'              => !empty($customerSupport) ? $customerSupport : new \stdClass(),
         ];
-
-        if (!empty($customerSupport)) {
-            $payload['customer_support'] = $customerSupport;
-        }
 
         $response = $this->client()
             ->retry(3, 1000, fn($e) => $e instanceof ConnectionException || ($e instanceof RequestException && $e->response?->serverError()))
@@ -233,6 +232,7 @@ class WoltDriveService
 
     /**
      * Convert CPV-based item array to Wolt contents format.
+     * Dimensions must be nested under the "dimensions" key per Wolt Drive API spec.
      *
      * @param  array  $items  [{weight_gram, size_category, quantity, amount_cents}]
      */
@@ -249,16 +249,19 @@ class WoltDriveService
                 ? $item['size_category']->value
                 : ($item['size_category'] ?? 'medium');
 
-            $dims = $sizeMap[$cat] ?? $sizeMap['medium'];
+            $dimBase = $sizeMap[$cat] ?? $sizeMap['medium'];
 
-            return array_merge([
-                'count'       => $item['quantity'] ?? 1,
-                'weight_gram' => $item['weight_gram'] ?? 0,
-                'price'       => [
+            return [
+                'count'      => $item['quantity'] ?? 1,
+                'price'      => [
                     'amount'   => $item['amount_cents'] ?? 0,
                     'currency' => 'AZN',
                 ],
-            ], $dims);
+                'dimensions' => array_merge(
+                    ['weight_gram' => $item['weight_gram'] ?? 0],
+                    $dimBase
+                ),
+            ];
         }, $items));
     }
 
