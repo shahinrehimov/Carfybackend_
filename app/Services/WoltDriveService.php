@@ -99,7 +99,7 @@ class WoltDriveService
 
         if ($response->failed()) {
             $this->logError('delivery-order', $response->status(), $response->body());
-            throw new \RuntimeException("Wolt delivery order failed: " . $response->body());
+            throw new WoltException($this->parseWoltError($response->body()));
         }
 
         $data = $response->json();
@@ -252,12 +252,13 @@ class WoltDriveService
             $dimBase = $sizeMap[$cat] ?? $sizeMap['medium'];
 
             return [
-                'count'      => $item['quantity'] ?? 1,
-                'price'      => [
+                'count'       => $item['quantity'] ?? 1,
+                'description' => $item['description'] ?? 'Auto part',
+                'price'       => [
                     'amount'   => $item['amount_cents'] ?? 0,
                     'currency' => 'AZN',
                 ],
-                'dimensions' => array_merge(
+                'dimensions'  => array_merge(
                     ['weight_gram' => $item['weight_gram'] ?? 0],
                     $dimBase
                 ),
@@ -476,11 +477,19 @@ class WoltDriveService
         return $orderItems->map(function (OrderItem $item) {
             $cpv = $item->companyProductVariant;
 
+            // Title comes from ProductVariant via TitleCast (product title + option values)
+            $title = $item->productVariant?->title ?? null;
+            if (is_array($title)) {
+                // TitleCast may return array of translations; pick default locale
+                $title = $title[app()->getLocale()] ?? $title['az'] ?? $title['en'] ?? reset($title);
+            }
+
             return [
                 'weight_gram'   => $cpv?->weight_gram ?? 0,
                 'size_category' => $cpv?->size_category ?? ProductSizeCategoryEnum::MEDIUM,
                 'quantity'      => $item->quantity,
                 'amount_cents'  => $item->getRawOriginal('amount_final') ?? 0,
+                'description'   => $title ? (string) $title : 'Auto part',
             ];
         })->all();
     }
@@ -488,5 +497,49 @@ class WoltDriveService
     private function logError(string $operation, int $status, string $body): void
     {
         Log::error("Wolt {$operation} failed", ['status' => $status, 'body' => $body]);
+    }
+
+    /**
+     * Parse a Wolt API error response body into a human-readable message.
+     *
+     * Wolt returns validation errors as:
+     *   {"detail": [{"type": "missing", "loc": ["body","contents",0,"description"], "msg": "Field required"}, ...]}
+     * Or simple errors as:
+     *   {"reason": "DROPOFF_OUTSIDE_OF_DELIVERY_AREA", "details": "..."}
+     */
+    private function parseWoltError(string $body): string
+    {
+        $data = json_decode($body, true);
+
+        if (!is_array($data)) {
+            return $body;
+        }
+
+        // Validation errors: detail[] array with msg + loc
+        if (!empty($data['detail']) && is_array($data['detail'])) {
+            $messages = array_map(function (array $err): string {
+                $msg  = $err['msg'] ?? 'Unknown error';
+                $loc  = isset($err['loc']) ? implode('.', $err['loc']) : null;
+                return $loc ? "{$msg} ({$loc})" : $msg;
+            }, $data['detail']);
+
+            return implode('; ', $messages);
+        }
+
+        // Simple reason + details
+        if (!empty($data['reason'])) {
+            $text = $data['reason'];
+            if (!empty($data['details'])) {
+                $text .= ': ' . $data['details'];
+            }
+            return $text;
+        }
+
+        // Generic message field
+        if (!empty($data['message'])) {
+            return $data['message'];
+        }
+
+        return $body;
     }
 }

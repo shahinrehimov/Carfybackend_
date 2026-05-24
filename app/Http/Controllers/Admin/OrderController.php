@@ -181,7 +181,7 @@ class OrderController extends Controller
             ->where('company_product_variant_id', '!=', null)
             ->whereHas('companyProductVariant', fn($q) => $q->where('company_id', $companyId))
             ->where('status', '!=', \App\Enum\OrderItemStatusEnum::CANCELED)
-            ->with('companyProductVariant')
+            ->with(['companyProductVariant', 'productVariant'])
             ->get();
 
         if ($orderItems->isEmpty()) {
@@ -216,12 +216,15 @@ class OrderController extends Controller
                     'status'                  => 'pending',
                     'part'                    => $index + 1,
                 ];
+            } catch (\App\Exceptions\WoltException $e) {
+                return response()->json([
+                    'message' => 'Wolt message: ' . $e->getMessage(),
+                ], 422);
             } catch (\RuntimeException $e) {
                 return response()->json([
                     'message' => LangService::instance()
                         ->setDefault('Wolt delivery request failed. Please try again.')
                         ->getLang('wolt_delivery_request_failed'),
-                    'detail' => $e->getMessage(),
                 ], 502);
             }
         }
