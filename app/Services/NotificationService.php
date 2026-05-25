@@ -24,6 +24,7 @@ use App\Targeting\SellerCustomersTarget;
 use App\Targeting\SpecificUsersTarget;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Str;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 
@@ -368,7 +369,7 @@ class NotificationService
         return Notification::query()
             ->with([
                 'translatable',
-                'recipients' => fn(Builder $q) => $q->where('user_id', $user->id),
+                'recipients' => fn(HasMany $q) => $q->where('user_id', $user->id),
             ])
             ->whereHas('recipients', function (Builder $query) use ($user) {
                 $query->where('user_id', $user->id)
