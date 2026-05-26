@@ -25,6 +25,7 @@ use App\Http\Controllers\Admin\CompanyController;
 use App\Http\Controllers\Admin\CompanyProductVariantController;
 use App\Http\Controllers\Admin\CountryController;
 use App\Http\Controllers\Admin\DiscountTypeController;
+use App\Http\Controllers\Admin\ProductSizeCategoryController;
 use App\Http\Controllers\Admin\GroupController;
 use App\Http\Controllers\Admin\LanguageController;
 use App\Http\Controllers\Admin\MetaController;
@@ -209,6 +210,10 @@ Route::middleware(['general_access:admin', RouteLogMiddleware::class])->prefix('
 
         Route::group(['prefix' => 'discount-types'], static function () {
             Route::get('list', [DiscountTypeController::class, 'list']);
+        });
+
+        Route::group(['prefix' => 'product-size-categories'], static function () {
+            Route::get('list', [ProductSizeCategoryController::class, 'list']);
         });
 
         Route::group(['prefix' => 'groups'], static function () {

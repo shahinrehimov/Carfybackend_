@@ -5064,6 +5064,51 @@
           ]
         },
         {
+          "name": "Product size categories",
+          "item": [
+            {
+              "name": "List",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{token}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Token",
+                    "value": "{{app_token}}",
+                    "type": "text"
+                  },
+                  {
+                    "key": "accept",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{url}}/control/product-size-categories/list",
+                  "host": [
+                    "{{url}}"
+                  ],
+                  "path": [
+                    "control",
+                    "product-size-categories",
+                    "list"
+                  ]
+                }
+              },
+              "response": []
+            }
+          ]
+        },
+        {
           "name": "Products",
           "item": [
             {
@@ -29629,6 +29674,51 @@
                       "value": "yes",
                       "description": "yes or no"
                     }
+                  ]
+                }
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "Product size categories",
+          "item": [
+            {
+              "name": "List",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{login_token_seller}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Token",
+                    "value": "{{app_seller_token}}",
+                    "type": "text"
+                  },
+                  {
+                    "key": "accept",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{url}}/sellers/product-size-categories/list",
+                  "host": [
+                    "{{url}}"
+                  ],
+                  "path": [
+                    "sellers",
+                    "product-size-categories",
+                    "list"
                   ]
                 }
               },

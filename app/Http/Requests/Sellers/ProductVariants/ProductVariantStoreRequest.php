@@ -53,7 +53,7 @@ class ProductVariantStoreRequest extends FormRequest
             'city_id' => ['required', 'integer', Rule::exists(City::class, 'id')->where('is_active', true)->whereNull('deleted_at')],
 
             'size_category' => ['required', 'string', Rule::in(ProductSizeCategoryEnum::cases())],
-            'weight_gram'   => ['required', 'integer', 'min:1', 'max:20000'],
+            'weight_gram'   => ['required', 'integer', 'min:1', 'max:' . config('wolt.max_weight_gram', 20000)],
 
             'brand_model_ids' => ['required', 'array', 'min:1'],
             'brand_model_ids.*' => ['required', 'integer',

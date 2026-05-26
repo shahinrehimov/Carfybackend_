@@ -31,7 +31,7 @@ class AttachRequest extends FormRequest
             'discount_end_at' => ['nullable', Rule::excludeIf(fn() => !$this->has_discount), 'date', 'after_or_equal:discount_start_at'],
             'city_id' => ['nullable', 'integer', Rule::exists(City::class, 'id')->where('is_active', true)->whereNull('deleted_at')],
             'size_category' => ['required', 'string', Rule::in(ProductSizeCategoryEnum::cases())],
-            'weight_gram' => ['required', 'integer', 'min:1', 'max:20000'],
+            'weight_gram' => ['required', 'integer', 'min:1', 'max:' . config('wolt.max_weight_gram', 20000)],
             'images' => ['filled', 'array', 'min:1'],
             'images.*' => ['required', File::image()->max(10 * 1024)],
         ];
