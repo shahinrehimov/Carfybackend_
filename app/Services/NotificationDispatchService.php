@@ -44,7 +44,7 @@ class NotificationDispatchService
             $user,
             [
                 'action_type' => NotificationActionTypeEnum::ORDER->value,
-                'action_id' => $order->uuid,
+                'action_id' => $order->id,
             ]
         );
 
@@ -74,7 +74,7 @@ class NotificationDispatchService
             $user,
             [
                 'action_type' => NotificationActionTypeEnum::ORDER->value,
-                'action_id' => $order->uuid,
+                'action_id' => $order->id,
             ]
         );
     }
@@ -98,7 +98,7 @@ class NotificationDispatchService
             $user,
             [
                 'action_type' => NotificationActionTypeEnum::ORDER->value,
-                'action_id' => $order->uuid,
+                'action_id' => $order->id,
             ]
         );
     }
@@ -122,7 +122,7 @@ class NotificationDispatchService
             $user,
             [
                 'action_type' => NotificationActionTypeEnum::ORDER->value,
-                'action_id' => $order->uuid,
+                'action_id' => $order->id,
             ]
         );
     }
@@ -165,7 +165,7 @@ class NotificationDispatchService
             $user,
             [
                 'action_type' => NotificationActionTypeEnum::ORDER->value,
-                'action_id' => $order->uuid,
+                'action_id' => $order->id,
             ]
         );
     }
