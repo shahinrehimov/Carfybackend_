@@ -13,7 +13,13 @@ use App\Traits\ActionUser;
 use Dyrynda\Database\Support\CascadeSoftDeletes;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Builder;
+use App\Models\Referral\ReferralActivityStatus;
+use App\Models\Referral\ReferralAttribution;
+use App\Models\Referral\ReferralBalance;
+use App\Models\Referral\ReferralCode;
+use App\Models\Referral\ReferredUserPerk;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\Relations\MorphToMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -61,6 +67,8 @@ class User extends Authenticatable implements MustVerifyEmail
         'is_active',
         'google_id',
         'google_avatar',
+        'registration_ip',
+        'device_fingerprint',
     ];
 
     protected $casts = [
@@ -225,5 +233,35 @@ class User extends Authenticatable implements MustVerifyEmail
     public function userCars(): HasMany
     {
         return $this->hasMany(UserCar::class);
+    }
+
+    public function referralCodes(): HasMany
+    {
+        return $this->hasMany(ReferralCode::class);
+    }
+
+    public function activeReferralCode(): HasOne
+    {
+        return $this->hasOne(ReferralCode::class)->where('is_active', true);
+    }
+
+    public function referralAttribution(): HasOne
+    {
+        return $this->hasOne(ReferralAttribution::class, 'referred_id');
+    }
+
+    public function referralBalance(): HasOne
+    {
+        return $this->hasOne(ReferralBalance::class);
+    }
+
+    public function referralActivityStatus(): HasOne
+    {
+        return $this->hasOne(ReferralActivityStatus::class);
+    }
+
+    public function referredUserPerk(): HasOne
+    {
+        return $this->hasOne(ReferredUserPerk::class);
     }
 }

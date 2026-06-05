@@ -11,3 +11,5 @@ Artisan::command('inspire', function () {
 Schedule::command('orders:check-seller-timeout')->everyMinute();
 Schedule::command('notifications:cleanup')->weekly();
 Schedule::command('notifications:send-scheduled')->everyMinute();
+Schedule::command('referral:process-pending-earnings')->hourly();
+Schedule::command('referral:update-activity-status')->daily();

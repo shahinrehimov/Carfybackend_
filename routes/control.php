@@ -3,6 +3,10 @@
 use App\Enum\RoleEnum;
 use App\Http\Controllers\Admin\NotificationController;
 use App\Http\Controllers\Admin\NotificationSettingController;
+use App\Http\Controllers\Admin\ReferralController as AdminReferralController;
+use App\Models\Referral\ReferralCode;
+use App\Models\Referral\ReferralFraudFlag;
+use App\Models\Referral\ReferralWithdrawal;
 use App\Http\Controllers\Admin\AddressController;
 use App\Http\Controllers\Admin\ContactMessageController;
 use App\Http\Controllers\Admin\PageController;
@@ -519,6 +523,35 @@ Route::middleware(['general_access:admin', RouteLogMiddleware::class])->prefix('
             Route::get('load', [NotificationSettingController::class, 'index']);
             Route::post('update', [NotificationSettingController::class, 'update']);
             Route::post('sync', [NotificationSettingController::class, 'sync']);
+        });
+
+        Route::group(['prefix' => 'referral'], static function () {
+            Route::get('overview', [AdminReferralController::class, 'overview']);
+
+            Route::group(['prefix' => 'withdrawals'], static function () {
+                Route::get('load', [AdminReferralController::class, 'withdrawalIndex']);
+                Route::post('{withdrawal}/approve', [AdminReferralController::class, 'withdrawalApprove']);
+                Route::post('{withdrawal}/reject', [AdminReferralController::class, 'withdrawalReject']);
+                Route::post('{withdrawal}/mark-paid', [AdminReferralController::class, 'withdrawalMarkPaid']);
+            });
+
+            Route::group(['prefix' => 'fraud-flags'], static function () {
+                Route::get('load', [AdminReferralController::class, 'fraudFlagIndex']);
+                Route::post('{flag}/resolve', [AdminReferralController::class, 'fraudFlagResolve']);
+            });
+
+            Route::post('balance-adjust', [AdminReferralController::class, 'balanceAdjust']);
+            Route::get('users/{user}', [AdminReferralController::class, 'userDetail']);
+
+            Route::group(['prefix' => 'codes'], static function () {
+                Route::get('load', [AdminReferralController::class, 'codeIndex']);
+                Route::put('{referralCode}', [AdminReferralController::class, 'codeUpdate']);
+                Route::post('{referralCode}/deactivate', [AdminReferralController::class, 'codeDeactivate']);
+                Route::delete('{referralCode}', [AdminReferralController::class, 'codeDestroy']);
+            });
+
+            Route::get('settings', [AdminReferralController::class, 'settingsIndex']);
+            Route::post('settings', [AdminReferralController::class, 'settingsUpdate']);
         });
     });
 });

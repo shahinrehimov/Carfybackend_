@@ -6,6 +6,7 @@ use App\Enum\UserOtpProvidersEnum;
 use App\Enum\UserOtpTypesEnum;
 use App\Enum\UserRegisterTypesEnum;
 use App\Models\Guest;
+use App\Services\ReferralService;
 use App\Models\ThirdPartyProviderLoginToken;
 use App\Models\User;
 use App\Models\UserOtpCode;
@@ -111,6 +112,7 @@ class UserService
     public function registerWithEmail(FormRequest $request): User
     {
         $validated = $request->validated();
+        $refCode   = $validated['ref_code'] ?? null;
 
         $validated['register_type'] = UserRegisterTypesEnum::EMAIL->value;
 
@@ -118,12 +120,15 @@ class UserService
 
         UserService::instance()->sendEmailVerificationNotification($user);
 
+        ReferralService::instance()->handleRegistration($user, $refCode, $validated['device_fingerprint'] ?? null);
+
         return $user;
     }
 
     public function registerWithPhone(FormRequest $request): User
     {
         $validated = $request->validated();
+        $refCode   = $validated['ref_code'] ?? null;
 
         $this->checkOtpConfirmationToken($validated['phone_confirmation_token'], UserOtpTypesEnum::REGISTER, $validated['otp'], null, UserOtpProvidersEnum::SMS, $validated['phone']);
 
@@ -133,13 +138,17 @@ class UserService
 
         $_this = $this;
 
-        return DB::transaction(function () use ($validated, $_this) {
+        $user = DB::transaction(function () use ($validated, $_this) {
             $user = $_this->registerUser($validated);
 
             $_this->removeFakePhones($user);
 
             return $user;
         });
+
+        ReferralService::instance()->handleRegistration($user, $refCode, $validated['device_fingerprint'] ?? null);
+
+        return $user;
     }
 
     public function registerUser(array $validated, bool $checkEmail = true, bool $removeFake = false): User

@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\App\AddressController;
+use App\Http\Controllers\App\ReferralController;
 use App\Http\Controllers\App\ContactController;
 use App\Http\Controllers\App\CarLibraryController;
 use App\Http\Controllers\App\UserCarController;
@@ -247,6 +248,17 @@ return static function () {
                 Route::group(['prefix' => 'device-token'], static function () {
                     Route::post('register', [DeviceTokenController::class, 'store']);
                     Route::delete('unregister', [DeviceTokenController::class, 'destroy']);
+                });
+
+                Route::group(['prefix' => 'referral'], static function () {
+                    Route::get('my', [ReferralController::class, 'my']);
+                    Route::get('balance', [ReferralController::class, 'balance']);
+                    Route::get('earnings', [ReferralController::class, 'earnings']);
+                    Route::get('referrals', [ReferralController::class, 'referrals']);
+                    Route::get('perks', [ReferralController::class, 'perks']);
+                    Route::post('update-code', [ReferralController::class, 'updateCode']);
+                    Route::post('withdrawals', [ReferralController::class, 'createWithdrawal']);
+                    Route::get('withdrawals', [ReferralController::class, 'withdrawals']);
                 });
             });
         });

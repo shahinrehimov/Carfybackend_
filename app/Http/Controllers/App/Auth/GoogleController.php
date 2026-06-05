@@ -23,11 +23,12 @@ class GoogleController extends Controller
 
     public function callback(Request $request): Application|Redirector|RedirectResponse
     {
-        $gUser = GoogleService::instance()->getCallbackUser($request);
+        $gUser   = GoogleService::instance()->getCallbackUser($request);
+        $refCode = $request::query('ref_code');
 
         $user = UserService::instance()->getUserByGoogle($gUser);
 
-        $user = GoogleService::instance()->updateOrCreateUser($user, $gUser);
+        $user = GoogleService::instance()->updateOrCreateUser($user, $gUser, $refCode);
 
         $loginToken = UserService::instance()->generateLoginTokenForThirdPartyApp($user, 'google', $gUser->getId());
 

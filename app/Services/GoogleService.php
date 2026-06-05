@@ -4,6 +4,7 @@ namespace App\Services;
 
 
 use App\Models\User;
+use App\Services\ReferralService;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Request;
 use Illuminate\Support\Str;
@@ -52,10 +53,10 @@ class GoogleService
         return $gUser;
     }
 
-    public function updateOrCreateUser(?User $user, $gUser): User
+    public function updateOrCreateUser(?User $user, $gUser, ?string $refCode = null): User
     {
         if (!$user) {
-            return UserService::instance()->registerUser([
+            $newUser = UserService::instance()->registerUser([
                 'name' => $gUser->getName() ?? Str::before($gUser->getEmail(), '@'),
                 'surname' => $gUser->getName() ?? Str::before($gUser->getEmail(), '@'), // TODO:: get surname
                 'email' => $gUser->getEmail(),
@@ -65,6 +66,10 @@ class GoogleService
                 'google_id' => $gUser->getId(),
                 'google_avatar' => $gUser->getAvatar(),
             ], false);
+
+            ReferralService::instance()->handleRegistration($newUser, $refCode);
+
+            return $newUser;
         }
 
         $data = [];

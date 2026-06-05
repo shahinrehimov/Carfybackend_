@@ -61,6 +61,8 @@ class Order extends Model
         'cancelled_by_type',
         'cancelled_by_id',
         'courier_info',
+        'referral_free_delivery_applied',
+        'referral_discount_applied',
     ];
 
     protected $casts = [
@@ -74,6 +76,8 @@ class Order extends Model
         'total_discount_in_basket' => AmountCast::class,
         'shipping' => AmountCast::class,
         'courier_info' => 'array',
+        'referral_free_delivery_applied' => 'boolean',
+        'referral_discount_applied' => 'boolean',
     ];
 
     protected array $cascadeDeletes = [

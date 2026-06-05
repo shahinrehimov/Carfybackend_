@@ -34,6 +34,8 @@ class RegisterWithPhoneRequest extends FormRequest
             'email' => ['required', 'email', 'max:150', Rule::unique(User::class, 'email')->whereNull('deleted_at')],
             'gender' => ['nullable', 'string', Rule::in(GenderEnum::cases())],
             'birth_date' => ['nullable', 'date', 'before:today'],
+            'ref_code'           => ['nullable', 'string', 'max:50'],
+            'device_fingerprint' => ['nullable', 'string', 'max:500'],
         ];
     }
 }

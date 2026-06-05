@@ -8,6 +8,7 @@ use App\Enum\OrderPaymentStatusEnum;
 use App\Enum\OrderStatusEnum;
 use App\Enum\PaymentLogActionEnum;
 use App\Models\Order;
+use App\Services\ReferralService;
 use App\Models\OrderItem;
 use App\Models\OrderItemStatus;
 use App\Models\OrderShipping;
@@ -18,6 +19,7 @@ use App\Models\Setting;
 use App\Models\User;
 use App\Services\LoggerService;
 use App\Services\NotificationDispatchService;
+use App\Services\SettingService;
 use App\Services\Payment\PaymentService;
 use App\Services\WoltDriveService;
 use Carbon\Carbon;
@@ -168,11 +170,41 @@ class OrderService
             $totalShipping += $seller['shipping'];
         }
 
+        // Referral perks preview
+        $referralRepo    = ReferralService::instance()->repository();
+        $perk            = $referralRepo->getOrCreatePerks($user);
+        $attribution     = $referralRepo->getAttributionForReferred($user);
+        $hasPerkEligibility = $attribution !== null;
+
+        $freeDeliveryApplied = $hasPerkEligibility && $perk->hasFreeDelivery();
+        $discountApplied     = $hasPerkEligibility && $perk->hasDiscount();
+
+        $previewShipping    = $freeDeliveryApplied ? 0 : round($totalShipping, 2);
+        $previewDiscount    = $discountApplied ? round($subtotal * 1 / 100, 2) : 0;
+        $previewSubtotal    = round($subtotal - $previewDiscount, 2);
+
+        $balance         = $referralRepo->getOrCreateBalance($user->id);
+        $settings        = SettingService::instance()->get();
+        $minPlatformSpend = (int) ($settings->referral_min_platform_spend ?? 2000);
+        $canUseBalance   = $balance->available_balance >= $minPlatformSpend;
+
         return [
             'sellers'        => array_values($sellers),
             'subtotal'       => round($subtotal, 2),
             'total_shipping' => round($totalShipping, 2),
             'grand_total'    => round($subtotal + $totalShipping, 2),
+            'referral'       => [
+                'free_delivery_applied'     => $freeDeliveryApplied,
+                'discount_applied'          => $discountApplied,
+                'discount_amount'           => $previewDiscount,
+                'subtotal_after_discount'   => $previewSubtotal,
+                'shipping_after_perk'       => $previewShipping,
+                'grand_total_after_perks'   => round($previewSubtotal + $previewShipping, 2),
+                'can_use_balance'           => $canUseBalance,
+                'available_balance'         => round($balance->available_balance / 100, 2),
+                'free_delivery_remaining'   => $perk->remainingFreeDeliveries(),
+                'discount_orders_remaining' => $perk->remainingDiscountOrders(),
+            ],
         ];
     }
 
@@ -309,8 +341,49 @@ class OrderService
                 ];
             }
 
-            $basketData = BasketService::instance()->calculateBasketData($productVariants);
+            $basketData    = BasketService::instance()->calculateBasketData($productVariants);
             $totalShipping = array_sum($shippingPerCompany);
+
+            // --- Referral perks for referred users (free delivery + 1% discount) ---
+            $referralRepo        = ReferralService::instance()->repository();
+            $referralPerk        = $referralRepo->getOrCreatePerks($user);
+            $referralAttribution = $referralRepo->getAttributionForReferred($user);
+            $hasPerkEligibility  = $referralAttribution !== null;
+
+            $referralProductDiscount = 0;
+            $freeDeliveryApplied     = false;
+            $discountApplied         = false;
+
+            if ($hasPerkEligibility) {
+                if ($referralPerk->hasFreeDelivery()) {
+                    $totalShipping       = 0;
+                    $freeDeliveryApplied = $referralRepo->useFreeDeliveryPerk($user);
+                }
+
+                if ($referralPerk->hasDiscount()) {
+                    $subtotalCents           = (int) round($basketData['total_price_final_in_basket'] * 100);
+                    $referralProductDiscount = (int) round($subtotalCents * 1 / 100);
+                    $discountApplied         = $referralRepo->useDiscountPerk($user);
+                }
+            }
+
+            $subtotalAfterReferral = $basketData['total_price_final_in_basket'] - ($referralProductDiscount / 100);
+            $amountFinal           = $subtotalAfterReferral + $totalShipping;
+
+            // --- Referral balance spending (user opt-in) ---
+            $useReferralBalance   = (bool) ($validated['use_referral_balance'] ?? false);
+            $referralBalanceUsed  = 0;
+            $settings             = SettingService::instance()->get();
+            $minPlatformSpend     = (int) ($settings->referral_min_platform_spend ?? 2000);
+            $referralBalance      = $referralRepo->getOrCreateBalance($user->id);
+
+            if ($useReferralBalance && $referralBalance->available_balance >= $minPlatformSpend) {
+                $referralBalanceUsed = min(
+                    $referralBalance->available_balance,
+                    (int) round($amountFinal * 100)
+                );
+                $amountFinal = max(0, $amountFinal - $referralBalanceUsed / 100);
+            }
 
             /** @var Order $order */
             $order = $user->orders()->create([
@@ -318,7 +391,7 @@ class OrderService
                 'payment_status' => OrderPaymentStatusEnum::PENDING,
                 'payment_method' => $validated['payment_method'],
                 'amount' => $basketData['total_price_in_basket'],
-                'amount_final' => $basketData['total_price_final_in_basket'] + $totalShipping,
+                'amount_final' => $amountFinal,
                 'total_discount_in_basket' => $basketData['total_discount_in_basket'],
                 'shipping' => $totalShipping,
                 'total_quantity' => $basketData['total_basket_quantity'],
@@ -329,6 +402,8 @@ class OrderService
                 'latitude' => $address->latitude,
                 'longitude' => $address->longitude,
                 'phone' => $address->phone,
+                'referral_free_delivery_applied' => $freeDeliveryApplied,
+                'referral_discount_applied' => $discountApplied,
             ]);
 
             $order->items()->createMany($items);
@@ -342,6 +417,10 @@ class OrderService
             }
 
             BasketService::instance()->clearBasket($user);
+
+            if ($referralBalanceUsed > 0) {
+                $referralRepo->spendOnPlatform($user, $referralBalanceUsed, $order->id);
+            }
 
             // Seller/admin alerts handled by OrderObserver via NotificationDispatchService::newOrderReceived()
             // (CompanyAdmin and Admin are not User models — separate mechanism needed)
@@ -366,6 +445,7 @@ class OrderService
             if (!$result->isRefund) {
                 if ($order !== null && $order->status === OrderStatusEnum::PAYMENT_PENDING && $order->payment_status === OrderPaymentStatusEnum::PENDING) {
                     $this->pay($order, OrderPaymentStatusEnum::PAID, $result->transactionId);
+                    ReferralService::instance()->handlePaymentCard($order, $result->metadata);
                 }
             }
         } else if (!$result->isPending) {
@@ -387,6 +467,7 @@ class OrderService
             if (!$result->isRefund) {
                 if ($order->status === OrderStatusEnum::PAYMENT_PENDING && $order->payment_status === OrderPaymentStatusEnum::PENDING) {
                     $this->pay($order, OrderPaymentStatusEnum::PAID, $result->transactionId);
+                    ReferralService::instance()->handlePaymentCard($order, $result->metadata);
                 }
             }
         } else if (!$result->isPending) {
@@ -472,6 +553,9 @@ class OrderService
             ]);
 
             NotificationDispatchService::instance()->orderItemCancelled($item);
+            // Referral earning is based on product subtotal only — deduct the item's
+            // product amount, excluding any shipping included in $refundAmount.
+            ReferralService::instance()->handlePartialRefund($order, (int) $item->getRawOriginal('amount_final'));
         } else {
             LoggerService::instance()->log(
                 "Partial refund FAILED for item #{$item->id}: {$result->message}",

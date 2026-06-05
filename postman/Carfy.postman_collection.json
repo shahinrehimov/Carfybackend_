@@ -19473,6 +19473,818 @@
               "response": []
             }
           ]
+        },
+        {
+          "id": "525e44b9-db8f-4257-bb1c-11bafc07c2dc",
+          "name": "Referral",
+          "item": [
+            {
+              "id": "b80a8392-48ef-4884-8865-5ea56fd786c2",
+              "name": "Overview stats",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{token}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Token",
+                    "value": "{{app_token}}",
+                    "type": "text"
+                  },
+                  {
+                    "key": "accept",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{url}}/control/referral/overview",
+                  "host": [
+                    "{{url}}"
+                  ],
+                  "path": [
+                    "control",
+                    "referral",
+                    "overview"
+                  ]
+                },
+                "description": ""
+              },
+              "response": []
+            },
+            {
+              "id": "08120291-66c6-4c40-9ae7-5e64df7868b6",
+              "name": "Withdrawals",
+              "item": [
+                {
+                  "id": "19b6f1be-b36a-4d40-aa58-87c677fcb413",
+                  "name": "Load withdrawals",
+                  "request": {
+                    "auth": {
+                      "type": "bearer",
+                      "bearer": [
+                        {
+                          "key": "token",
+                          "value": "{{token}}",
+                          "type": "string"
+                        }
+                      ]
+                    },
+                    "method": "GET",
+                    "header": [
+                      {
+                        "key": "Token",
+                        "value": "{{app_token}}",
+                        "type": "text"
+                      },
+                      {
+                        "key": "accept",
+                        "value": "application/json",
+                        "type": "text"
+                      }
+                    ],
+                    "url": {
+                      "raw": "{{url}}/control/referral/withdrawals/load",
+                      "host": [
+                        "{{url}}"
+                      ],
+                      "path": [
+                        "control",
+                        "referral",
+                        "withdrawals",
+                        "load"
+                      ],
+                      "query": [
+                        {
+                          "key": "limit",
+                          "value": "15",
+                          "disabled": true
+                        },
+                        {
+                          "key": "page",
+                          "value": "1",
+                          "disabled": true
+                        },
+                        {
+                          "key": "status",
+                          "value": "",
+                          "disabled": true,
+                          "description": "pending|approved|rejected|paid|cancelled"
+                        }
+                      ]
+                    },
+                    "description": ""
+                  },
+                  "response": []
+                },
+                {
+                  "id": "85b9e40b-0e77-4909-a1fa-782e059a64bf",
+                  "name": "Approve",
+                  "request": {
+                    "auth": {
+                      "type": "bearer",
+                      "bearer": [
+                        {
+                          "key": "token",
+                          "value": "{{token}}",
+                          "type": "string"
+                        }
+                      ]
+                    },
+                    "method": "POST",
+                    "header": [
+                      {
+                        "key": "Token",
+                        "value": "{{app_token}}",
+                        "type": "text"
+                      },
+                      {
+                        "key": "accept",
+                        "value": "application/json",
+                        "type": "text"
+                      }
+                    ],
+                    "body": {},
+                    "url": {
+                      "raw": "{{url}}/control/referral/withdrawals/:id/approve",
+                      "host": [
+                        "{{url}}"
+                      ],
+                      "path": [
+                        "control",
+                        "referral",
+                        "withdrawals",
+                        ":id",
+                        "approve"
+                      ]
+                    },
+                    "description": ""
+                  },
+                  "response": []
+                },
+                {
+                  "id": "2d8dc725-23e9-4635-bf5e-f6c7372f2a77",
+                  "name": "Reject",
+                  "request": {
+                    "auth": {
+                      "type": "bearer",
+                      "bearer": [
+                        {
+                          "key": "token",
+                          "value": "{{token}}",
+                          "type": "string"
+                        }
+                      ]
+                    },
+                    "method": "POST",
+                    "header": [
+                      {
+                        "key": "Token",
+                        "value": "{{app_token}}",
+                        "type": "text"
+                      },
+                      {
+                        "key": "accept",
+                        "value": "application/json",
+                        "type": "text"
+                      },
+                      {
+                        "key": "Content-Type",
+                        "value": "application/json",
+                        "type": "text"
+                      }
+                    ],
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\n  \"note\": \"Fraud suspected\"\n}",
+                      "options": {
+                        "raw": {
+                          "language": "json"
+                        }
+                      }
+                    },
+                    "url": {
+                      "raw": "{{url}}/control/referral/withdrawals/:id/reject",
+                      "host": [
+                        "{{url}}"
+                      ],
+                      "path": [
+                        "control",
+                        "referral",
+                        "withdrawals",
+                        ":id",
+                        "reject"
+                      ]
+                    },
+                    "description": ""
+                  },
+                  "response": []
+                },
+                {
+                  "id": "b9732c1b-cb5e-4635-b4b1-d5a70ecde786",
+                  "name": "Mark paid",
+                  "request": {
+                    "auth": {
+                      "type": "bearer",
+                      "bearer": [
+                        {
+                          "key": "token",
+                          "value": "{{token}}",
+                          "type": "string"
+                        }
+                      ]
+                    },
+                    "method": "POST",
+                    "header": [
+                      {
+                        "key": "Token",
+                        "value": "{{app_token}}",
+                        "type": "text"
+                      },
+                      {
+                        "key": "accept",
+                        "value": "application/json",
+                        "type": "text"
+                      }
+                    ],
+                    "body": {},
+                    "url": {
+                      "raw": "{{url}}/control/referral/withdrawals/:id/mark-paid",
+                      "host": [
+                        "{{url}}"
+                      ],
+                      "path": [
+                        "control",
+                        "referral",
+                        "withdrawals",
+                        ":id",
+                        "mark-paid"
+                      ]
+                    },
+                    "description": ""
+                  },
+                  "response": []
+                }
+              ]
+            },
+            {
+              "id": "9727bf79-8794-4228-ad34-0daf5402c401",
+              "name": "Fraud flags",
+              "item": [
+                {
+                  "id": "28d9504f-82a0-4525-ad3e-e404e2792765",
+                  "name": "Load flags",
+                  "request": {
+                    "auth": {
+                      "type": "bearer",
+                      "bearer": [
+                        {
+                          "key": "token",
+                          "value": "{{token}}",
+                          "type": "string"
+                        }
+                      ]
+                    },
+                    "method": "GET",
+                    "header": [
+                      {
+                        "key": "Token",
+                        "value": "{{app_token}}",
+                        "type": "text"
+                      },
+                      {
+                        "key": "accept",
+                        "value": "application/json",
+                        "type": "text"
+                      }
+                    ],
+                    "url": {
+                      "raw": "{{url}}/control/referral/fraud-flags/load",
+                      "host": [
+                        "{{url}}"
+                      ],
+                      "path": [
+                        "control",
+                        "referral",
+                        "fraud-flags",
+                        "load"
+                      ],
+                      "query": [
+                        {
+                          "key": "unresolved_only",
+                          "value": "true"
+                        },
+                        {
+                          "key": "severity",
+                          "value": "",
+                          "disabled": true,
+                          "description": "hard_block|soft_flag"
+                        },
+                        {
+                          "key": "limit",
+                          "value": "15",
+                          "disabled": true
+                        },
+                        {
+                          "key": "page",
+                          "value": "1",
+                          "disabled": true
+                        }
+                      ]
+                    },
+                    "description": ""
+                  },
+                  "response": []
+                },
+                {
+                  "id": "50c3228d-4d36-461d-a3c3-5d1b660e0bc9",
+                  "name": "Resolve flag",
+                  "request": {
+                    "auth": {
+                      "type": "bearer",
+                      "bearer": [
+                        {
+                          "key": "token",
+                          "value": "{{token}}",
+                          "type": "string"
+                        }
+                      ]
+                    },
+                    "method": "POST",
+                    "header": [
+                      {
+                        "key": "Token",
+                        "value": "{{app_token}}",
+                        "type": "text"
+                      },
+                      {
+                        "key": "accept",
+                        "value": "application/json",
+                        "type": "text"
+                      },
+                      {
+                        "key": "Content-Type",
+                        "value": "application/json",
+                        "type": "text"
+                      }
+                    ],
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\n  \"resolution\": \"approved\"\n}",
+                      "options": {
+                        "raw": {
+                          "language": "json"
+                        }
+                      }
+                    },
+                    "url": {
+                      "raw": "{{url}}/control/referral/fraud-flags/:id/resolve",
+                      "host": [
+                        "{{url}}"
+                      ],
+                      "path": [
+                        "control",
+                        "referral",
+                        "fraud-flags",
+                        ":id",
+                        "resolve"
+                      ]
+                    },
+                    "description": "resolution: 'approved' releases held earnings; 'rejected' cancels them and blocks attribution."
+                  },
+                  "response": []
+                }
+              ]
+            },
+            {
+              "id": "be5fa4dd-e611-4546-94f9-16c412b1fb14",
+              "name": "Balance adjust",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{token}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Token",
+                    "value": "{{app_token}}",
+                    "type": "text"
+                  },
+                  {
+                    "key": "accept",
+                    "value": "application/json",
+                    "type": "text"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"user_id\": 1,\n  \"type\": \"add\",\n  \"amount_azn\": 10,\n  \"reason\": \"Compensation\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{url}}/control/referral/balance-adjust",
+                  "host": [
+                    "{{url}}"
+                  ],
+                  "path": [
+                    "control",
+                    "referral",
+                    "balance-adjust"
+                  ]
+                },
+                "description": "type: 'add' or 'deduct'."
+              },
+              "response": []
+            },
+            {
+              "id": "f8bf98f0-4131-4b4f-818b-c4eb7abc79bf",
+              "name": "User detail",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{token}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Token",
+                    "value": "{{app_token}}",
+                    "type": "text"
+                  },
+                  {
+                    "key": "accept",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{url}}/control/referral/users/:user_id",
+                  "host": [
+                    "{{url}}"
+                  ],
+                  "path": [
+                    "control",
+                    "referral",
+                    "users",
+                    ":user_id"
+                  ]
+                },
+                "description": "Full referral profile for a user: stats, code, attribution, perks."
+              },
+              "response": []
+            },
+            {
+              "id": "299352c3-9245-4ed0-a446-e738c78e3e0d",
+              "name": "Codes",
+              "item": [
+                {
+                  "id": "4009e8a8-1267-45bb-958d-21066032a1dc",
+                  "name": "Load codes",
+                  "request": {
+                    "auth": {
+                      "type": "bearer",
+                      "bearer": [
+                        {
+                          "key": "token",
+                          "value": "{{token}}",
+                          "type": "string"
+                        }
+                      ]
+                    },
+                    "method": "GET",
+                    "header": [
+                      {
+                        "key": "Token",
+                        "value": "{{app_token}}",
+                        "type": "text"
+                      },
+                      {
+                        "key": "accept",
+                        "value": "application/json",
+                        "type": "text"
+                      }
+                    ],
+                    "url": {
+                      "raw": "{{url}}/control/referral/codes/load",
+                      "host": [
+                        "{{url}}"
+                      ],
+                      "path": [
+                        "control",
+                        "referral",
+                        "codes",
+                        "load"
+                      ],
+                      "query": [
+                        {
+                          "key": "limit",
+                          "value": "15",
+                          "disabled": true
+                        },
+                        {
+                          "key": "page",
+                          "value": "1",
+                          "disabled": true
+                        },
+                        {
+                          "key": "search",
+                          "value": "",
+                          "disabled": true
+                        },
+                        {
+                          "key": "is_active",
+                          "value": "",
+                          "disabled": true,
+                          "description": "true|false"
+                        }
+                      ]
+                    },
+                    "description": ""
+                  },
+                  "response": []
+                },
+                {
+                  "id": "82d4f44c-5e72-4080-8b99-e82f51d1d312",
+                  "name": "Update code",
+                  "request": {
+                    "auth": {
+                      "type": "bearer",
+                      "bearer": [
+                        {
+                          "key": "token",
+                          "value": "{{token}}",
+                          "type": "string"
+                        }
+                      ]
+                    },
+                    "method": "PUT",
+                    "header": [
+                      {
+                        "key": "Token",
+                        "value": "{{app_token}}",
+                        "type": "text"
+                      },
+                      {
+                        "key": "accept",
+                        "value": "application/json",
+                        "type": "text"
+                      },
+                      {
+                        "key": "Content-Type",
+                        "value": "application/json",
+                        "type": "text"
+                      }
+                    ],
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\n  \"code\": \"NEWCODE1\"\n}",
+                      "options": {
+                        "raw": {
+                          "language": "json"
+                        }
+                      }
+                    },
+                    "url": {
+                      "raw": "{{url}}/control/referral/codes/:id",
+                      "host": [
+                        "{{url}}"
+                      ],
+                      "path": [
+                        "control",
+                        "referral",
+                        "codes",
+                        ":id"
+                      ]
+                    },
+                    "description": ""
+                  },
+                  "response": []
+                },
+                {
+                  "id": "03a984c9-429e-440f-8731-7332f456a66b",
+                  "name": "Deactivate code",
+                  "request": {
+                    "auth": {
+                      "type": "bearer",
+                      "bearer": [
+                        {
+                          "key": "token",
+                          "value": "{{token}}",
+                          "type": "string"
+                        }
+                      ]
+                    },
+                    "method": "POST",
+                    "header": [
+                      {
+                        "key": "Token",
+                        "value": "{{app_token}}",
+                        "type": "text"
+                      },
+                      {
+                        "key": "accept",
+                        "value": "application/json",
+                        "type": "text"
+                      }
+                    ],
+                    "body": {},
+                    "url": {
+                      "raw": "{{url}}/control/referral/codes/:id/deactivate",
+                      "host": [
+                        "{{url}}"
+                      ],
+                      "path": [
+                        "control",
+                        "referral",
+                        "codes",
+                        ":id",
+                        "deactivate"
+                      ]
+                    },
+                    "description": ""
+                  },
+                  "response": []
+                },
+                {
+                  "id": "4e2d582e-5642-4236-957c-f060e07b601d",
+                  "name": "Delete code",
+                  "request": {
+                    "auth": {
+                      "type": "bearer",
+                      "bearer": [
+                        {
+                          "key": "token",
+                          "value": "{{token}}",
+                          "type": "string"
+                        }
+                      ]
+                    },
+                    "method": "DELETE",
+                    "header": [
+                      {
+                        "key": "Token",
+                        "value": "{{app_token}}",
+                        "type": "text"
+                      },
+                      {
+                        "key": "accept",
+                        "value": "application/json",
+                        "type": "text"
+                      }
+                    ],
+                    "url": {
+                      "raw": "{{url}}/control/referral/codes/:id",
+                      "host": [
+                        "{{url}}"
+                      ],
+                      "path": [
+                        "control",
+                        "referral",
+                        "codes",
+                        ":id"
+                      ]
+                    },
+                    "description": ""
+                  },
+                  "response": []
+                }
+              ]
+            },
+            {
+              "id": "44e4df1a-828c-4fc2-ab3d-c2cb9bab917c",
+              "name": "Settings",
+              "item": [
+                {
+                  "id": "cfb4845d-a49d-4123-997c-ab3674c0c296",
+                  "name": "Load settings",
+                  "request": {
+                    "auth": {
+                      "type": "bearer",
+                      "bearer": [
+                        {
+                          "key": "token",
+                          "value": "{{token}}",
+                          "type": "string"
+                        }
+                      ]
+                    },
+                    "method": "GET",
+                    "header": [
+                      {
+                        "key": "Token",
+                        "value": "{{app_token}}",
+                        "type": "text"
+                      },
+                      {
+                        "key": "accept",
+                        "value": "application/json",
+                        "type": "text"
+                      }
+                    ],
+                    "url": {
+                      "raw": "{{url}}/control/referral/settings",
+                      "host": [
+                        "{{url}}"
+                      ],
+                      "path": [
+                        "control",
+                        "referral",
+                        "settings"
+                      ]
+                    },
+                    "description": "Returns all 10 referral config keys with current values."
+                  },
+                  "response": []
+                },
+                {
+                  "id": "b4adb8ba-e414-473a-a1cd-1d361cee266c",
+                  "name": "Update settings",
+                  "request": {
+                    "auth": {
+                      "type": "bearer",
+                      "bearer": [
+                        {
+                          "key": "token",
+                          "value": "{{token}}",
+                          "type": "string"
+                        }
+                      ]
+                    },
+                    "method": "POST",
+                    "header": [
+                      {
+                        "key": "Token",
+                        "value": "{{app_token}}",
+                        "type": "text"
+                      },
+                      {
+                        "key": "accept",
+                        "value": "application/json",
+                        "type": "text"
+                      },
+                      {
+                        "key": "Content-Type",
+                        "value": "application/json",
+                        "type": "text"
+                      }
+                    ],
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\n  \"settings\": [\n    {\n      \"key\": \"referral_pending_days\",\n      \"value\": \"14\"\n    },\n    {\n      \"key\": \"referral_withdrawal_fee_percent\",\n      \"value\": \"2\"\n    },\n    {\n      \"key\": \"referral_code_min_length\",\n      \"value\": \"4\"\n    },\n    {\n      \"key\": \"referral_code_max_length\",\n      \"value\": \"20\"\n    }\n  ]\n}",
+                      "options": {
+                        "raw": {
+                          "language": "json"
+                        }
+                      }
+                    },
+                    "url": {
+                      "raw": "{{url}}/control/referral/settings",
+                      "host": [
+                        "{{url}}"
+                      ],
+                      "path": [
+                        "control",
+                        "referral",
+                        "settings"
+                      ]
+                    },
+                    "description": "Submit any subset of the 10 keys. Clears settings cache automatically."
+                  },
+                  "response": []
+                }
+              ]
+            }
+          ]
         }
       ]
     },
@@ -26045,6 +26857,62 @@
                 }
               },
               "response": []
+            },
+            {
+              "id": "6315698d-67f5-4214-8064-e69588ea6b2b",
+              "name": "Checkout (with referral balance)",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{login_token_site}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Token",
+                    "value": "{{app_site_token}}",
+                    "type": "text"
+                  },
+                  {
+                    "key": "accept",
+                    "value": "application/json",
+                    "type": "text"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"payment_method\": \"fpay\",\n  \"address_id\": 1,\n  \"use_referral_balance\": true\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{url}}/:provider/orders/checkout",
+                  "host": [
+                    "{{url}}"
+                  ],
+                  "path": [
+                    ":provider",
+                    "orders",
+                    "checkout"
+                  ]
+                },
+                "description": "Set use_referral_balance:true to apply available referral balance. Minimum 20 AZN balance required. Referred-user perks (free delivery + 1% discount) are applied automatically when eligible."
+              },
+              "response": []
             }
           ]
         },
@@ -26943,6 +27811,418 @@
                   ]
                 },
                 "description": "Unregister device token on logout"
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "id": "25e660d3-86ca-4144-9afb-4bb63c989af9",
+          "name": "Referral",
+          "item": [
+            {
+              "id": "c7e25147-5be3-4c31-8e77-ea4d98161580",
+              "name": "My referral info",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{login_token_site}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Token",
+                    "value": "{{app_site_token}}",
+                    "type": "text"
+                  },
+                  {
+                    "key": "accept",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{url}}/:provider/referral/my",
+                  "host": [
+                    "{{url}}"
+                  ],
+                  "path": [
+                    ":provider",
+                    "referral",
+                    "my"
+                  ]
+                },
+                "description": "Returns code, link, tier, rate, is_active, stats, balances."
+              },
+              "response": []
+            },
+            {
+              "id": "3cd74ce4-9c42-4122-b88b-34c2305155b5",
+              "name": "Balance",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{login_token_site}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Token",
+                    "value": "{{app_site_token}}",
+                    "type": "text"
+                  },
+                  {
+                    "key": "accept",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{url}}/:provider/referral/balance",
+                  "host": [
+                    "{{url}}"
+                  ],
+                  "path": [
+                    ":provider",
+                    "referral",
+                    "balance"
+                  ]
+                },
+                "description": "pending_balance, available_balance, lifetime figures (all in AZN)."
+              },
+              "response": []
+            },
+            {
+              "id": "87a8c983-5a55-4582-8043-bfc5b2daf9f1",
+              "name": "Earnings history",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{login_token_site}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Token",
+                    "value": "{{app_site_token}}",
+                    "type": "text"
+                  },
+                  {
+                    "key": "accept",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{url}}/:provider/referral/earnings",
+                  "host": [
+                    "{{url}}"
+                  ],
+                  "path": [
+                    ":provider",
+                    "referral",
+                    "earnings"
+                  ],
+                  "query": [
+                    {
+                      "key": "limit",
+                      "value": "15",
+                      "disabled": true
+                    },
+                    {
+                      "key": "page",
+                      "value": "1",
+                      "disabled": true
+                    },
+                    {
+                      "key": "status",
+                      "value": "",
+                      "disabled": true,
+                      "description": "pending|available|refunded|cancelled|fraud_hold"
+                    }
+                  ]
+                },
+                "description": ""
+              },
+              "response": []
+            },
+            {
+              "id": "1e65fa9b-69fd-40ab-b469-c2a2cd47bbee",
+              "name": "My referrals",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{login_token_site}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Token",
+                    "value": "{{app_site_token}}",
+                    "type": "text"
+                  },
+                  {
+                    "key": "accept",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{url}}/:provider/referral/referrals",
+                  "host": [
+                    "{{url}}"
+                  ],
+                  "path": [
+                    ":provider",
+                    "referral",
+                    "referrals"
+                  ],
+                  "query": [
+                    {
+                      "key": "limit",
+                      "value": "15",
+                      "disabled": true
+                    },
+                    {
+                      "key": "page",
+                      "value": "1",
+                      "disabled": true
+                    }
+                  ]
+                },
+                "description": "Paginated list of users invited by me."
+              },
+              "response": []
+            },
+            {
+              "id": "b7b28ce2-9290-4ad1-80fd-3814025cd2d1",
+              "name": "Perks (referred user)",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{login_token_site}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Token",
+                    "value": "{{app_site_token}}",
+                    "type": "text"
+                  },
+                  {
+                    "key": "accept",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{url}}/:provider/referral/perks",
+                  "host": [
+                    "{{url}}"
+                  ],
+                  "path": [
+                    ":provider",
+                    "referral",
+                    "perks"
+                  ]
+                },
+                "description": "Free-delivery & 1% discount remaining for the referred (invited) user."
+              },
+              "response": []
+            },
+            {
+              "id": "fabfd3d9-6cc0-4a90-a6c5-2510d27b778b",
+              "name": "Withdrawal history",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{login_token_site}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Token",
+                    "value": "{{app_site_token}}",
+                    "type": "text"
+                  },
+                  {
+                    "key": "accept",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{url}}/:provider/referral/withdrawals",
+                  "host": [
+                    "{{url}}"
+                  ],
+                  "path": [
+                    ":provider",
+                    "referral",
+                    "withdrawals"
+                  ],
+                  "query": [
+                    {
+                      "key": "limit",
+                      "value": "15",
+                      "disabled": true
+                    },
+                    {
+                      "key": "page",
+                      "value": "1",
+                      "disabled": true
+                    }
+                  ]
+                },
+                "description": ""
+              },
+              "response": []
+            },
+            {
+              "id": "897e040b-1094-4341-b43f-1c97de5c5a65",
+              "name": "Create withdrawal",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{login_token_site}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Token",
+                    "value": "{{app_site_token}}",
+                    "type": "text"
+                  },
+                  {
+                    "key": "accept",
+                    "value": "application/json",
+                    "type": "text"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"amount\": 50,\n  \"card_last4\": \"1234\",\n  \"card_holder_name\": \"ANAR ALIYEV\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{url}}/:provider/referral/withdrawals",
+                  "host": [
+                    "{{url}}"
+                  ],
+                  "path": [
+                    ":provider",
+                    "referral",
+                    "withdrawals"
+                  ]
+                },
+                "description": "Minimum 50 AZN. Freezes balance pending admin approval."
+              },
+              "response": []
+            },
+            {
+              "id": "ee05b261-9cb4-4903-bcd8-ae54d1501d87",
+              "name": "Update referral code",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{login_token_site}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Token",
+                    "value": "{{app_site_token}}",
+                    "type": "text"
+                  },
+                  {
+                    "key": "accept",
+                    "value": "application/json",
+                    "type": "text"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"code\": \"MYKOD1\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{url}}/:provider/referral/update-code",
+                  "host": [
+                    "{{url}}"
+                  ],
+                  "path": [
+                    ":provider",
+                    "referral",
+                    "update-code"
+                  ]
+                },
+                "description": "Change own referral code. Must be unique (case-insensitive). Min 4 / max 20 alphanumeric chars. Old code deactivates immediately."
               },
               "response": []
             }

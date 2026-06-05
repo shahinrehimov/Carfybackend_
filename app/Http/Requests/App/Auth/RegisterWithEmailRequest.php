@@ -42,6 +42,8 @@ class RegisterWithEmailRequest extends FormRequest
                     ->numbers()
                     ->symbols()
             ],
+            'ref_code'           => ['nullable', 'string', 'max:50'],
+            'device_fingerprint' => ['nullable', 'string', 'max:500'],
         ];
     }
 }

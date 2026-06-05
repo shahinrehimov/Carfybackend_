@@ -40,6 +40,7 @@ class OrderStoreRequest extends FormRequest
                     ->where('user_id', UserService::instance()->getUser()->id)
                     ->whereNull('deleted_at'),
             ],
+            'use_referral_balance' => ['nullable', 'boolean'],
         ];
     }
 }

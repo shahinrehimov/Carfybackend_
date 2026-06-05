@@ -5,6 +5,7 @@ namespace App\Observers;
 use App\Enum\OrderStatusEnum;
 use App\Models\Order;
 use App\Services\NotificationDispatchService;
+use App\Services\ReferralService;
 
 class OrderObserver
 {
@@ -39,11 +40,15 @@ class OrderObserver
                     'status' => $order->status,
                 ]);
 
-            match ($order->status) {
-                OrderStatusEnum::CANCELED => NotificationDispatchService::instance()->orderCancelled($order),
-                OrderStatusEnum::DELIVERED => NotificationDispatchService::instance()->orderDelivered($order),
-                default => NotificationDispatchService::instance()->orderStatusChanged($order),
-            };
+            if ($order->status === OrderStatusEnum::CANCELED) {
+                NotificationDispatchService::instance()->orderCancelled($order);
+                ReferralService::instance()->handleOrderCancelled($order);
+            } elseif ($order->status === OrderStatusEnum::DELIVERED) {
+                NotificationDispatchService::instance()->orderDelivered($order);
+                ReferralService::instance()->handleOrderDelivered($order);
+            } else {
+                NotificationDispatchService::instance()->orderStatusChanged($order);
+            }
         }
 
         if ($order->isDirty('payment_status') && $order->payment_status) {
