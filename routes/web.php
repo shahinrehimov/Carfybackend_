@@ -4,6 +4,7 @@ use App\Http\Controllers\App\AdvertisementController;
 use App\Http\Controllers\App\Auth\EmailVerificationController;
 use App\Http\Controllers\App\Auth\GoogleController;
 use App\Http\Controllers\App\OrderController;
+use App\Http\Controllers\Test\ReferralSeedController;
 use App\Http\Controllers\Webhook\WoltWebhookController;
 use App\Http\Middleware\RouteLogMiddleware;
 use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
@@ -41,3 +42,7 @@ Route::get('/ads/{key}/click', [AdvertisementController::class, 'click'])
     ->name('advertisements.click')
     ->middleware(['throttle:30,1'])
     ->withoutMiddleware(VerifyCsrfToken::class);
+
+// Test-only: seed mock referral/bonus data for a user (guarded by env key + active mode)
+Route::get('/test/referral-seed', ReferralSeedController::class)
+    ->name('test.referral.seed');

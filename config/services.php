@@ -44,4 +44,10 @@ return [
     'c1' => [
         'url' => env('C1_URL'),
     ],
+
+    // Test-only referral/bonus mock data seeder (guarded by env key + active mode)
+    'referral_test_seed' => [
+        'enabled' => env('REFERRAL_TEST_SEED_ENABLED', false),
+        'key'     => env('REFERRAL_TEST_SEED_KEY'),
+    ],
 ];
