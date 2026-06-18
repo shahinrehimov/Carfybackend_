@@ -13,6 +13,7 @@ class ReferralUsage extends Model
         'user_id',
         'order_id',
         'amount_used',
+        'refunded_amount',
         'refunded_at',
     ];
 

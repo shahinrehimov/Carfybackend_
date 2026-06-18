@@ -498,13 +498,39 @@ class OrderService
         // Release the canceled item's reserved stock (applies to paid and cash orders alike).
         $this->restoreStockForItem($item);
 
-        // Nothing left to refund for unpaid (e.g. cash) orders.
+        $itemAmount = (int) $item->getRawOriginal('amount_final');
+
+        // Original product subtotal = sum of every item's amount_final. Items are
+        // not deleted on cancel (status only), so this still reflects the basket.
+        $productSubtotal = (int) $order->items->sum(
+            fn($orderItem) => (int) $orderItem->getRawOriginal('amount_final')
+        );
+
+        // Return this item's share of any referral balance the buyer spent on the
+        // order. Balance is consumed at checkout for every payment method (card and
+        // cash alike), so it is returned here regardless of payment status — the
+        // cash/card gateway refund below only covers the cash-paid portion.
+        ReferralService::instance()->handleItemBalanceRefund($order, $itemAmount, $productSubtotal);
+
+        // Nothing left to refund (in cash) for unpaid (e.g. cash) orders.
         if ($order->payment_status !== OrderPaymentStatusEnum::PAID) {
             return;
         }
 
-        // Refund the item's amount
-        $refundAmount = $item->getRawOriginal('amount_final');
+        // Refund the item's cash-paid amount, adjusted for order-level reductions
+        // that are NOT baked into the item's amount_final (referral 1% discount,
+        // referral balance spent). These apply to the whole order, so refunding the
+        // raw item amount would hand the discount/balance back as cash (over-refund).
+        // What the customer actually paid in cash for products = order total minus
+        // shipping; amount_final already has every order-level reduction applied.
+        $paidForProducts = max(
+            0,
+            (int) $order->getRawOriginal('amount_final') - (int) $order->getRawOriginal('shipping')
+        );
+
+        $refundAmount = ($productSubtotal > 0 && $paidForProducts < $productSubtotal)
+            ? (int) round($itemAmount * $paidForProducts / $productSubtotal)
+            : $itemAmount;
 
         // Check if all items for this company are now canceled → also refund shipping
         $companyId = $item->companyProductVariant?->company_id;

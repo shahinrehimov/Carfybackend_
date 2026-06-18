@@ -612,7 +612,8 @@ class ReferralRepository
     /**
      * Return referral balance that was spent on an order back to the user's
      * available_balance when that order is fully cancelled / refunded.
-     * Idempotent: only un-refunded usages are processed.
+     * Idempotent: only the not-yet-returned remainder of each usage is processed,
+     * so this composes correctly with partial item refunds (refundPlatformSpendingPartial).
      */
     public function refundPlatformSpending(int $userId, int $orderId): void
     {
@@ -626,19 +627,86 @@ class ReferralRepository
         }
 
         DB::transaction(function () use ($usages, $userId) {
-            $total = (int) $usages->sum('amount_used');
+            // Only the remainder that has not already been returned via partial refunds.
+            $total = (int) $usages->sum(
+                fn($usage) => max(0, (int) $usage->amount_used - (int) $usage->refunded_amount)
+            );
 
-            $balance = $this->getOrCreateBalance($userId);
-            $balance->increment('available_balance', $total);
-            // Reverse the lifetime spend counter, never below zero
-            $newSpent = max(0, (int) $balance->lifetime_spent_on_platform - $total);
-            $balance->update([
-                'lifetime_spent_on_platform' => $newSpent,
-                'updated_at'                 => now(),
-            ]);
+            if ($total > 0) {
+                $balance = $this->getOrCreateBalance($userId);
+                $balance->increment('available_balance', $total);
+                // Reverse the lifetime spend counter, never below zero
+                $newSpent = max(0, (int) $balance->lifetime_spent_on_platform - $total);
+                $balance->update([
+                    'lifetime_spent_on_platform' => $newSpent,
+                    'updated_at'                 => now(),
+                ]);
+            }
 
             \App\Models\Referral\ReferralUsage::whereIn('id', $usages->pluck('id'))
-                ->update(['refunded_at' => now()]);
+                ->update([
+                    'refunded_amount' => DB::raw('amount_used'),
+                    'refunded_at'     => now(),
+                ]);
+        });
+    }
+
+    /**
+     * Return a partial slice of the referral balance spent on an order — used when a
+     * single order item is cancelled. Returns up to the remaining (not-yet-refunded)
+     * balance across the order's usages and returns the amount actually credited.
+     * Idempotent against over-returning: never credits more than what is still owed.
+     */
+    public function refundPlatformSpendingPartial(int $userId, int $orderId, int $amountCents): int
+    {
+        if ($amountCents <= 0) {
+            return 0;
+        }
+
+        return (int) DB::transaction(function () use ($userId, $orderId, $amountCents) {
+            $usages = \App\Models\Referral\ReferralUsage::where('user_id', $userId)
+                ->where('order_id', $orderId)
+                ->whereNull('refunded_at')
+                ->lockForUpdate()
+                ->get();
+
+            $remaining = $amountCents;
+            $credited  = 0;
+
+            foreach ($usages as $usage) {
+                if ($remaining <= 0) {
+                    break;
+                }
+
+                $usageRemaining = max(0, (int) $usage->amount_used - (int) $usage->refunded_amount);
+                if ($usageRemaining <= 0) {
+                    continue;
+                }
+
+                $slice = min($usageRemaining, $remaining);
+                $newRefunded = (int) $usage->refunded_amount + $slice;
+
+                $usage->update([
+                    'refunded_amount' => $newRefunded,
+                    // Mark fully refunded only when the whole usage has been returned.
+                    'refunded_at'     => $newRefunded >= (int) $usage->amount_used ? now() : null,
+                ]);
+
+                $credited  += $slice;
+                $remaining -= $slice;
+            }
+
+            if ($credited > 0) {
+                $balance = $this->getOrCreateBalance($userId);
+                $balance->increment('available_balance', $credited);
+                $newSpent = max(0, (int) $balance->lifetime_spent_on_platform - $credited);
+                $balance->update([
+                    'lifetime_spent_on_platform' => $newSpent,
+                    'updated_at'                 => now(),
+                ]);
+            }
+
+            return $credited;
         });
     }
 

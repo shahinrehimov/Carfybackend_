@@ -191,6 +191,31 @@ class ReferralService
     }
 
     /**
+     * Return a cancelled item's proportional share of any referral balance the buyer
+     * spent on the order. Balance is consumed at checkout for every payment method,
+     * so it must be returned on item cancellation regardless of cash/card. Allocates
+     * the order's spent balance across the product subtotal and credits this item's
+     * slice. Returns the cents actually credited back to the balance.
+     */
+    public function handleItemBalanceRefund(Order $order, int $itemAmountCents, int $productSubtotalCents): int
+    {
+        if ($order->user_id === null || $itemAmountCents <= 0 || $productSubtotalCents <= 0) {
+            return 0;
+        }
+
+        $balanceUsed = (int) \App\Models\Referral\ReferralUsage::where('order_id', $order->id)
+            ->sum('amount_used');
+
+        if ($balanceUsed <= 0) {
+            return 0;
+        }
+
+        $itemShare = (int) round($itemAmountCents * $balanceUsed / $productSubtotalCents);
+
+        return $this->repo->refundPlatformSpendingPartial($order->user_id, $order->id, $itemShare);
+    }
+
+    /**
      * Called after a successful card payment. Stores the card fingerprint for the
      * buyer and runs the card-based fraud hard-block check (plan §8): if the
      * referrer of this buyer has paid with the same card, flag a hard block and
