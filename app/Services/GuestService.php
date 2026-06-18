@@ -48,8 +48,8 @@ class GuestService
 
     public function setGuestByIdentifier(string $identifier): static
     {
-        logger("identifier");
-        logger($identifier);
+        //logger("identifier");
+        //logger($identifier);
         if (!Str::isUuid($identifier)) {
             throw new AccessDeniedHttpException(
                 LangService::instance()
