@@ -16,6 +16,8 @@ use Illuminate\Support\Str;
  * @property mixed $total_quantity
  * @property mixed $amount
  * @property mixed $amount_final
+ * @property mixed $total_discount_in_basket
+ * @property mixed $shipping
  */
 class OrderShowResource extends JsonResource
 {
@@ -39,6 +41,8 @@ class OrderShowResource extends JsonResource
                 ->getLang('order_status_' . $this->status->value),
             'date' => $this->created_at?->format('d.m.Y'),
             'amount' => $this->amount,
+            'total_discount' => $this->total_discount_in_basket,
+            'shipping' => $this->shipping,
             'amount_final' => $this->amount_final,
             'items' => OrderItemsListResource::collection($this->whenLoaded('items')),
         ];
