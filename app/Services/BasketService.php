@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\Basket;
 use App\Models\CompanyProductVariant;
 use App\Models\Guest;
+use App\Models\Order;
 use App\Models\ProductVariant;
 use App\Models\User;
 use Carbon\Carbon;
@@ -563,6 +564,32 @@ class BasketService
             ->update([
                 'deletable_id' => $user->id,
                 'deletable_type' => $user->getMorphClass(),
+                'is_deleted' => DB::raw("CONCAT('deleted_', id)"),
+                'deleted_at' => Carbon::now(),
+            ]);
+    }
+
+    /**
+     * Clear only the basket rows that belong to a given order, leaving any
+     * items the user added after checkout untouched. Called once the order's
+     * payment is confirmed.
+     */
+    public function clearBasketForOrder(Order $order): void
+    {
+        $basketIds = $order->items()
+            ->pluck('basket_id')
+            ->filter()
+            ->values();
+
+        if ($basketIds->isEmpty()) {
+            return;
+        }
+
+        Basket::query()
+            ->whereIn('id', $basketIds)
+            ->update([
+                'deletable_id' => $order->user_id,
+                'deletable_type' => (new User())->getMorphClass(),
                 'is_deleted' => DB::raw("CONCAT('deleted_', id)"),
                 'deleted_at' => Carbon::now(),
             ]);

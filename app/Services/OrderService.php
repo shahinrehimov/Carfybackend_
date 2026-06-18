@@ -416,7 +416,9 @@ class OrderService
                 ]);
             }
 
-            BasketService::instance()->clearBasket($user);
+            // Basket is NOT cleared here. It is cleared only once payment is
+            // confirmed (see PaymentService::processPayment for instant methods
+            // like cash, and OrderService::pay() for redirect/callback methods).
 
             if ($referralBalanceUsed > 0) {
                 $referralRepo->spendOnPlatform($user, $referralBalanceUsed, $order->id);
@@ -483,7 +485,21 @@ class OrderService
     {
         $order = $item->order;
 
-        if (!$order || $order->payment_status !== OrderPaymentStatusEnum::PAID) {
+        if (!$order) {
+            return;
+        }
+
+        // A failed/canceled order already released its stock via restoreStock();
+        // skip it here to avoid restoring the same units twice.
+        if (in_array($order->status, [OrderStatusEnum::FAILED, OrderStatusEnum::CANCELED], true)) {
+            return;
+        }
+
+        // Release the canceled item's reserved stock (applies to paid and cash orders alike).
+        $this->restoreStockForItem($item);
+
+        // Nothing left to refund for unpaid (e.g. cash) orders.
+        if ($order->payment_status !== OrderPaymentStatusEnum::PAID) {
             return;
         }
 
@@ -794,6 +810,43 @@ class OrderService
             'payment_status' => $paymentStatusEnum,
             'paid_at' => $paymentStatusEnum === OrderPaymentStatusEnum::PAID ? Carbon::now() : null,
         ]);
+
+        if ($paymentStatusEnum === OrderPaymentStatusEnum::PAID) {
+            // Clear the basket only after the payment is confirmed (redirect/callback methods).
+            BasketService::instance()->clearBasketForOrder($order);
+        } else {
+            // Payment failed: release the stock reserved at checkout.
+            $this->restoreStock($order);
+        }
+    }
+
+    /**
+     * Return the stock that was reserved at checkout. Called when an order's
+     * payment ultimately fails, so the reserved units become available again.
+     */
+    public function restoreStock(Order $order): void
+    {
+        $items = $order->items()
+            ->whereNotNull('company_product_variant_id')
+            ->get(['id', 'company_product_variant_id', 'quantity']);
+
+        foreach ($items as $item) {
+            $this->restoreStockForItem($item);
+        }
+    }
+
+    /**
+     * Return a single order item's reserved stock to its seller listing.
+     */
+    public function restoreStockForItem(OrderItem $item): void
+    {
+        if (!$item->company_product_variant_id) {
+            return;
+        }
+
+        CompanyProductVariant::query()
+            ->whereKey($item->company_product_variant_id)
+            ->increment('stock', $item->quantity);
     }
 
     public function getOrderByUuid(string $uuid): ?Order

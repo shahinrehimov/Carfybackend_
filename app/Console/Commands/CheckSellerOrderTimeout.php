@@ -3,6 +3,7 @@
 namespace App\Console\Commands;
 
 use App\Enum\OrderItemStatusEnum;
+use App\Enum\OrderStatusEnum;
 use App\Models\OrderItem;
 use App\Models\OrderItemStatus;
 use App\Models\Setting;
@@ -24,6 +25,10 @@ class CheckSellerOrderTimeout extends Command
         $timedOutItems = OrderItem::query()
             ->where('status', OrderItemStatusEnum::PENDING)
             ->where('created_at', '<=', $cutoff)
+            ->whereHas('order', fn($q) => $q->whereNotIn('status', [
+                OrderStatusEnum::FAILED->value,
+                OrderStatusEnum::CANCELED->value,
+            ]))
             ->with(['order', 'companyProductVariant'])
             ->get();
 

@@ -8,7 +8,9 @@ use App\Enum\PaymentLogActionEnum;
 use App\Models\Order;
 use App\Models\PaymentLog;
 use App\DTOs\Payment\PaymentResult;
+use App\Services\BasketService;
 use App\Services\LangService;
+use App\Services\OrderService;
 use App\Services\LoggerService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -46,6 +48,9 @@ readonly class PaymentService
                     'transaction_id' => $result->transactionId,
                 ]);
 
+                // Instant-success methods (e.g. cash) are confirmed here, so clear the basket now.
+                BasketService::instance()->clearBasketForOrder($order);
+
                 LoggerService::instance()->log("Payment completed for order {$order->uuid}", [
                     'transaction_id' => $result->transactionId,
                     'payment_method' => $order->payment_method,
@@ -66,6 +71,9 @@ readonly class PaymentService
                     'status' => OrderStatusEnum::FAILED,
                     'payment_status' => OrderPaymentStatusEnum::FAILED,
                 ]);
+
+                // Payment failed immediately: release the stock reserved at checkout.
+                OrderService::instance()->restoreStock($order);
 
                 LoggerService::instance()->log("Payment failed for order {$order->uuid}", [
                     'payment_method' => $order->payment_method,
