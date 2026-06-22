@@ -6,6 +6,7 @@ use App\Enum\ProductSortEnum;
 use App\Enum\SortTypeEnum;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\App\Products\ProductSearchRequest;
+use App\Http\Requests\App\Products\ProductShowByUuidRequest;
 use App\Http\Requests\App\Products\ProductShowRequest;
 use App\Http\Requests\GeneralListRequest;
 use App\Http\Resources\Admin\Brands\BrandsListResource;
@@ -109,6 +110,11 @@ class ProductController extends Controller
     public function showBySlugOnlySubCategory(ProductShowRequest $request, string $subCategorySlug, string $productSlug): ProductVariantResource
     {
         return ProductVariantResource::make($this->repo->showBySlug($productSlug, $subCategorySlug, null, $request->validated()));
+    }
+
+    public function showByUuid(ProductShowByUuidRequest $request, string $cpvUuid): ProductVariantResource
+    {
+        return ProductVariantResource::make($this->repo->showByUuid($cpvUuid, $request->validated()));
     }
 
     public function otherSellers(GeneralListRequest $request, ProductVariant $productVariant): JsonResponse

@@ -969,6 +969,55 @@ class ProductVariantRepository
             );
         }
 
+        $sellerListing = $this->resolveSellerListing($productVariant, $sellerStoreCode);
+
+        return $this->enrichVariantForShow($productVariant, $sellerListing, $validated, $categorySlug, true);
+    }
+
+    /**
+     * Show product detail by CompanyProductVariant uuid (seller listing).
+     *
+     * Single universal identifier used by the app and by every in-list navigation
+     * (search, favorites, basket, related, orders). Returns the exact same payload
+     * as showBySlug() because both feed enrichVariantForShow().
+     */
+    public function showByUuid(string $cpvUuid, array $validated = []): ProductVariant
+    {
+        $sellerListing = CompanyProductVariant::query()
+            ->where('uuid', $cpvUuid)
+            ->where('is_active', true)
+            ->where('approval_status', ProductVariantApprovalStatusEnum::APPROVED->value)
+            ->with(['city', 'city.translatable', 'media', 'company', 'productVariant'])
+            ->whereHas('productVariant', function (Builder $query) {
+                $query->active();
+                $query->whereHas('product', fn(Builder $q) => $q->active());
+            })
+            ->first();
+
+        if (!$sellerListing) {
+            throw new BadRequestHttpException(
+                LangService::instance()
+                    ->setDefault('Product not found!')
+                    ->getLang('site_product_not_found')
+            );
+        }
+
+        return $this->enrichVariantForShow($sellerListing->productVariant, $sellerListing, $validated, null, false);
+    }
+
+    /**
+     * Load all relations and seller-specific data for the product detail page.
+     *
+     * Shared by showBySlug() (slug + store_code) and showByUuid() (cpv uuid) so the
+     * returned payload is identical regardless of how the listing was resolved.
+     */
+    private function enrichVariantForShow(
+        ProductVariant $productVariant,
+        ?CompanyProductVariant $sellerListing,
+        array $validated,
+        ?string $categorySlug,
+        bool $enforceCategorySlug
+    ): ProductVariant {
         $productVariant = ProductService::instance()->setProductVariant($productVariant)->loadVariantRelationsForSite();
 
         $productVariant->loadMissing([
@@ -978,7 +1027,7 @@ class ProductVariantRepository
 
         $product = $productVariant->product;
 
-        if ($product->mainCategory?->parent) {
+        if ($enforceCategorySlug && $product->mainCategory?->parent) {
             if ($categorySlug == null) {
                 throw new BadRequestHttpException(
                     LangService::instance()
@@ -1025,9 +1074,7 @@ class ProductVariantRepository
             $productVariant->related_products = $this->loadRelatedProducts($productVariant);
         }
 
-        // Load seller-specific data
-        $sellerListing = $this->resolveSellerListing($productVariant, $sellerStoreCode);
-
+        // Apply seller-specific data (listing resolved by the caller)
         if ($sellerListing) {
             $this->overrideWithSellerData($productVariant, $sellerListing);
             $productVariant->ratings = $this->calculateCpvRating($sellerListing);

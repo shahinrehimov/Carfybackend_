@@ -25450,6 +25450,75 @@
               "response": []
             },
             {
+              "name": "Show by uuid",
+              "request": {
+                "auth": {
+                  "type": "noauth"
+                },
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Token",
+                    "value": "{{app_site_token}}",
+                    "type": "text"
+                  },
+                  {
+                    "key": "accept",
+                    "value": "application/json",
+                    "type": "text"
+                  },
+                  {
+                    "key": "identifier",
+                    "value": "{{guest_identifier}}",
+                    "type": "text"
+                  },
+                  {
+                    "key": "Accept-Language",
+                    "value": "en",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{url}}/:provider/products/show/:cpvUuid?with_related=yes&other_sellers=yes",
+                  "host": [
+                    "{{url}}"
+                  ],
+                  "path": [
+                    ":provider",
+                    "products",
+                    "show",
+                    ":cpvUuid"
+                  ],
+                  "query": [
+                    {
+                      "key": "with_related",
+                      "value": "yes",
+                      "description": "nullable — yes/no"
+                    },
+                    {
+                      "key": "other_sellers",
+                      "value": "yes",
+                      "description": "nullable — yes to include other sellers list"
+                    }
+                  ],
+                  "variable": [
+                    {
+                      "key": "provider",
+                      "value": "app",
+                      "description": "app or site"
+                    },
+                    {
+                      "key": "cpvUuid",
+                      "value": "00000000-0000-0000-0000-000000000000",
+                      "description": "CompanyProductVariant (seller listing) uuid — from any list/favorites/basket card's seller.uuid"
+                    }
+                  ]
+                },
+                "description": "Show product detail page by CompanyProductVariant uuid (seller listing).\n\nUniversal identifier used by the mobile app and every in-list navigation (search, favorites, basket, related, orders) — each card already carries this as seller.uuid. The uuid selects both the variant and the seller, so no variant slug or seller store_code is needed.\n\nReturns the exact same payload as the slug endpoints (both feed the same enrich logic). Slug endpoints remain for the web (SEO URLs)."
+              },
+              "response": []
+            },
+            {
               "name": "Other Sellers",
               "request": {
                 "auth": {

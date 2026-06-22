@@ -77,6 +77,7 @@ return static function () {
             Route::group(['prefix' => 'products'], static function () {
                 Route::get('filters', [ProductController::class, 'getProductsSearchFilters']);
                 Route::get('load', [ProductController::class, 'index']);
+                Route::get('show/{cpvUuid}', [ProductController::class, 'showByUuid']);
                 Route::get('show/{parentCategorySlug}/{subCategorySlug}/{productSlug}', [ProductController::class, 'showBySlug']);
                 Route::get('show/{subCategorySlug}/{productSlug}', [ProductController::class, 'showBySlugOnlySubCategory']);
                 Route::get('{productVariant}/other-sellers', [ProductController::class, 'otherSellers']);

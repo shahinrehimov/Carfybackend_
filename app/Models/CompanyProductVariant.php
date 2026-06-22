@@ -33,6 +33,7 @@ use Spatie\MediaLibrary\InteractsWithMedia;
  * @property string|null $listing_hover_image
  * @property string|null $listing_main_image
  * @property array       $listing_gallery
+ * @property mixed $productVariant
  */
 class CompanyProductVariant extends Model implements HasMedia
 {
