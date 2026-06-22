@@ -63,6 +63,13 @@ class OrdersResource extends JsonResource
             'amount_final' => $this->amount_final,
             'total_discount_in_basket' => $this->total_discount_in_basket,
             'shipping' => $this->shipping,
+            'user' => $this->whenLoaded('user', fn() => [
+                'id' => $this->user?->id,
+                'uuid' => $this->user?->uuid,
+                'full_name' => $this->user?->full_name,
+                'email' => $this->user?->email,
+                'phone' => $this->user?->phone,
+            ]),
             'address' => [
                 'address_type' => AddressTypesListResource::make($this->whenLoaded('addressType')),
                 'city' => CitiesListResource::make($this->whenLoaded('city')),
