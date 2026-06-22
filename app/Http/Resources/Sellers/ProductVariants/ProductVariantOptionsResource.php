@@ -25,17 +25,17 @@ class ProductVariantOptionsResource extends JsonResource
 
     public function toArray(Request $request): array
     {
-        /** @var ProductOption $option */
-        $option = $this->whenLoaded('option');
+        /** @var ProductOption|null $option */
+        $option = $this->relationLoaded('option') ? $this->getRelation('option') : null;
 
         $value = $this->value;
 
-        if ($option->hasItems()) {
+        if ($option && $option->hasItems()) {
             $value = (int) $this->product_option_item_id;
         }
 
         $translations = [];
-        if ($option->isTranslatable()) {
+        if ($option && $option->isTranslatable()) {
             $translations = $this->translations;
             $value = null;
         }
@@ -45,7 +45,7 @@ class ProductVariantOptionsResource extends JsonResource
             'option_id' => $this->product_option_id,
             'value' => $value,
             'translations' => $translations,
-            'option' => ProductOptionsListResource::make($this->whenLoaded('option')),
+            'option' => $option ? ProductOptionsListResource::make($option) : null,
         ];
     }
 }
