@@ -24,10 +24,13 @@ class SmsPg365Service implements SmsProviderInterface
     {
         $body = [
             'Text'      => $message,
-            'Purpose'   => $purpose,
+            // The PG365 account is only authorized for the INF message purpose,
+            // so OTP messages are delivered through the same purpose.
+            'Purpose'   => $purpose === 'OTP' ? 'INF' : $purpose,
             'Options'   => array_filter([
                 'Originator' => $this->originator ?: null,
-                'Encoding'   => 'UNICODE',
+                // The account is not authorized for UNICODE; OTP/INF texts are plain Latin.
+                'Encoding'   => 'LATIN',
             ]),
             'Receivers' => [
                 ['Receiver' => $this->formatPhone($phone)],

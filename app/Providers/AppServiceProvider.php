@@ -29,7 +29,12 @@ class AppServiceProvider extends ServiceProvider
 
         if (config('logger.sql_debug')) {
             DB::listen(static function ($query) {
-                LoggerService::instance()->log($query->sql, $query->bindings);
+                // Never leak OTP codes into the SQL log.
+                $bindings = str_contains($query->sql, 'user_otp_codes')
+                    ? ['***']
+                    : $query->bindings;
+
+                LoggerService::instance()->log($query->sql, $bindings);
             });
         }
 

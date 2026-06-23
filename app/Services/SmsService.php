@@ -29,7 +29,8 @@ class SmsService
         if (config('sms.debug')) {
             LoggerService::instance()->log('SMS debug mode — not sent', [
                 'phone'   => $phone,
-                'message' => $message,
+                // Never leak OTP codes; mask any digits in the message.
+                'message' => preg_replace('/\d/', '*', $message),
                 'purpose' => $purpose,
             ]);
 
