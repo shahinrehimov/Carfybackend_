@@ -59,7 +59,7 @@ class FpayPaymentMethod extends AbstractPaymentMethod
             $merchantName = $this->getConfig('merchant_name');
             $amount = $order->getRawOriginal('amount_final');
             $description = 'ORDER-' . $order->uuid;
-            $callbackUrl = url('/payment/fpay-return/'); // FPay appends paymentKey automatically
+            $callbackUrl = url('/payment/fpay-return') . '/'; // FPay appends paymentKey directly; keep trailing slash (url() strips it)
 
             $requestBody = [
                 'merchantName' => $merchantName,
