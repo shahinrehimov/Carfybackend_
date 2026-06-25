@@ -30,7 +30,7 @@ class CompanyRepository
                     $builder->orWhereLike('phone', '%' . $validated['search'] . '%');
                     $builder->orWhereLike('voen', '%' . $validated['search'] . '%');
                     $builder->orWhereHas('translatable', function (Builder $query) use ($validated) {
-                        $query->whereLike('value', '%' . $validated['search'] . '%');
+                        $query->whereLike('text', '%' . $validated['search'] . '%');
                     });
                 });
             })
