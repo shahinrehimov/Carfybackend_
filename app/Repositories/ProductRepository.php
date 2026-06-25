@@ -263,9 +263,23 @@ class ProductRepository
                 'variants',
             ]);
 
+        $companyId = CompanyAdminService::instance()->checkUser()
+            ? CompanyAdminService::instance()->getUser()->company_id
+            : null;
+
+        $withCompanyListings = static function ($query) use ($companyId) {
+            if ($companyId) {
+                $query->with([
+                    'companyListings' => function ($q) use ($companyId) {
+                        $q->where('company_id', $companyId);
+                    },
+                ]);
+            }
+        };
+
         if ($product->isSet()) {
             $product->load([
-                'variants' => function ($query) {
+                'variants' => function ($query) use ($withCompanyListings) {
                     $query->default();
                     $query->with([
                         'sets',
@@ -273,6 +287,14 @@ class ProductRepository
                         'sets.product.translatable',
                         'sets.product.media',
                     ]);
+                    $withCompanyListings($query);
+                }
+            ]);
+        } else {
+            $product->load([
+                'variants' => function ($query) use ($withCompanyListings) {
+                    $query->with(['media']);
+                    $withCompanyListings($query);
                 }
             ]);
         }

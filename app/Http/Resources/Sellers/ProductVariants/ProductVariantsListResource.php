@@ -13,6 +13,9 @@ use Illuminate\Http\Resources\Json\JsonResource;
  * @property mixed $main_image
  * @property mixed $pivot
  * @property mixed $oem_code
+ * @property mixed $stock
+ * @property mixed $price
+ * @property mixed $price_final
  * @method isSet()
  * @method isDefault()
  */
@@ -40,6 +43,21 @@ class ProductVariantsListResource extends JsonResource
             'quantity' => $this->whenLoaded('pivot', function () {
                 return $this->pivot->quantity;
             }),
+            'stock' => $this->whenLoaded(
+                'companyListings',
+                fn() => $this->companyListings->first()?->stock,
+                $this->stock
+            ),
+            'price' => $this->whenLoaded(
+                'companyListings',
+                fn() => $this->companyListings->first()?->price,
+                $this->price
+            ),
+            'price_final' => $this->whenLoaded(
+                'companyListings',
+                fn() => $this->companyListings->first()?->price_final,
+                $this->price_final
+            ),
             'is_default' => $this->isDefault(),
             'sets' => ProductVariantsListResource::collection($this->whenLoaded('sets')),
         ];
