@@ -7,6 +7,7 @@ use App\Models\UserCar;
 use App\Services\FileUpload;
 use App\Services\LangService;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\DB;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
@@ -28,6 +29,22 @@ class UserCarRepository
             ])
             ->orderByDesc('id')
             ->paginate($validated['limit'] ?? 10);
+    }
+
+    /**
+     * Lightweight, non-paginated list of the user's cars for selectors
+     * (e.g. car-based product search). Capped at the 50 most recently added.
+     */
+    public function listAll(User $user): Collection
+    {
+        return $user->userCars()
+            ->with([
+                'brandModel.brand.translatable',
+                'brandModel.translatable',
+            ])
+            ->orderByDesc('id')
+            ->limit(50)
+            ->get();
     }
 
     public function show(User $user, UserCar $userCar): UserCar

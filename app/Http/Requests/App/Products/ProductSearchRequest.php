@@ -9,6 +9,9 @@ use App\Models\Brand;
 use App\Models\BrandModel;
 use App\Models\Category;
 use App\Models\ProductOptionItem;
+use App\Models\UserCar;
+use App\Services\UserService;
+use Illuminate\Auth\AuthenticationException;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -22,6 +25,19 @@ class ProductSearchRequest extends FormRequest
     public function authorize(): bool
     {
         return true;
+    }
+
+    /**
+     * Car-based search requires an authenticated user. Reject anonymous
+     * requests that carry a user_car_id before validation runs.
+     *
+     * @throws AuthenticationException
+     */
+    protected function prepareForValidation(): void
+    {
+        if ($this->filled('user_car_id') && ! UserService::instance()->checkUser()) {
+            throw new AuthenticationException();
+        }
     }
 
     /**
@@ -60,6 +76,15 @@ class ProductSearchRequest extends FormRequest
             'color_ids.*' => ['required', 'integer', Rule::exists(ProductOptionItem::class, 'id')->where('is_active', true)->whereNull('deleted_at')],
             'ratings' => ['nullable', 'array'],
             'ratings.*' => ['required', 'integer', 'min:1', 'max:5'],
+
+            // Car-based search: only the authenticated user's own car is accepted.
+            'user_car_id' => [
+                'nullable',
+                'integer',
+                Rule::exists(UserCar::class, 'id')
+                    ->where('user_id', UserService::instance()->checkUser() ? UserService::instance()->getUser()->id : 0)
+                    ->whereNull('deleted_at'),
+            ],
         ];
     }
 }

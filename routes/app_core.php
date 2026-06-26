@@ -201,6 +201,7 @@ return static function () {
 
                     Route::group(['prefix' => 'cars'], static function () {
                         Route::get('load', [UserCarController::class, 'index']);
+                        Route::get('list', [UserCarController::class, 'list']);
                         Route::get('show/{userCar}', [UserCarController::class, 'show']);
                         Route::post('add', [UserCarController::class, 'store']);
                         Route::post('update/{userCar}', [UserCarController::class, 'update']);

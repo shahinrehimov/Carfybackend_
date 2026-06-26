@@ -24107,6 +24107,55 @@
                   "response": []
                 },
                 {
+                  "name": "List",
+                  "request": {
+                    "auth": {
+                      "type": "bearer",
+                      "bearer": [
+                        {
+                          "key": "token",
+                          "value": "{{login_token_site}}",
+                          "type": "string"
+                        }
+                      ]
+                    },
+                    "method": "GET",
+                    "header": [
+                      {
+                        "key": "Token",
+                        "value": "{{app_site_token}}",
+                        "type": "text"
+                      },
+                      {
+                        "key": "accept",
+                        "value": "application/json",
+                        "type": "text"
+                      }
+                    ],
+                    "url": {
+                      "raw": "{{url}}/:provider/profile/cars/list",
+                      "host": [
+                        "{{url}}"
+                      ],
+                      "path": [
+                        ":provider",
+                        "profile",
+                        "cars",
+                        "list"
+                      ],
+                      "variable": [
+                        {
+                          "key": "provider",
+                          "value": "site",
+                          "description": "site or app"
+                        }
+                      ]
+                    },
+                    "description": "Lightweight, non-paginated list of the authenticated user's cars for selectors (e.g. car-based product search). Returns the 50 most recently added cars with minimal fields (id, photo, year, brand, brand_model). Use 'Load' for the full paginated list."
+                  },
+                  "response": []
+                },
+                {
                   "name": "Show",
                   "request": {
                     "auth": {
@@ -25367,6 +25416,12 @@
                       "key": "ratings[]",
                       "value": "4",
                       "disabled": true
+                    },
+                    {
+                      "key": "user_car_id",
+                      "value": "5",
+                      "disabled": true,
+                      "description": "car-based search: authenticated user's own car id. Returns listings that fit the car's model plus universal products. Requires login (401 if sent without auth)."
                     }
                   ],
                   "variable": [
@@ -25377,7 +25432,7 @@
                     }
                   ]
                 },
-                "description": "Returns a paginated list of active, approved CompanyProductVariant (seller listings).\n\nEach card in the response represents ONE seller's listing for a product variant.\nMultiple sellers can sell the same variant — each appears as a separate card.\n\nAvailable filters (all optional):\n  search            — full-text search on product title/description\n  brands[]          — filter by brand slug(s)\n  categories[]      — filter by parent category slug(s)\n  sub_categories[]  — filter by sub-category slug(s)\n  statuses[]        — on_sale | new_arrival | ...\n  min_price / max_price — price in AZN (stored in cents, filter in AZN)\n  sort              — date | title | price\n  sort_type         — asc | desc\n  is_set            — yes | no\n  city_id           — filter by seller's city\n  seller_store_code — filter by seller's 5-char store code\n  colors[]          — filter by color option item slug(s) (slugs from /products/filters)\n  conditions[]      — filter by condition option item slug(s) (slugs from /products/filters)\n  min_year / max_year — filter by product variant year\n  limit             — 5-100, default 10\n  page              — pagination page\n\nResponse: uuid field = CPV.uuid (used as seller param on detail page)"
+                "description": "Returns a paginated list of active, approved CompanyProductVariant (seller listings).\n\nEach card in the response represents ONE seller's listing for a product variant.\nMultiple sellers can sell the same variant — each appears as a separate card.\n\nAvailable filters (all optional):\n  search            — full-text search on product title/description\n  brands[]          — filter by brand slug(s)\n  categories[]      — filter by parent category slug(s)\n  sub_categories[]  — filter by sub-category slug(s)\n  statuses[]        — on_sale | new_arrival | ...\n  min_price / max_price — price in AZN (stored in cents, filter in AZN)\n  sort              — date | title | price\n  sort_type         — asc | desc\n  is_set            — yes | no\n  city_id           — filter by seller's city\n  seller_store_code — filter by seller's 5-char store code\n  colors[]          — filter by color option item slug(s) (slugs from /products/filters)\n  conditions[]      — filter by condition option item slug(s) (slugs from /products/filters)\n  min_year / max_year — filter by product variant year\n  user_car_id       — car-based search (auth only); fits the car's model + universal products\n  limit             — 5-100, default 10\n  page              — pagination page\n\nResponse: uuid field = CPV.uuid (used as seller param on detail page)"
               },
               "response": []
             },

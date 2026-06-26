@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\App\UserCars\UserCarStoreRequest;
 use App\Http\Requests\App\UserCars\UserCarUpdateRequest;
 use App\Http\Requests\GeneralListRequest;
+use App\Http\Resources\App\UserCars\UserCarListResource;
 use App\Http\Resources\App\UserCars\UserCarResource;
 use App\Http\Resources\GeneralResource;
 use App\Models\UserCar;
@@ -28,6 +29,12 @@ class UserCarController extends Controller
     {
         $user = UserService::instance()->getUser();
         return UserCarResource::collection($this->repo->load($user, $request->validated()));
+    }
+
+    public function list(): AnonymousResourceCollection
+    {
+        $user = UserService::instance()->getUser();
+        return UserCarListResource::collection($this->repo->listAll($user));
     }
 
     public function show(UserCar $userCar): UserCarResource

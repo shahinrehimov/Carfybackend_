@@ -6,6 +6,7 @@ use App\Enum\ProductSearchStatusEnum;
 use App\Enum\ProductVariantApprovalStatusEnum;
 use App\Models\Basket;
 use App\Models\Brand;
+use App\Models\UserCar;
 use App\Models\Category;
 use App\Models\CompanyProductVariant;
 use App\Models\Product;
@@ -230,6 +231,12 @@ class ProductVariantRepository
                 ->toArray();
         }
 
+        // Car-based search: resolve the selected user car to its model. Ownership
+        // is already enforced in ProductSearchRequest, so a plain lookup is safe.
+        $userCarBrandModelId = ! empty($validated['user_car_id'])
+            ? UserCar::query()->whereKey($validated['user_car_id'])->value('brand_model_id')
+            : null;
+
         $currentLangId = LangService::instance()->getCurrentLangId();
 
         // Full-text search runs in Elasticsearch; it returns relevance-ordered
@@ -299,6 +306,12 @@ class ProductVariantRepository
             ->when(isset($validated['min_year']), fn (Builder $b) => $b->whereHas('productVariant', fn (Builder $q) => $q->where('year', '>=', $validated['min_year'])))
             ->when(isset($validated['max_year']), fn (Builder $b) => $b->whereHas('productVariant', fn (Builder $q) => $q->where('year', '<=', $validated['max_year'])))
             ->when(! empty($validated['models']), fn (Builder $b) => $b->whereHas('productVariant.brandModels', fn (Builder $q) => $q->whereIn('brand_models.id', $validated['models'])))
+            // Car-based search: keep listings that fit the car's model, plus
+            // universal products (no model assigned at all).
+            ->when($userCarBrandModelId, fn (Builder $b) => $b->where(function (Builder $w) use ($userCarBrandModelId) {
+                $w->whereHas('productVariant.brandModels', fn (Builder $q) => $q->where('brand_models.id', $userCarBrandModelId))
+                    ->orWhereDoesntHave('productVariant.brandModels');
+            }))
             ->when(! empty($validated['ratings']), function (Builder $b) use ($validated) {
                 // Match listings whose approved-review average rounds to any of the
                 // selected star values (e.g. [2,3,4] → avg rounds to 2, 3 or 4).
