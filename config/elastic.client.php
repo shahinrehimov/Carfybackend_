@@ -22,9 +22,10 @@ return [
                 env('ELASTIC_PASSWORD'),
             ]) ?: null,
 
-            // API key auth (preferred for the production node). Accepts either an
-            // encoded key or "id:key".
-            'apiKey' => env('ELASTIC_API_KEY') ?: null,
+            // API key auth (preferred for the production node). Wrapped in an
+            // array because the client's fromConfig() spreads the value into
+            // ClientBuilder::setApiKey($apiKey, $id = null).
+            'apiKey' => env('ELASTIC_API_KEY') ? [env('ELASTIC_API_KEY')] : null,
 
             // TLS: path to the CA certificate bundle and whether to verify it.
             'caBundle' => env('ELASTIC_CA_BUNDLE') ?: null,
