@@ -2,9 +2,17 @@
 
 namespace App\Providers;
 
+use App\Models\Brand;
+use App\Models\Category;
 use App\Models\Order;
 use App\Models\PersonalAccessToken;
+use App\Models\Product;
+use App\Models\ProductVariant;
+use App\Observers\BrandSearchObserver;
+use App\Observers\CategorySearchObserver;
 use App\Observers\OrderObserver;
+use App\Observers\ProductSearchObserver;
+use App\Observers\ProductVariantSearchObserver;
 use App\Services\LoggerService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\ServiceProvider;
@@ -40,5 +48,11 @@ class AppServiceProvider extends ServiceProvider
 
         // Observers
         Order::observe(OrderObserver::class);
+
+        // Keep Elasticsearch in sync with denormalised product content.
+        Product::observe(ProductSearchObserver::class);
+        ProductVariant::observe(ProductVariantSearchObserver::class);
+        Brand::observe(BrandSearchObserver::class);
+        Category::observe(CategorySearchObserver::class);
     }
 }
