@@ -13,6 +13,7 @@ class UserRepository
     public function load(array $validated): LengthAwarePaginator
     {
         return User::query()
+            ->with('media')
             ->withCount([
                 'addresses',
             ])
@@ -39,6 +40,8 @@ class UserRepository
 
     public function show(User $user): User
     {
+        $user->load('media');
+
         $user->loadCount([
             'addresses',
         ]);

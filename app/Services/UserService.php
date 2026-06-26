@@ -183,6 +183,24 @@ class UserService
         });
     }
 
+    public function updateProfileImage(User $user, FormRequest $request): User
+    {
+        return DB::transaction(function () use ($user, $request) {
+            FileUpload::upload($request, 'image', 'users', $user, true);
+
+            return $user->load('media');
+        });
+    }
+
+    public function deleteProfileImage(User $user): User
+    {
+        return DB::transaction(function () use ($user) {
+            $user->clearMediaCollection('users');
+
+            return $user->load('media');
+        });
+    }
+
     public function checkPhoneForLogin(string $phone): User
     {
         $user = User::query()

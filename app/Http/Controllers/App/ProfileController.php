@@ -8,6 +8,7 @@ use App\Enum\UserRegisterTypesEnum;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\App\Auth\ChangePasswordRequest;
 use App\Http\Requests\App\Auth\ChangePasswordVerifyOtpRequest;
+use App\Http\Requests\App\Profile\UpdateProfileImageRequest;
 use App\Http\Requests\App\Profile\UpdateProfileRequest;
 use App\Http\Resources\App\Auth\UserResource;
 use App\Http\Resources\GeneralResource;
@@ -38,6 +39,30 @@ class ProfileController extends Controller
             'message' => LangService::instance()
                 ->setDefault('Profile updated successfully')
                 ->getLang('profile_updated_successfully'),
+        ]);
+    }
+
+    public function updateProfileImage(UpdateProfileImageRequest $request): JsonResponse
+    {
+        $user = UserService::instance()->updateProfileImage(UserService::instance()->getUser(), $request);
+
+        return response()->json([
+            'user' => UserResource::make($user),
+            'message' => LangService::instance()
+                ->setDefault('Profile image updated successfully')
+                ->getLang('profile_image_updated_successfully'),
+        ]);
+    }
+
+    public function deleteProfileImage(): JsonResponse
+    {
+        $user = UserService::instance()->deleteProfileImage(UserService::instance()->getUser());
+
+        return response()->json([
+            'user' => UserResource::make($user),
+            'message' => LangService::instance()
+                ->setDefault('Profile image deleted successfully')
+                ->getLang('profile_image_deleted_successfully'),
         ]);
     }
 

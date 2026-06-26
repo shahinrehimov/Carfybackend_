@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Casts\Users\FullNameCast;
+use App\Casts\Users\ImageCast;
 use App\Notifications\CustomChangePasswordNotificationOTP;
 use App\Notifications\CustomVerifyEmailNotification;
 use App\Notifications\CustomVerifyEmailNotificationOTP;
@@ -27,6 +28,8 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Facades\DB;
 use Laravel\Sanctum\HasApiTokens;
+use Spatie\MediaLibrary\HasMedia;
+use Spatie\MediaLibrary\InteractsWithMedia;
 
 /**
  * @property mixed $is_active
@@ -44,9 +47,9 @@ use Laravel\Sanctum\HasApiTokens;
  * @property mixed $phone_verified_at
  * @property mixed $phone
  */
-class User extends Authenticatable implements MustVerifyEmail
+class User extends Authenticatable implements MustVerifyEmail, HasMedia
 {
-    use HasApiTokens, Notifiable, SoftDeletes, ActionBy, ActionUser, CascadeSoftDeletes;
+    use HasApiTokens, Notifiable, SoftDeletes, ActionBy, ActionUser, CascadeSoftDeletes, InteractsWithMedia;
 
     protected $fillable = [
         'uuid',
@@ -78,6 +81,7 @@ class User extends Authenticatable implements MustVerifyEmail
         'email_verified_at' => 'datetime',
         'phone_verified_at' => 'datetime',
         'full_name' => FullNameCast::class,
+        'image' => ImageCast::class,
     ];
 
     protected $hidden = [
@@ -94,7 +98,13 @@ class User extends Authenticatable implements MustVerifyEmail
         'orders',
         'thirdPartyProviderLoginTokens',
         'userCars',
+        'media',
     ];
+
+    public function registerMediaCollections(): void
+    {
+        $this->addMediaCollection('users')->singleFile();
+    }
 
     public function sendEmailVerificationNotification(): void
     {

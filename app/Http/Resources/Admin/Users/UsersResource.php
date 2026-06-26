@@ -15,6 +15,7 @@ use Illuminate\Support\Str;
  * @property mixed $gender
  * @property mixed $birth_date
  * @property mixed $email_verified_at
+ * @property mixed $image
  * @method isActive()
  * @method isEmailVerified()
  */
@@ -31,6 +32,7 @@ class UsersResource extends JsonResource
     {
         return [
             'id' => $this->id,
+            'image' => $this->image,
             'email' => $this->email,
             'full_name' => $this->full_name,
             'gender' => $this->gender,

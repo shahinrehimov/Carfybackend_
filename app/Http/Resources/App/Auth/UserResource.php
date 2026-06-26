@@ -18,6 +18,7 @@ use Illuminate\Support\Str;
  * @property mixed $phone
  * @property mixed $email_verified_at
  * @property mixed $phone_verified_at
+ * @property mixed $image
  */
 class UserResource extends JsonResource
 {
@@ -30,6 +31,7 @@ class UserResource extends JsonResource
     {
         return [
             'uuid' => $this->uuid,
+            'image' => $this->image,
             'email' => $this->email,
             'phone' => $this->phone,
             'name' => $this->name,
