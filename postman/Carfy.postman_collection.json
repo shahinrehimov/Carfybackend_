@@ -25245,6 +25245,22 @@
                       "value": "AB123",
                       "disabled": true,
                       "description": "filter by seller 5-char store code"
+                    },
+                    {
+                      "key": "ratings[]",
+                      "value": "2",
+                      "disabled": true,
+                      "description": "multiple star filter (1-5); returns listings whose avg rating rounds to any selected value"
+                    },
+                    {
+                      "key": "ratings[]",
+                      "value": "3",
+                      "disabled": true
+                    },
+                    {
+                      "key": "ratings[]",
+                      "value": "4",
+                      "disabled": true
                     }
                   ],
                   "variable": [

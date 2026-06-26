@@ -299,6 +299,17 @@ class ProductVariantRepository
             ->when(isset($validated['min_year']), fn (Builder $b) => $b->whereHas('productVariant', fn (Builder $q) => $q->where('year', '>=', $validated['min_year'])))
             ->when(isset($validated['max_year']), fn (Builder $b) => $b->whereHas('productVariant', fn (Builder $q) => $q->where('year', '<=', $validated['max_year'])))
             ->when(! empty($validated['models']), fn (Builder $b) => $b->whereHas('productVariant.brandModels', fn (Builder $q) => $q->whereIn('brand_models.id', $validated['models'])))
+            ->when(! empty($validated['ratings']), function (Builder $b) use ($validated) {
+                // Match listings whose approved-review average rounds to any of the
+                // selected star values (e.g. [2,3,4] → avg rounds to 2, 3 or 4).
+                $ratingValues = array_map('intval', $validated['ratings']);
+
+                $b->whereIn('company_product_variant.id', ProductReview::query()
+                    ->approved()
+                    ->groupBy('company_product_variant_id')
+                    ->havingRaw('ROUND(AVG(rating)) IN ('.implode(',', $ratingValues).')')
+                    ->select('company_product_variant_id'));
+            })
             ->when(
                 isset($validated['sort']) && isset($validated['sort_type']),
                 function (Builder $b) use ($validated, $currentLangId) {

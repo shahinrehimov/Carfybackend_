@@ -58,6 +58,8 @@ class ProductSearchRequest extends FormRequest
             'models.*' => ['required', 'integer', Rule::exists(BrandModel::class, 'id')->where('is_active', true)->whereNull('deleted_at')],
             'color_ids' => ['nullable', 'array'],
             'color_ids.*' => ['required', 'integer', Rule::exists(ProductOptionItem::class, 'id')->where('is_active', true)->whereNull('deleted_at')],
+            'ratings' => ['nullable', 'array'],
+            'ratings.*' => ['required', 'integer', 'min:1', 'max:5'],
         ];
     }
 }
