@@ -38,6 +38,12 @@ class SmsPg365Service implements SmsProviderInterface
         if ($status !== 200 && $status !== '200') {
             throw new \RuntimeException('SMS göndərilmədi: ' . ($result['Description'] ?? 'Xəta baş verdi'));
         }
+
+        // The gateway can return Status 200 overall yet reject individual receivers.
+        $rejections = $this->rejectionsByReceiver($result);
+        if (isset($rejections[$formatted])) {
+            throw new \RuntimeException('SMS göndərilmədi: ' . $rejections[$formatted]);
+        }
     }
 
     public function sendBulk(array $phones, string $message, string $purpose): array
@@ -62,27 +68,44 @@ class SmsPg365Service implements SmsProviderInterface
 
         // Whole request failed — treat every phone as not sent.
         if ($status !== 200 && $status !== '200') {
-            return array_fill_keys($phones, false);
+            return array_fill_keys($phones, $result['Description'] ?: 'sms_gateway_error');
         }
 
-        // Anything the gateway explicitly rejected is marked failed; the rest accepted.
-        $rejectedFormatted = [];
-        foreach ($result['Result']['ReceiversRejected'] ?? [] as $item) {
-            $receiver = is_array($item) ? ($item['Receiver'] ?? null) : $item;
-            if ($receiver !== null) {
-                $rejectedFormatted[(string) $receiver] = true;
-            }
-        }
+        // Anything the gateway explicitly rejected carries its reason; the rest are accepted (null).
+        $rejections = $this->rejectionsByReceiver($result);
 
         $out = [];
         foreach ($formattedMap as $formatted => $originals) {
-            $accepted = !isset($rejectedFormatted[$formatted]);
+            $error = $rejections[$formatted] ?? null;
             foreach ($originals as $original) {
-                $out[$original] = $accepted;
+                $out[$original] = $error;
             }
         }
 
         return $out;
+    }
+
+    /**
+     * Extract per-receiver rejection reasons from a gateway response.
+     *
+     * @return array<string,string> formatted receiver => error message
+     */
+    private function rejectionsByReceiver(array $result): array
+    {
+        $rejections = [];
+
+        foreach ($result['Result']['ReceiversRejected'] ?? [] as $item) {
+            if (!is_array($item)) {
+                continue;
+            }
+
+            $receiver = $item['Receiver'] ?? null;
+            if ($receiver !== null) {
+                $rejections[(string) $receiver] = $item['ErrorMessage'] ?? ($item['ErrorCode'] ?? 'rejected');
+            }
+        }
+
+        return $rejections;
     }
 
     /**

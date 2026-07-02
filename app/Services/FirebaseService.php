@@ -86,9 +86,20 @@ class FirebaseService
 
             $report = $this->messaging->sendMulticast($message, $tokens);
 
-            $this->deactivateFailedTokens($report);
+            $sent = $report->successes()->count() > 0;
 
-            if ($report->successes()->count() === 0) {
+            // Token cleanup is a best-effort side effect — never let a failure here
+            // turn an already-delivered push into a recorded error.
+            try {
+                $this->deactivateFailedTokens($report);
+            } catch (Throwable $e) {
+                LoggerService::instance()->log('Firebase token cleanup failed', [
+                    'notification_id' => $notification->id,
+                    'error' => $e->getMessage(),
+                ], true);
+            }
+
+            if (!$sent) {
                 return ['sent_at' => null, 'error' => 'all_tokens_failed'];
             }
 
@@ -111,12 +122,9 @@ class FirebaseService
         $invalidTokens = [];
 
         foreach ($report->failures()->getItems() as $failure) {
-            if ($failure->messageWasSentWithoutError()) {
-                continue;
-            }
-
-            $error = $failure->error();
-            if ($error && str_contains($error->getMessage(), 'UNREGISTERED')) {
+            // kreait 8.x SendReport API: a token is dead when it is unknown/unregistered
+            // or the target itself was invalid.
+            if ($failure->messageWasSentToUnknownToken() || $failure->messageTargetWasInvalid()) {
                 $invalidTokens[] = $failure->target()->value();
             }
         }

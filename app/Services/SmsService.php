@@ -68,7 +68,7 @@ class SmsService
      * Send the same informational message to many phones in one gateway request.
      *
      * @param string[] $phones
-     * @return array<string,bool> map of original phone => accepted
+     * @return array<string,?string> map of original phone => error message (null = accepted)
      */
     public function sendInfoBulk(array $phones, string $message): array
     {
@@ -83,7 +83,7 @@ class SmsService
                 'purpose' => 'INF',
             ]);
 
-            return array_fill_keys($phones, true);
+            return array_fill_keys($phones, null);
         }
 
         try {
@@ -94,7 +94,7 @@ class SmsService
                 'error' => $e->getMessage(),
             ], true);
 
-            return array_fill_keys($phones, false);
+            return array_fill_keys($phones, $e->getMessage());
         }
     }
 

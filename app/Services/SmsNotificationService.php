@@ -74,16 +74,17 @@ class SmsNotificationService
             return $results;
         }
 
-        $sentMap = SmsService::instance()->sendInfoBulk(array_keys($phoneToUserIds), $message);
+        $errorMap = SmsService::instance()->sendInfoBulk(array_keys($phoneToUserIds), $message);
         $now = now();
 
         foreach ($phoneToUserIds as $phone => $userIds) {
-            $accepted = $sentMap[$phone] ?? false;
+            // null = accepted; a string carries the gateway's rejection reason.
+            $error = array_key_exists($phone, $errorMap) ? $errorMap[$phone] : 'sms_not_processed';
 
             foreach ($userIds as $userId) {
-                $results[$userId] = $accepted
+                $results[$userId] = $error === null
                     ? ['sent_at' => $now, 'error' => null]
-                    : ['sent_at' => null, 'error' => 'sms_rejected'];
+                    : ['sent_at' => null, 'error' => $error];
             }
         }
 
