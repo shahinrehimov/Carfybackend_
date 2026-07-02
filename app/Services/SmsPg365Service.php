@@ -22,27 +22,8 @@ class SmsPg365Service implements SmsProviderInterface
 
     public function send(string $phone, string $message, string $purpose): void
     {
-        $body = [
-            'Text'      => $message,
-            // The PG365 account is only authorized for the INF message purpose,
-            // so OTP messages are delivered through the same purpose.
-            'Purpose'   => $purpose === 'OTP' ? 'INF' : $purpose,
-            'Options'   => array_filter([
-                'Originator' => $this->originator ?: null,
-                // The account is not authorized for UNICODE; OTP/INF texts are plain Latin.
-                'Encoding'   => 'LATIN',
-            ]),
-            'Receivers' => [
-                ['Receiver' => $this->formatPhone($phone)],
-            ],
-        ];
-
-        $response = Http::withHeaders([
-            'Authorization' => 'Bearer ' . $this->privateKey,
-            'Content-Type'  => 'application/json',
-        ])->post($this->baseUrl . '/gateway/api/sms/v1/message/send?publicKey=' . $this->publicKey, $body);
-
-        $result = $response->json();
+        $formatted = $this->formatPhone($phone);
+        $result = $this->dispatch([$formatted], $message, $purpose);
         $status = $result['Status'] ?? null;
 
         LoggerService::instance()->log('SMS PG365 response', [
@@ -57,6 +38,79 @@ class SmsPg365Service implements SmsProviderInterface
         if ($status !== 200 && $status !== '200') {
             throw new \RuntimeException('SMS göndərilmədi: ' . ($result['Description'] ?? 'Xəta baş verdi'));
         }
+    }
+
+    public function sendBulk(array $phones, string $message, string $purpose): array
+    {
+        // Map formatted receiver -> list of original phones (several users may share a number).
+        $formattedMap = [];
+        foreach ($phones as $phone) {
+            $formattedMap[$this->formatPhone($phone)][] = $phone;
+        }
+
+        $result = $this->dispatch(array_keys($formattedMap), $message, $purpose);
+        $status = $result['Status'] ?? null;
+
+        LoggerService::instance()->log('SMS PG365 bulk response', [
+            'purpose'     => $purpose,
+            'count'       => count($phones),
+            'status'      => $status,
+            'description' => $result['Description'] ?? null,
+            'accepted'    => $result['Result']['ReceiversAccepted'] ?? [],
+            'rejected'    => $result['Result']['ReceiversRejected'] ?? [],
+        ]);
+
+        // Whole request failed — treat every phone as not sent.
+        if ($status !== 200 && $status !== '200') {
+            return array_fill_keys($phones, false);
+        }
+
+        // Anything the gateway explicitly rejected is marked failed; the rest accepted.
+        $rejectedFormatted = [];
+        foreach ($result['Result']['ReceiversRejected'] ?? [] as $item) {
+            $receiver = is_array($item) ? ($item['Receiver'] ?? null) : $item;
+            if ($receiver !== null) {
+                $rejectedFormatted[(string) $receiver] = true;
+            }
+        }
+
+        $out = [];
+        foreach ($formattedMap as $formatted => $originals) {
+            $accepted = !isset($rejectedFormatted[$formatted]);
+            foreach ($originals as $original) {
+                $out[$original] = $accepted;
+            }
+        }
+
+        return $out;
+    }
+
+    /**
+     * Build the request body and POST it to the PG365 gateway.
+     *
+     * @param string[] $receivers already-formatted receiver numbers
+     */
+    private function dispatch(array $receivers, string $message, string $purpose): array
+    {
+        $body = [
+            'Text'      => $message,
+            // The PG365 account is only authorized for the INF message purpose,
+            // so OTP messages are delivered through the same purpose.
+            'Purpose'   => $purpose === 'OTP' ? 'INF' : $purpose,
+            'Options'   => array_filter([
+                'Originator' => $this->originator ?: null,
+                // The account is not authorized for UNICODE; OTP/INF texts are plain Latin.
+                'Encoding'   => 'LATIN',
+            ]),
+            'Receivers' => array_map(fn(string $receiver) => ['Receiver' => $receiver], $receivers),
+        ];
+
+        $response = Http::timeout(30)->withHeaders([
+            'Authorization' => 'Bearer ' . $this->privateKey,
+            'Content-Type'  => 'application/json',
+        ])->post($this->baseUrl . '/gateway/api/sms/v1/message/send?publicKey=' . $this->publicKey, $body);
+
+        return $response->json() ?? [];
     }
 
     private function formatPhone(string $phone): string

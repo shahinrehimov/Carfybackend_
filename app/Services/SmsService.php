@@ -64,6 +64,40 @@ class SmsService
         $this->send($phone, $message, 'INF');
     }
 
+    /**
+     * Send the same informational message to many phones in one gateway request.
+     *
+     * @param string[] $phones
+     * @return array<string,bool> map of original phone => accepted
+     */
+    public function sendInfoBulk(array $phones, string $message): array
+    {
+        if (empty($phones)) {
+            return [];
+        }
+
+        if (config('sms.debug')) {
+            LoggerService::instance()->log('SMS bulk debug mode — not sent', [
+                'count'   => count($phones),
+                'message' => preg_replace('/\d/', '*', $message),
+                'purpose' => 'INF',
+            ]);
+
+            return array_fill_keys($phones, true);
+        }
+
+        try {
+            return $this->provider->sendBulk($phones, $message, 'INF');
+        } catch (\Throwable $e) {
+            LoggerService::instance()->log('SMS bulk send failed', [
+                'count' => count($phones),
+                'error' => $e->getMessage(),
+            ], true);
+
+            return array_fill_keys($phones, false);
+        }
+    }
+
     private function resolveProvider(): SmsProviderInterface
     {
         return match (config('sms.provider')) {

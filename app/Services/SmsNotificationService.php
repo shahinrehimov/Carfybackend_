@@ -45,4 +45,48 @@ class SmsNotificationService
             return ['sent_at' => null, 'error' => $e->getMessage()];
         }
     }
+
+    /**
+     * Send the notification SMS to many users in a single gateway request.
+     *
+     * @param User[] $users
+     * @return array<int,array{sent_at:mixed,error:?string}> keyed by user id
+     */
+    public function sendBulkToUsers(array $users, Notification $notification): array
+    {
+        $body = strip_tags($notification->getLang('body'));
+        $title = $notification->getLang('title');
+        $message = $title . "\n" . $body;
+
+        $results = [];
+        $phoneToUserIds = [];
+
+        foreach ($users as $user) {
+            if (empty($user->phone)) {
+                $results[$user->id] = ['sent_at' => null, 'error' => 'no_phone'];
+                continue;
+            }
+
+            $phoneToUserIds[$user->phone][] = $user->id;
+        }
+
+        if (empty($phoneToUserIds)) {
+            return $results;
+        }
+
+        $sentMap = SmsService::instance()->sendInfoBulk(array_keys($phoneToUserIds), $message);
+        $now = now();
+
+        foreach ($phoneToUserIds as $phone => $userIds) {
+            $accepted = $sentMap[$phone] ?? false;
+
+            foreach ($userIds as $userId) {
+                $results[$userId] = $accepted
+                    ? ['sent_at' => $now, 'error' => null]
+                    : ['sent_at' => null, 'error' => 'sms_rejected'];
+            }
+        }
+
+        return $results;
+    }
 }
