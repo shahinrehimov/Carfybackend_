@@ -74,9 +74,9 @@ class FirebaseService
         $body = strip_tags($notification->getLang('body'));
 
         $data = array_filter([
-            'notification_uuid' => $notification->uuid,
-            'action_type' => $notification->action_type->value,
-            'action_id' => $notification->action_id ?? '',
+            'notification_uuid' => (string) $notification->uuid,
+            'action_type' => (string) $notification->action_type->value,
+            'action_id' => (string) ($notification->action_id ?? ''),
         ]);
 
         try {
