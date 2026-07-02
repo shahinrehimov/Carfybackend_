@@ -462,14 +462,19 @@ class NotificationService
     }
 
     /**
-     * Register or refresh a user's FCM device token.
+     * Register or refresh an FCM device token.
+     *
+     * The token may belong to a guest (not logged in) — in that case user_id
+     * stays null. When the same device later re-registers after login, the
+     * token row (unique by token) is updated in place and its user_id is set,
+     * so the device becomes targetable without losing the token.
      */
-    public function registerDeviceToken(User $user, string $token, string $deviceType): void
+    public function registerDeviceToken(?User $user, string $token, string $deviceType): void
     {
         UserDeviceToken::query()->updateOrCreate(
             ['token' => $token],
             [
-                'user_id' => $user->id,
+                'user_id' => $user?->id,
                 'device_type' => $deviceType,
                 'is_active' => true,
                 'last_used_at' => now(),
@@ -478,13 +483,16 @@ class NotificationService
     }
 
     /**
-     * Deactivate a user's FCM device token (logout / token refresh).
+     * Deactivate an FCM device token (logout / token refresh).
+     *
+     * A logged-in user may only deactivate their own token; guests deactivate
+     * by token only (their rows have no user_id to match on).
      */
-    public function deregisterDeviceToken(User $user, string $token): void
+    public function deregisterDeviceToken(?User $user, string $token): void
     {
         UserDeviceToken::query()
             ->where('token', $token)
-            ->where('user_id', $user->id)
+            ->when($user !== null, fn ($query) => $query->where('user_id', $user->id))
             ->update(['is_active' => false]);
     }
 

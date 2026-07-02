@@ -126,6 +126,13 @@ return static function () {
                 Route::get('by-key/{key}', [AdvertisementController::class, 'byKey']);
             });
 
+            // Device token registration is available to guests too, so the app
+            // can register its FCM token on launch before the user logs in.
+            Route::group(['prefix' => 'device-token'], static function () {
+                Route::post('register', [DeviceTokenController::class, 'store']);
+                Route::delete('unregister', [DeviceTokenController::class, 'destroy']);
+            });
+
             Route::group(['prefix' => 'basket'], static function () {
                 Route::get('ids', [BasketController::class, 'ids']);
                 Route::get('load', [BasketController::class, 'load']);
@@ -247,11 +254,6 @@ return static function () {
                     Route::post('read-all', [NotificationController::class, 'readAll']);
                     Route::delete('{notification}/delete', [NotificationController::class, 'destroy']);
                     Route::delete('delete-all', [NotificationController::class, 'destroyAll']);
-                });
-
-                Route::group(['prefix' => 'device-token'], static function () {
-                    Route::post('register', [DeviceTokenController::class, 'store']);
-                    Route::delete('unregister', [DeviceTokenController::class, 'destroy']);
                 });
 
                 Route::group(['prefix' => 'referral'], static function () {

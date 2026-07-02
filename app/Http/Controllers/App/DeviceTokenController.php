@@ -4,8 +4,10 @@ namespace App\Http\Controllers\App;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\App\Notifications\DeviceTokenRequest;
+use App\Models\User;
 use App\Services\LangService;
 use App\Services\NotificationService;
+use App\Services\UserService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -14,7 +16,7 @@ class DeviceTokenController extends Controller
     public function store(DeviceTokenRequest $request): JsonResponse
     {
         NotificationService::instance()->registerDeviceToken(
-            auth()->user(),
+            $this->currentUser(),
             $request->token,
             $request->device_type
         );
@@ -30,12 +32,24 @@ class DeviceTokenController extends Controller
     {
         $request->validate(['token' => ['required', 'string']]);
 
-        NotificationService::instance()->deregisterDeviceToken(auth()->user(), $request->token);
+        NotificationService::instance()->deregisterDeviceToken($this->currentUser(), $request->token);
 
         return response()->json([
             'message' => LangService::instance()
                 ->setDefault('Device unregistered.')
                 ->getLang('device_token_unregistered'),
         ]);
+    }
+
+    /**
+     * Resolve the authenticated app user via the "user" guard, or null for
+     * guests. This endpoint is public, so the "auth:user" middleware no longer
+     * runs and the default guard cannot be relied on.
+     */
+    private function currentUser(): ?User
+    {
+        $userService = UserService::instance();
+
+        return $userService->checkUser() ? $userService->getUser() : null;
     }
 }
