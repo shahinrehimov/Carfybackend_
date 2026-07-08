@@ -267,10 +267,25 @@ class AppleService
 
         return JWT::encode(
             $payload,
-            config('services.apple.private_key'),
+            $this->privateKey(),
             'ES256',
             config('services.apple.key_id')
         );
+    }
+
+    /**
+     * Resolve the Apple private key, supporting both an inline PEM string and
+     * a path to the .p8 file.
+     */
+    private function privateKey(): string
+    {
+        $key = (string) config('services.apple.private_key');
+
+        if ($key !== '' && is_file($key)) {
+            return (string) file_get_contents($key);
+        }
+
+        return $key;
     }
 
     /**
