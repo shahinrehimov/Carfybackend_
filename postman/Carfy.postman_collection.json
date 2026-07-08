@@ -20556,6 +20556,231 @@
               ]
             },
             {
+              "name": "Apple",
+              "item": [
+                {
+                  "name": "Redirect to apple",
+                  "request": {
+                    "auth": {
+                      "type": "noauth"
+                    },
+                    "method": "GET",
+                    "header": [
+                      {
+                        "key": "Token",
+                        "value": "{{app_site_token}}",
+                        "type": "text"
+                      },
+                      {
+                        "key": "accept",
+                        "value": "application/json",
+                        "type": "text"
+                      },
+                      {
+                        "key": "identifier",
+                        "value": "{{guest_identifier}}",
+                        "type": "text",
+                        "disabled": true
+                      }
+                    ],
+                    "url": {
+                      "raw": "{{url}}/:provider/auth/apple",
+                      "host": [
+                        "{{url}}"
+                      ],
+                      "path": [
+                        ":provider",
+                        "auth",
+                        "apple"
+                      ],
+                      "variable": [
+                        {
+                          "key": "provider",
+                          "value": "site",
+                          "description": "site or app"
+                        }
+                      ]
+                    }
+                  },
+                  "response": [
+                    {
+                      "name": "Redirect to apple",
+                      "originalRequest": {
+                        "method": "GET",
+                        "header": [
+                          {
+                            "key": "Token",
+                            "value": "{{app_site_token}}",
+                            "type": "text"
+                          },
+                          {
+                            "key": "accept",
+                            "value": "application/json",
+                            "type": "text"
+                          },
+                          {
+                            "key": "identifier",
+                            "value": "{{guest_identifier}}",
+                            "type": "text",
+                            "disabled": true
+                          }
+                        ],
+                        "url": {
+                          "raw": "{{url}}/:provider/auth/apple",
+                          "host": [
+                            "{{url}}"
+                          ],
+                          "path": [
+                            ":provider",
+                            "auth",
+                            "apple"
+                          ],
+                          "variable": [
+                            {
+                              "key": "provider",
+                              "value": "site",
+                              "description": "site or app"
+                            }
+                          ]
+                        }
+                      },
+                      "status": "OK",
+                      "code": 200,
+                      "_postman_previewlanguage": "json",
+                      "header": [
+                        {
+                          "key": "Content-Type",
+                          "value": "application/json"
+                        }
+                      ],
+                      "cookie": [],
+                      "body": "{\n    \"step\": \"redirect\",\n    \"url\": \"https://appleid.apple.com/auth/authorize?response_type=code&response_mode=form_post&client_id=com.carfy.web&redirect_uri=https%3A%2F%2Fapi...%2Fauth%2Fapple%2Fcallback&scope=name+email&state=...&nonce=...\"\n}"
+                    }
+                  ]
+                },
+                {
+                  "name": "Login native (iOS)",
+                  "request": {
+                    "auth": {
+                      "type": "noauth"
+                    },
+                    "method": "POST",
+                    "header": [
+                      {
+                        "key": "Token",
+                        "value": "{{app_mobile_token}}",
+                        "type": "text"
+                      },
+                      {
+                        "key": "accept",
+                        "value": "application/json",
+                        "type": "text"
+                      },
+                      {
+                        "key": "identifier",
+                        "value": "{{guest_identifier}}",
+                        "type": "text",
+                        "disabled": true
+                      }
+                    ],
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\n    \"identity_token\": \"<apple identity token JWT from device>\",\n    \"authorization_code\": \"<apple authorization code>\", // optional, needed to revoke on account delete\n    \"name\": \"John\",       // only sent by Apple on the FIRST login\n    \"surname\": \"Appleseed\", // only sent by Apple on the FIRST login\n    \"device_type\": \"ios\", // android,ios,web\n    \"ref_code\": \"\"        // optional referral code\n}",
+                      "options": {
+                        "raw": {
+                          "language": "json"
+                        }
+                      }
+                    },
+                    "url": {
+                      "raw": "{{url}}/:provider/auth/apple/native",
+                      "host": [
+                        "{{url}}"
+                      ],
+                      "path": [
+                        ":provider",
+                        "auth",
+                        "apple",
+                        "native"
+                      ],
+                      "variable": [
+                        {
+                          "key": "provider",
+                          "value": "app",
+                          "description": "site or app"
+                        }
+                      ]
+                    }
+                  },
+                  "response": [
+                    {
+                      "name": "Login native (iOS)",
+                      "originalRequest": {
+                        "method": "POST",
+                        "header": [
+                          {
+                            "key": "Token",
+                            "value": "{{app_mobile_token}}",
+                            "type": "text"
+                          },
+                          {
+                            "key": "accept",
+                            "value": "application/json",
+                            "type": "text"
+                          },
+                          {
+                            "key": "identifier",
+                            "value": "{{guest_identifier}}",
+                            "type": "text",
+                            "disabled": true
+                          }
+                        ],
+                        "body": {
+                          "mode": "raw",
+                          "raw": "{\n    \"identity_token\": \"<apple identity token JWT from device>\",\n    \"authorization_code\": \"<apple authorization code>\", // optional, needed to revoke on account delete\n    \"name\": \"John\",       // only sent by Apple on the FIRST login\n    \"surname\": \"Appleseed\", // only sent by Apple on the FIRST login\n    \"device_type\": \"ios\", // android,ios,web\n    \"ref_code\": \"\"        // optional referral code\n}",
+                          "options": {
+                            "raw": {
+                              "language": "json"
+                            }
+                          }
+                        },
+                        "url": {
+                          "raw": "{{url}}/:provider/auth/apple/native",
+                          "host": [
+                            "{{url}}"
+                          ],
+                          "path": [
+                            ":provider",
+                            "auth",
+                            "apple",
+                            "native"
+                          ],
+                          "variable": [
+                            {
+                              "key": "provider",
+                              "value": "app",
+                              "description": "site or app"
+                            }
+                          ]
+                        }
+                      },
+                      "status": "OK",
+                      "code": 200,
+                      "_postman_previewlanguage": "json",
+                      "header": [
+                        {
+                          "key": "Content-Type",
+                          "value": "application/json"
+                        }
+                      ],
+                      "cookie": [],
+                      "body": "{\n    \"uuid\": \"9b1f...\",\n    \"image\": null,\n    \"email\": \"user@example.com\",\n    \"phone\": null,\n    \"name\": \"John\",\n    \"surname\": \"Appleseed\",\n    \"gender\": null,\n    \"gender_label\": \"\",\n    \"birth_date\": null,\n    \"email_is_verified\": true,\n    \"phone_is_verified\": false,\n    \"token\": \"123|abcdefg...\"\n}"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
               "name": "Register",
               "item": [
                 {
@@ -22268,7 +22493,7 @@
                         ],
                         "body": {
                           "mode": "raw",
-                          "raw": "{\n    \"device_type\": \"web\", // android,ios,web\n    \"provider\": \"google\",\n    \"token\": \"6ac2557726a57c76a39508b6d4d793527de79268\"\n}",
+                          "raw": "{\n    \"device_type\": \"web\", // android,ios,web\n    \"provider\": \"apple\",  // google or apple (web redirect flow)\n    \"token\": \"6ac2557726a57c76a39508b6d4d793527de79268\"\n}",
                           "options": {
                             "raw": {
                               "language": "json"
@@ -22276,13 +22501,14 @@
                           }
                         },
                         "url": {
-                          "raw": "{{url}}/:provider/third-party-login",
+                          "raw": "{{url}}/:provider/login/with-third-party",
                           "host": [
                             "{{url}}"
                           ],
                           "path": [
                             ":provider",
-                            "third-party-login"
+                            "login",
+                            "with-third-party"
                           ],
                           "variable": [
                             {

@@ -41,6 +41,19 @@ return [
         'redirect' => env('GOOGLE_REDIRECT_URL'),
     ],
 
+    'apple' => [
+        // Web (SocialiteProviders) — Services ID acts as client_id / web aud
+        'client_id' => env('APPLE_CLIENT_ID'),         // Services ID, e.g. com.carfy.web
+        'client_secret' => env('APPLE_CLIENT_SECRET'), // Generated ES256 JWT (see AppleService::generateClientSecret)
+        'redirect' => env('APPLE_REDIRECT_URL'),        // https://<api-domain>/auth/apple/callback
+
+        // Shared credentials for client-secret generation and native token verification
+        'team_id' => env('APPLE_TEAM_ID'),
+        'key_id' => env('APPLE_KEY_ID'),
+        'private_key' => env('APPLE_PRIVATE_KEY'),       // Contents of the .p8 key (with header/footer)
+        'bundle_id' => env('APPLE_BUNDLE_ID'),           // Native app aud, e.g. com.carfy.app
+    ],
+
     'c1' => [
         'url' => env('C1_URL'),
     ],

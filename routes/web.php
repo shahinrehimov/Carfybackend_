@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\App\AdvertisementController;
+use App\Http\Controllers\App\Auth\AppleController;
 use App\Http\Controllers\App\Auth\EmailVerificationController;
 use App\Http\Controllers\App\Auth\GoogleController;
 use App\Http\Controllers\App\OrderController;
@@ -36,6 +37,11 @@ Route::post('/webhooks/wolt', [WoltWebhookController::class, 'handle'])
 
 Route::get('/auth/google/callback', [GoogleController::class, 'callback'])
     ->name('auth.google.callback')
+    ->withoutMiddleware(VerifyCsrfToken::class);
+
+// Apple posts the callback (response_mode=form_post), hence POST + no CSRF.
+Route::post('/auth/apple/callback', [AppleController::class, 'callback'])
+    ->name('auth.apple.callback')
     ->withoutMiddleware(VerifyCsrfToken::class);
 
 Route::get('/ads/{key}/click', [AdvertisementController::class, 'click'])

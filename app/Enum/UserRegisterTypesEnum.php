@@ -10,6 +10,7 @@ enum UserRegisterTypesEnum: string
     case EMAIL = 'email';
     case PHONE = 'phone';
     case GOOGLE = 'google';
+    case APPLE = 'apple';
 
     public static function getList(): array
     {

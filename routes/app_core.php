@@ -5,6 +5,7 @@ use App\Http\Controllers\App\ReferralController;
 use App\Http\Controllers\App\ContactController;
 use App\Http\Controllers\App\CarLibraryController;
 use App\Http\Controllers\App\UserCarController;
+use App\Http\Controllers\App\Auth\AppleController;
 use App\Http\Controllers\App\Auth\EmailVerificationController;
 use App\Http\Controllers\App\Auth\ForgotPasswordController;
 use App\Http\Controllers\App\Auth\GoogleController;
@@ -162,6 +163,10 @@ return static function () {
 
             // google auth
             Route::get('auth/google', [GoogleController::class, 'redirect']);
+
+            // apple auth
+            Route::get('auth/apple', [AppleController::class, 'redirect']);
+            Route::post('auth/apple/native', [AppleController::class, 'nativeLogin'])->withoutMiddleware(RouteLogMiddleware::class);
 
             // login
             Route::group(['prefix' => 'login'], static function () {

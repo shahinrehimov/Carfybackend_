@@ -41,6 +41,8 @@ use Spatie\MediaLibrary\InteractsWithMedia;
  * @property mixed $surname
  * @property mixed $email_verified_at
  * @property mixed $google_id
+ * @property mixed $apple_id
+ * @property mixed $apple_refresh_token
  * @property mixed $email_verified
  * @property mixed $created_at
  * @property mixed $register_type
@@ -70,6 +72,8 @@ class User extends Authenticatable implements MustVerifyEmail, HasMedia
         'is_active',
         'google_id',
         'google_avatar',
+        'apple_id',
+        'apple_refresh_token',
         'registration_ip',
         'device_fingerprint',
     ];
@@ -77,6 +81,7 @@ class User extends Authenticatable implements MustVerifyEmail, HasMedia
     protected $casts = [
         'is_active' => 'boolean',
         'password' => 'hashed',
+        'apple_refresh_token' => 'encrypted',
         'birth_date' => 'date',
         'email_verified_at' => 'datetime',
         'phone_verified_at' => 'datetime',
@@ -154,6 +159,11 @@ class User extends Authenticatable implements MustVerifyEmail, HasMedia
         $builder->whereNotNull('google_id');
     }
 
+    public function scopeAppleUser(Builder $builder): void
+    {
+        $builder->whereNotNull('apple_id');
+    }
+
     public function scopeIsEmailVerified(Builder $builder): void
     {
         $builder->whereNotNull('email_verified_at');
@@ -167,6 +177,11 @@ class User extends Authenticatable implements MustVerifyEmail, HasMedia
     public function isGoogleUser(): bool
     {
         return $this->google_id !== null;
+    }
+
+    public function isAppleUser(): bool
+    {
+        return $this->apple_id !== null;
     }
 
     public function isEmailVerified(): bool

@@ -15,8 +15,11 @@ use App\Observers\ProductSearchObserver;
 use App\Observers\ProductVariantSearchObserver;
 use App\Services\LoggerService;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\ServiceProvider;
 use Laravel\Sanctum\Sanctum;
+use SocialiteProviders\Apple\Provider as AppleProvider;
+use SocialiteProviders\Manager\SocialiteWasCalled;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -34,6 +37,11 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         Sanctum::usePersonalAccessTokenModel(PersonalAccessToken::class);
+
+        // Register the "Sign in with Apple" Socialite driver.
+        Event::listen(function (SocialiteWasCalled $event) {
+            $event->extendSocialite('apple', AppleProvider::class);
+        });
 
         if (config('logger.sql_debug')) {
             DB::listen(static function ($query) {

@@ -569,6 +569,17 @@ class UserService
         return $user;
     }
 
+    public function getUserByApple(array $appleUser): ?User
+    {
+        $user = User::query()->where('apple_id', $appleUser['sub'])->first();
+
+        if (!$user && !empty($appleUser['email'])) {
+            $user = User::query()->where('email', $appleUser['email'])->first();
+        }
+
+        return $user;
+    }
+
     public function generateLoginTokenForThirdPartyApp(User $user, string $provider, string $providerUserId): string
     {
         $token = sha1(md5(sha1(Str::uuid())));
@@ -606,6 +617,9 @@ class UserService
                 switch ($validated['provider']) {
                     case 'google':
                         $query->where('google_id', $checkToken->provider_user_id);
+                        break;
+                    case 'apple':
+                        $query->where('apple_id', $checkToken->provider_user_id);
                         break;
                     default:
                         throw new BadRequestHttpException(

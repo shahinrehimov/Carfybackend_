@@ -13,6 +13,7 @@ use App\Http\Requests\App\Profile\UpdateProfileRequest;
 use App\Http\Resources\App\Auth\UserResource;
 use App\Http\Resources\GeneralResource;
 use App\Models\User;
+use App\Services\AppleService;
 use App\Services\LangService;
 use App\Services\UserService;
 use Illuminate\Http\JsonResponse;
@@ -132,6 +133,12 @@ class ProfileController extends Controller
     public function deleteAccount(): JsonResponse
     {
         $user = UserService::instance()->getUser();
+
+        // Apple requires revoking the user's tokens when they delete their account.
+        // The user is only ever soft-deleted on our side; we never force delete.
+        if ($user->isAppleUser() && !empty($user->apple_refresh_token)) {
+            AppleService::instance()->revokeToken($user->apple_refresh_token);
+        }
 
         DB::transaction(static function () use ($user) {
             $user->delete();

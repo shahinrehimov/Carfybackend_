@@ -23,7 +23,7 @@ class LoginWithThirdPartyProviderRequest extends FormRequest
     {
         return [
             'device_type' => ['nullable', 'string', 'max:255'],
-            'provider' => ['required', 'string', 'in:google'],
+            'provider' => ['required', 'string', 'in:google,apple'],
             'token' => ['required', 'string', 'max:200'],
         ];
     }
