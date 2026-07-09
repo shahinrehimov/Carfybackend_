@@ -18248,6 +18248,530 @@
           ]
         },
         {
+          "name": "Faqs",
+          "item": [
+            {
+              "name": "Load",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{token}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Token",
+                    "value": "{{app_token}}",
+                    "type": "text"
+                  },
+                  {
+                    "key": "accept",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{url}}/control/faqs/load?search=test",
+                  "host": [
+                    "{{url}}"
+                  ],
+                  "path": [
+                    "control",
+                    "faqs",
+                    "load"
+                  ],
+                  "query": [
+                    {
+                      "key": "search",
+                      "value": "test"
+                    }
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "List",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{token}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Token",
+                    "value": "{{app_token}}",
+                    "type": "text"
+                  },
+                  {
+                    "key": "accept",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{url}}/control/faqs/list",
+                  "host": [
+                    "{{url}}"
+                  ],
+                  "path": [
+                    "control",
+                    "faqs",
+                    "list"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Show",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{token}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Token",
+                    "value": "{{app_token}}",
+                    "type": "text"
+                  },
+                  {
+                    "key": "accept",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{url}}/control/faqs/show/::id",
+                  "host": [
+                    "{{url}}"
+                  ],
+                  "path": [
+                    "control",
+                    "faqs",
+                    "show",
+                    "::id"
+                  ],
+                  "variable": [
+                    {
+                      "key": ":id",
+                      "value": "1"
+                    }
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Store",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{token}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Token",
+                    "value": "{{app_token}}",
+                    "type": "text"
+                  },
+                  {
+                    "key": "accept",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ],
+                "body": {
+                  "mode": "formdata",
+                  "formdata": [
+                    {
+                      "key": "translations[0][language_id]",
+                      "value": "1",
+                      "type": "text"
+                    },
+                    {
+                      "key": "translations[0][question]",
+                      "value": "Sifarişimi necə izləyə bilərəm?",
+                      "type": "text"
+                    },
+                    {
+                      "key": "translations[0][answer]",
+                      "value": "Sifariş statusunu \"Sifarişlərim\" bölməsindən izləyə bilərsiniz.",
+                      "type": "text"
+                    },
+                    {
+                      "key": "translations[1][language_id]",
+                      "value": "2",
+                      "type": "text"
+                    },
+                    {
+                      "key": "translations[1][question]",
+                      "value": "How can I track my order?",
+                      "type": "text"
+                    },
+                    {
+                      "key": "translations[1][answer]",
+                      "value": "You can track your order status from the \"My Orders\" section.",
+                      "type": "text"
+                    },
+                    {
+                      "key": "translations[2][language_id]",
+                      "value": "3",
+                      "type": "text"
+                    },
+                    {
+                      "key": "translations[2][question]",
+                      "value": "Как отследить мой заказ?",
+                      "type": "text"
+                    },
+                    {
+                      "key": "translations[2][answer]",
+                      "value": "Вы можете отследить статус заказа в разделе \"Мои заказы\".",
+                      "type": "text"
+                    }
+                  ]
+                },
+                "url": {
+                  "raw": "{{url}}/control/faqs/add",
+                  "host": [
+                    "{{url}}"
+                  ],
+                  "path": [
+                    "control",
+                    "faqs",
+                    "add"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Update",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{token}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Token",
+                    "value": "{{app_token}}",
+                    "type": "text"
+                  },
+                  {
+                    "key": "accept",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ],
+                "body": {
+                  "mode": "formdata",
+                  "formdata": [
+                    {
+                      "key": "translations[0][language_id]",
+                      "value": "1",
+                      "type": "text"
+                    },
+                    {
+                      "key": "translations[0][question]",
+                      "value": "Sifarişimi necə izləyə bilərəm?",
+                      "type": "text"
+                    },
+                    {
+                      "key": "translations[0][answer]",
+                      "value": "Sifariş statusunu \"Sifarişlərim\" bölməsindən izləyə bilərsiniz.",
+                      "type": "text"
+                    },
+                    {
+                      "key": "translations[1][language_id]",
+                      "value": "2",
+                      "type": "text"
+                    },
+                    {
+                      "key": "translations[1][question]",
+                      "value": "How can I track my order?",
+                      "type": "text"
+                    },
+                    {
+                      "key": "translations[1][answer]",
+                      "value": "You can track your order status from the \"My Orders\" section.",
+                      "type": "text"
+                    },
+                    {
+                      "key": "translations[2][language_id]",
+                      "value": "3",
+                      "type": "text"
+                    },
+                    {
+                      "key": "translations[2][question]",
+                      "value": "Как отследить мой заказ?",
+                      "type": "text"
+                    },
+                    {
+                      "key": "translations[2][answer]",
+                      "value": "Вы можете отследить статус заказа в разделе \"Мои заказы\".",
+                      "type": "text"
+                    }
+                  ]
+                },
+                "url": {
+                  "raw": "{{url}}/control/faqs/update/::id",
+                  "host": [
+                    "{{url}}"
+                  ],
+                  "path": [
+                    "control",
+                    "faqs",
+                    "update",
+                    "::id"
+                  ],
+                  "variable": [
+                    {
+                      "key": ":id",
+                      "value": "1"
+                    }
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Delete",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{token}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "DELETE",
+                "header": [
+                  {
+                    "key": "Token",
+                    "value": "{{app_token}}",
+                    "type": "text"
+                  },
+                  {
+                    "key": "accept",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{url}}/control/faqs/delete/::id",
+                  "host": [
+                    "{{url}}"
+                  ],
+                  "path": [
+                    "control",
+                    "faqs",
+                    "delete",
+                    "::id"
+                  ],
+                  "variable": [
+                    {
+                      "key": ":id",
+                      "value": "1"
+                    }
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Change active status",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{token}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Token",
+                    "value": "{{app_token}}",
+                    "type": "text"
+                  },
+                  {
+                    "key": "accept",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{url}}/control/faqs/change-active-status/::id",
+                  "host": [
+                    "{{url}}"
+                  ],
+                  "path": [
+                    "control",
+                    "faqs",
+                    "change-active-status",
+                    "::id"
+                  ],
+                  "variable": [
+                    {
+                      "key": ":id",
+                      "value": "1"
+                    }
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Change sorting",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{token}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Token",
+                    "value": "{{app_token}}",
+                    "type": "text"
+                  },
+                  {
+                    "key": "accept",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"sort\": 3\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{url}}/control/faqs/change-sorting/::id",
+                  "host": [
+                    "{{url}}"
+                  ],
+                  "path": [
+                    "control",
+                    "faqs",
+                    "change-sorting",
+                    "::id"
+                  ],
+                  "variable": [
+                    {
+                      "key": ":id",
+                      "value": "1"
+                    }
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Change sorting multiple",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{token}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Token",
+                    "value": "{{app_token}}",
+                    "type": "text"
+                  },
+                  {
+                    "key": "accept",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"items\": [\n        {\n            \"id\": 1,\n            \"sort\": 0\n        },\n        {\n            \"id\": 2,\n            \"sort\": 1\n        }\n    ]\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{url}}/control/faqs/change-sorting-multiple",
+                  "host": [
+                    "{{url}}"
+                  ],
+                  "path": [
+                    "control",
+                    "faqs",
+                    "change-sorting-multiple"
+                  ]
+                }
+              },
+              "response": []
+            }
+          ]
+        },
+        {
           "name": "Advertisements",
           "item": [
             {
@@ -25285,6 +25809,16 @@
                       "key": "services[11][limit]",
                       "value": "3",
                       "disabled": true
+                    },
+                    {
+                      "key": "services[12][key]",
+                      "value": "faq",
+                      "disabled": true
+                    },
+                    {
+                      "key": "services[12][limit]",
+                      "value": "5",
+                      "disabled": true
                     }
                   ],
                   "variable": [
@@ -27774,6 +28308,58 @@
                     {
                       "key": "slug",
                       "value": "about-us"
+                    }
+                  ]
+                }
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "Faqs",
+          "item": [
+            {
+              "name": "List",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{login_token_site}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Token",
+                    "value": "{{app_site_token}}",
+                    "type": "text"
+                  },
+                  {
+                    "key": "accept",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{url}}/:provider/faqs/list",
+                  "host": [
+                    "{{url}}"
+                  ],
+                  "path": [
+                    ":provider",
+                    "faqs",
+                    "list"
+                  ],
+                  "variable": [
+                    {
+                      "key": "provider",
+                      "value": "site",
+                      "description": "site or app"
                     }
                   ]
                 }
