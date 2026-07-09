@@ -3,6 +3,7 @@
 namespace App\Services;
 
 
+use App\Enum\UserRegisterTypesEnum;
 use App\Models\User;
 use App\Services\ReferralService;
 use Carbon\Carbon;
@@ -189,6 +190,7 @@ class GoogleService
                 'surname' => $surname,
                 'email' => $gUser->getEmail(),
                 'email_verified_at' => Carbon::now(),
+                'register_type' => UserRegisterTypesEnum::GOOGLE->value,
                 'email_unique_key' => md5($gUser->getEmail()),
                 'phone_unique_key' => md5(Str::uuid()),
                 'google_id' => $gUser->getId(),
