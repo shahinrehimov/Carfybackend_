@@ -135,12 +135,40 @@ class GoogleService
         });
     }
 
+    /**
+     * Resolve first/last name from a Google profile. Socialite only maps the
+     * full `name`, so given_name/family_name are read off the raw payload —
+     * present both in the userinfo response and in the native ID token.
+     *
+     * @return array{0: string, 1: string} [name, surname]
+     */
+    private function resolveNames($gUser): array
+    {
+        $raw = $gUser->getRaw();
+
+        $name = $raw['given_name'] ?? null;
+
+        if (empty($name)) {
+            $name = $gUser->getName() ?: Str::before($gUser->getEmail(), '@');
+        }
+
+        $surname = $raw['family_name'] ?? null;
+
+        if (empty($surname)) {
+            $surname = $name;
+        }
+
+        return [$name, $surname];
+    }
+
     public function updateOrCreateUser(?User $user, $gUser, ?string $refCode = null): User
     {
         if (!$user) {
+            [$name, $surname] = $this->resolveNames($gUser);
+
             $newUser = UserService::instance()->registerUser([
-                'name' => $gUser->getName() ?? Str::before($gUser->getEmail(), '@'),
-                'surname' => $gUser->getName() ?? Str::before($gUser->getEmail(), '@'), // TODO:: get surname
+                'name' => $name,
+                'surname' => $surname,
                 'email' => $gUser->getEmail(),
                 'email_verified_at' => Carbon::now(),
                 'email_unique_key' => md5($gUser->getEmail()),
