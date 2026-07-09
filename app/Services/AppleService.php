@@ -54,15 +54,9 @@ class AppleService
 
         $email = $appleUser->getEmail();
 
-        if (empty($email)) {
-            throw new AccessDeniedHttpException(
-                LangService::instance()
-                    ->setDefault('Unable to retrieve email from Apple account!')
-                    ->getLang('unable_to_retrieve_email_from_apple_account')
-            );
-        }
-
         $raw = $appleUser->getRaw();
+
+        $this->assertEmailIsVerified($email, $raw['email_verified'] ?? null);
 
         return [
             'sub'           => $appleUser->getId(),
@@ -132,7 +126,20 @@ class AppleService
             );
         }
 
-        if (empty($payload['email'])) {
+        $this->assertEmailIsVerified($payload['email'] ?? null, $payload['email_verified'] ?? null);
+
+        return $payload;
+    }
+
+    /**
+     * Apple only vouches for the mailbox when email_verified is true. The email
+     * is used to link an existing account, so an unverified one must never be
+     * trusted. Apple sends the claim as a string ("true") as often as a bool,
+     * and PHP treats the string "false" as truthy — hence the explicit filter.
+     */
+    private function assertEmailIsVerified(?string $email, mixed $emailVerified): void
+    {
+        if (empty($email)) {
             throw new AccessDeniedHttpException(
                 LangService::instance()
                     ->setDefault('Unable to retrieve email from Apple account!')
@@ -140,7 +147,18 @@ class AppleService
             );
         }
 
-        return $payload;
+        if (!filter_var($emailVerified, FILTER_VALIDATE_BOOLEAN)) {
+            LoggerService::instance()->log('Apple login rejected: email is not verified.', [
+                'email' => $email,
+                'email_verified' => $emailVerified,
+            ], true);
+
+            throw new AccessDeniedHttpException(
+                LangService::instance()
+                    ->setDefault('Apple account email is not verified!')
+                    ->getLang('apple_account_email_is_not_verified')
+            );
+        }
     }
 
     public function updateOrCreateUser(?User $user, array $appleUser, ?string $refCode = null): User

@@ -50,7 +50,20 @@ class GoogleService
     {
         $gUser = Socialite::driver('google')->stateless()->user();
 
-        if (empty($gUser->getEmail())) {
+        $this->assertEmailIsVerified($gUser->getEmail(), $gUser->getRaw()['email_verified'] ?? null);
+
+        return $gUser;
+    }
+
+    /**
+     * Google only vouches for the mailbox when email_verified is true. The email
+     * is used to link an existing account, so an unverified one must never be
+     * trusted. The claim is a bool in the ID token but may arrive as a string,
+     * and PHP treats the string "false" as truthy — hence the explicit filter.
+     */
+    private function assertEmailIsVerified(?string $email, mixed $emailVerified): void
+    {
+        if (empty($email)) {
             throw new AccessDeniedHttpException(
                 LangService::instance()
                     ->setDefault('Unable to retrieve email from Google account!')
@@ -58,7 +71,18 @@ class GoogleService
             );
         }
 
-        return $gUser;
+        if (!filter_var($emailVerified, FILTER_VALIDATE_BOOLEAN)) {
+            LoggerService::instance()->log('Google login rejected: email is not verified.', [
+                'email' => $email,
+                'email_verified' => $emailVerified,
+            ], true);
+
+            throw new AccessDeniedHttpException(
+                LangService::instance()
+                    ->setDefault('Google account email is not verified!')
+                    ->getLang('google_account_email_is_not_verified')
+            );
+        }
     }
 
     /**
@@ -117,13 +141,7 @@ class GoogleService
             );
         }
 
-        if (empty($payload['email'])) {
-            throw new AccessDeniedHttpException(
-                LangService::instance()
-                    ->setDefault('Unable to retrieve email from Google account!')
-                    ->getLang('unable_to_retrieve_email_from_google_account')
-            );
-        }
+        $this->assertEmailIsVerified($payload['email'] ?? null, $payload['email_verified'] ?? null);
 
         return $payload;
     }
