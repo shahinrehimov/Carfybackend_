@@ -36,9 +36,16 @@ return [
     ],
 
     'google' => [
+        // Web (Socialite) — Web client_id acts as redirect client_id / web aud
+        // and as the native serverClientId, so ID tokens are issued for it too.
         'client_id' => env('GOOGLE_CLIENT_ID'),
         'client_secret' => env('GOOGLE_CLIENT_SECRET'),
-        'redirect' => env('GOOGLE_REDIRECT_URL'),
+        'redirect' => env('GOOGLE_REDIRECT_URL'),        // https://<api-domain>/auth/google/callback
+
+        // Additional allowed audiences when verifying native ID tokens, in case
+        // the token is minted for a platform client id instead of the web one.
+        'ios_client_id' => env('GOOGLE_IOS_CLIENT_ID'),
+        'android_client_id' => env('GOOGLE_ANDROID_CLIENT_ID'),
     ],
 
     'apple' => [

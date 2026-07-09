@@ -163,6 +163,7 @@ return static function () {
 
             // google auth
             Route::get('auth/google', [GoogleController::class, 'redirect']);
+            Route::post('auth/google/native', [GoogleController::class, 'nativeLogin'])->withoutMiddleware(RouteLogMiddleware::class);
 
             // apple auth
             Route::get('auth/apple', [AppleController::class, 'redirect']);

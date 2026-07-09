@@ -20552,6 +20552,126 @@
                       "body": "{\n    \"step\": \"redirect\",\n    \"url\": \"https://accounts.google.com/o/oauth2/auth?client_id=&redirect_uri=&scope=openid+profile+email&response_type=code\"\n}"
                     }
                   ]
+                },
+                {
+                  "name": "Login native (iOS/Android)",
+                  "request": {
+                    "auth": {
+                      "type": "noauth"
+                    },
+                    "method": "POST",
+                    "header": [
+                      {
+                        "key": "Token",
+                        "value": "{{app_mobile_token}}",
+                        "type": "text"
+                      },
+                      {
+                        "key": "accept",
+                        "value": "application/json",
+                        "type": "text"
+                      },
+                      {
+                        "key": "identifier",
+                        "value": "{{guest_identifier}}",
+                        "type": "text",
+                        "disabled": true
+                      }
+                    ],
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\n    \"id_token\": \"<google ID token JWT from device>\",\n    \"device_type\": \"ios\", // android,ios,web\n    \"ref_code\": \"\"        // optional referral code\n}",
+                      "options": {
+                        "raw": {
+                          "language": "json"
+                        }
+                      }
+                    },
+                    "url": {
+                      "raw": "{{url}}/:provider/auth/google/native",
+                      "host": [
+                        "{{url}}"
+                      ],
+                      "path": [
+                        ":provider",
+                        "auth",
+                        "google",
+                        "native"
+                      ],
+                      "variable": [
+                        {
+                          "key": "provider",
+                          "value": "app",
+                          "description": "site or app"
+                        }
+                      ]
+                    }
+                  },
+                  "response": [
+                    {
+                      "name": "Login native (iOS/Android)",
+                      "originalRequest": {
+                        "method": "POST",
+                        "header": [
+                          {
+                            "key": "Token",
+                            "value": "{{app_mobile_token}}",
+                            "type": "text"
+                          },
+                          {
+                            "key": "accept",
+                            "value": "application/json",
+                            "type": "text"
+                          },
+                          {
+                            "key": "identifier",
+                            "value": "{{guest_identifier}}",
+                            "type": "text",
+                            "disabled": true
+                          }
+                        ],
+                        "body": {
+                          "mode": "raw",
+                          "raw": "{\n    \"id_token\": \"<google ID token JWT from device>\",\n    \"device_type\": \"ios\", // android,ios,web\n    \"ref_code\": \"\"        // optional referral code\n}",
+                          "options": {
+                            "raw": {
+                              "language": "json"
+                            }
+                          }
+                        },
+                        "url": {
+                          "raw": "{{url}}/:provider/auth/google/native",
+                          "host": [
+                            "{{url}}"
+                          ],
+                          "path": [
+                            ":provider",
+                            "auth",
+                            "google",
+                            "native"
+                          ],
+                          "variable": [
+                            {
+                              "key": "provider",
+                              "value": "app",
+                              "description": "site or app"
+                            }
+                          ]
+                        }
+                      },
+                      "status": "OK",
+                      "code": 200,
+                      "_postman_previewlanguage": "json",
+                      "header": [
+                        {
+                          "key": "Content-Type",
+                          "value": "application/json"
+                        }
+                      ],
+                      "cookie": [],
+                      "body": "{\n    \"uuid\": \"9b1f...\",\n    \"image\": null,\n    \"email\": \"user@example.com\",\n    \"phone\": null,\n    \"name\": \"John\",\n    \"surname\": \"Doe\",\n    \"gender\": null,\n    \"gender_label\": \"\",\n    \"birth_date\": null,\n    \"email_is_verified\": true,\n    \"phone_is_verified\": false,\n    \"token\": \"123|abcdefg...\"\n}"
+                    }
+                  ]
                 }
               ]
             },
