@@ -7,6 +7,7 @@ use App\Http\Requests\App\Auth\GoogleNativeLoginRequest;
 use App\Http\Resources\App\Auth\UserResource;
 use App\Services\GoogleService;
 use App\Services\UserService;
+use GuzzleHttp\Exception\ClientException;
 use Illuminate\Foundation\Application;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -25,7 +26,20 @@ class GoogleController extends Controller
 
     public function callback(Request $request): Application|Redirector|RedirectResponse
     {
-        $gUser   = GoogleService::instance()->getCallbackUser($request);
+        // Google redirects back with `error` and no `code` when the user
+        // cancels on the consent screen; there is nothing to exchange.
+        if ($request::query('error') || !$request::query('code')) {
+            return $this->redirectToFrontendWithError($request::query('error') ?: 'access_denied');
+        }
+
+        try {
+            $gUser = GoogleService::instance()->getCallbackUser($request);
+        } catch (ClientException) {
+            // The code is single-use and short-lived; a refresh/replay of the
+            // callback URL makes Google reject the exchange with a 400.
+            return $this->redirectToFrontendWithError('invalid_code');
+        }
+
         $refCode = $request::query('ref_code');
 
         $user = UserService::instance()->getUserByGoogle($gUser);
@@ -48,5 +62,10 @@ class GoogleController extends Controller
         $user = GoogleService::instance()->updateOrCreateUser($user, $gUser, $validated['ref_code'] ?? null);
 
         return UserResource::make(UserService::instance()->createToken($user, $validated['device_type'] ?? null));
+    }
+
+    private function redirectToFrontendWithError(string $error): Application|Redirector|RedirectResponse
+    {
+        return redirect(config('app.frontend_url') . '/auth/third-party-login?provider=google&error=' . urlencode($error));
     }
 }
