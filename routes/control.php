@@ -9,6 +9,7 @@ use App\Models\Referral\ReferralFraudFlag;
 use App\Models\Referral\ReferralWithdrawal;
 use App\Http\Controllers\Admin\AddressController;
 use App\Http\Controllers\Admin\ContactMessageController;
+use App\Http\Controllers\Admin\FaqController;
 use App\Http\Controllers\Admin\PageController;
 use App\Http\Controllers\Admin\AddressTypeController;
 use App\Http\Controllers\Admin\AdminController;
@@ -492,6 +493,18 @@ Route::middleware(['general_access:admin', RouteLogMiddleware::class])->prefix('
             Route::post('change-active-status/{page}', [PageController::class, 'changeActiveStatus']);
             Route::post('change-sorting/{page}', [PageController::class, 'changeSorting']);
             Route::post('change-sorting-multiple', [PageController::class, 'changeSortingMultiple']);
+        });
+
+        Route::group(['prefix' => 'faqs'], static function () {
+            Route::get('load', [FaqController::class, 'index']);
+            Route::get('list', [FaqController::class, 'list']);
+            Route::get('show/{faq}', [FaqController::class, 'show']);
+            Route::post('add', [FaqController::class, 'store']);
+            Route::post('update/{faq}', [FaqController::class, 'update']);
+            Route::delete('delete/{faq}', [FaqController::class, 'destroy']);
+            Route::post('change-active-status/{faq}', [FaqController::class, 'changeActiveStatus']);
+            Route::post('change-sorting/{faq}', [FaqController::class, 'changeSorting']);
+            Route::post('change-sorting-multiple', [FaqController::class, 'changeSortingMultiple']);
         });
 
         Route::group(['prefix' => 'advertisements'], static function () {

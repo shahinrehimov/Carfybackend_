@@ -4,6 +4,7 @@ use App\Http\Controllers\App\AddressController;
 use App\Http\Controllers\App\ReferralController;
 use App\Http\Controllers\App\ContactController;
 use App\Http\Controllers\App\CarLibraryController;
+use App\Http\Controllers\App\FaqController;
 use App\Http\Controllers\App\UserCarController;
 use App\Http\Controllers\App\Auth\AppleController;
 use App\Http\Controllers\App\Auth\EmailVerificationController;
@@ -55,6 +56,10 @@ return static function () {
             Route::group(['prefix' => 'services'], static function () {
                 Route::get('list', [ServicesController::class, 'getServicesList']);
                 Route::get('load', [ServicesController::class, 'loadAppServices']);
+            });
+
+            Route::group(['prefix' => 'faqs'], static function () {
+                Route::get('list', [FaqController::class, 'list']);
             });
 
             Route::group(['prefix' => 'car-libraries'], static function () {

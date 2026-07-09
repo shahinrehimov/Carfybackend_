@@ -11,6 +11,7 @@ class AppServices
         'genders' => GenderService::class,
         'address_type' => AddressTypeService::class,
         'country_and_city' => CountryAndCityService::class,
+        'faq' => FaqService::class,
     ];
 
     private function __construct() {
