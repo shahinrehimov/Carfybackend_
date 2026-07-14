@@ -133,7 +133,7 @@ class ProductController extends Controller
                 'city'          => $cpv->relationLoaded('city') ? CitiesListResource::make($cpv->city) : null,
                 'seller_label'  => $cpv->company?->getSellerLabel(),
                 'images'        => $cpv->relationLoaded('media')
-                    ? $cpv->getMedia('company_product_variant_images')->map(fn($m) => ['url' => $m->getUrl()])
+                    ? $cpv->getMedia('company_product_variant_images')->map(fn($m) => ['url' => \App\Models\CompanyProductVariant::webUrlForMedia($m)])
                     : [],
             ];
         });

@@ -75,7 +75,7 @@ class CompanyProductVariantListResource extends JsonResource
                 return $this->getMedia('company_product_variant_images')->map(function ($media) {
                     return [
                         'id' => $media->id,
-                        'url' => $media->getUrl(),
+                        'url' => \App\Models\CompanyProductVariant::webUrlForMedia($media),
                     ];
                 });
             }),

@@ -77,7 +77,7 @@ class ProductVariantsInBasketResource extends JsonResource
                     'title' => $sellerListing->city->getLang('title'),
                 ] : null,
                 'images'       => $sellerListing->relationLoaded('media')
-                    ? $sellerListing->getMedia('company_product_variant_images')->map(fn($m) => ['url' => $m->getUrl()])
+                    ? $sellerListing->getMedia('company_product_variant_images')->map(fn($m) => ['url' => \App\Models\CompanyProductVariant::webUrlForMedia($m)])
                     : [],
             ] : null,
 

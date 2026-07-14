@@ -20,7 +20,7 @@ class HoverImageCast implements CastsAttributes
     public function get(ProductVariant|Model $model, string $key, mixed $value, array $attributes): mixed
     {
         if ($model->hasMedia('product_variants_hover')) {
-            return $model->getFirstMediaUrl('product_variants_hover');
+            return $model->getWebImageUrl('product_variants_hover');
         }
 
         return $model->main_image;

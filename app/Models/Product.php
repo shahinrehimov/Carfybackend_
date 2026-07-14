@@ -8,6 +8,7 @@ use App\Casts\Products\MainImageCast;
 use App\Interfaces\TranslatableInterface;
 use App\Traits\ActionBy;
 use App\Traits\ActionUser;
+use App\Traits\HasWebImageConversions;
 use App\Traits\SlugTrait;
 use App\Traits\Translatable;
 use Dyrynda\Database\Support\CascadeSoftDeletes;
@@ -47,7 +48,7 @@ use Spatie\MediaLibrary\InteractsWithMedia;
 
 class Product extends Model implements TranslatableInterface, HasMedia
 {
-    use SoftDeletes, ActionBy, ActionUser, SlugTrait, Translatable, InteractsWithMedia, CascadeSoftDeletes;
+    use SoftDeletes, ActionBy, ActionUser, SlugTrait, Translatable, InteractsWithMedia, CascadeSoftDeletes, HasWebImageConversions;
 
     protected $fillable = [
         'company_id', // nullable
@@ -90,6 +91,11 @@ class Product extends Model implements TranslatableInterface, HasMedia
     {
         $this->addMediaCollection('products_main')->singleFile();
         $this->addMediaCollection('products_hover')->singleFile();
+    }
+
+    public function registerMediaConversions(?\Spatie\MediaLibrary\MediaCollections\Models\Media $media = null): void
+    {
+        $this->registerWebImageConversions(['products_main', 'products_hover']);
     }
 
     public function scopeActive(Builder $builder): void

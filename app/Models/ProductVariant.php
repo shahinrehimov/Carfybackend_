@@ -13,6 +13,7 @@ use App\Casts\ProductVariants\PriceInBasketCast;
 use App\Casts\ProductVariants\TitleCast;
 use App\Traits\ActionBy;
 use App\Traits\ActionUser;
+use App\Traits\HasWebImageConversions;
 use App\Traits\SlugTrait;
 use Carbon\Carbon;
 use Dyrynda\Database\Support\CascadeSoftDeletes;
@@ -53,7 +54,7 @@ use Spatie\MediaLibrary\InteractsWithMedia;
 
 class ProductVariant extends Model implements HasMedia
 {
-    use SoftDeletes, ActionBy, ActionUser, SlugTrait, InteractsWithMedia, CascadeSoftDeletes;
+    use SoftDeletes, ActionBy, ActionUser, SlugTrait, InteractsWithMedia, CascadeSoftDeletes, HasWebImageConversions;
 
     protected $fillable = [
         'company_id', // nullable
@@ -108,6 +109,11 @@ class ProductVariant extends Model implements HasMedia
     {
         $this->addMediaCollection('product_variants_main')->singleFile();
         $this->addMediaCollection('product_variants_hover')->singleFile();
+    }
+
+    public function registerMediaConversions(?\Spatie\MediaLibrary\MediaCollections\Models\Media $media = null): void
+    {
+        $this->registerWebImageConversions(['product_variants_main', 'product_variants_hover']);
     }
 
     public static function getPriceCalculationQuery(): string

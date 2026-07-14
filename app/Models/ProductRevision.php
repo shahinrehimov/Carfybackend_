@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Traits\ActionBy;
 use App\Traits\ActionUser;
+use App\Traits\HasWebImageConversions;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -12,7 +13,7 @@ use Spatie\MediaLibrary\InteractsWithMedia;
 
 class ProductRevision extends Model implements HasMedia
 {
-    use ActionBy, ActionUser, InteractsWithMedia, SoftDeletes;
+    use ActionBy, ActionUser, InteractsWithMedia, SoftDeletes, HasWebImageConversions;
 
     protected $fillable = [
         'product_id',
@@ -31,6 +32,11 @@ class ProductRevision extends Model implements HasMedia
         $this->addMediaCollection('revision_main_image')->singleFile();
         $this->addMediaCollection('revision_hover_image')->singleFile();
         $this->addMediaCollection('revision_images');
+    }
+
+    public function registerMediaConversions(?\Spatie\MediaLibrary\MediaCollections\Models\Media $media = null): void
+    {
+        $this->registerWebImageConversions(['revision_main_image', 'revision_hover_image', 'revision_images']);
     }
 
     public function product(): BelongsTo

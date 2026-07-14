@@ -139,9 +139,9 @@ class ProductVariantController extends Controller
                 ]),
             ],
             'images'             => [
-                'main_image'  => $revision->getFirstMediaUrl('revision_main_image') ?: null,
-                'hover_image' => $revision->getFirstMediaUrl('revision_hover_image') ?: null,
-                'images'      => $revision->getMedia('revision_images')->map(fn($m) => ['id' => $m->id, 'url' => $m->getUrl()])->values(),
+                'main_image'  => $revision->getWebImageUrl('revision_main_image'),
+                'hover_image' => $revision->getWebImageUrl('revision_hover_image'),
+                'images'      => $revision->getMedia('revision_images')->map(fn($m) => ['id' => $m->id, 'url' => $revision::webUrlForMedia($m)])->values(),
             ],
             'created_date'       => $revision->created_at?->toDateTimeString(),
         ];

@@ -20,7 +20,7 @@ class MainImageCast implements CastsAttributes
     public function get(Product|Model $model, string $key, mixed $value, array $attributes): mixed
     {
         if ($model->hasMedia('products_main')) {
-            return $model->getFirstMediaUrl('products_main');
+            return $model->getWebImageUrl('products_main');
         }
 
         return null;

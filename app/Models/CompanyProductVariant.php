@@ -10,6 +10,7 @@ use App\Enum\ProductVariantApprovalStatusEnum;
 use App\Services\LangService;
 use App\Traits\ActionBy;
 use App\Traits\ActionUser;
+use App\Traits\HasWebImageConversions;
 use Dyrynda\Database\Support\CascadeSoftDeletes;
 use Elastic\ScoutDriverPlus\Searchable;
 use Illuminate\Database\Eloquent\Builder;
@@ -40,7 +41,7 @@ use Spatie\MediaLibrary\InteractsWithMedia;
  */
 class CompanyProductVariant extends Model implements HasMedia
 {
-    use ActionBy, ActionUser, CascadeSoftDeletes, InteractsWithMedia, Searchable, SoftDeletes;
+    use ActionBy, ActionUser, CascadeSoftDeletes, InteractsWithMedia, Searchable, SoftDeletes, HasWebImageConversions;
 
     protected $table = 'company_product_variant';
 
@@ -91,6 +92,11 @@ class CompanyProductVariant extends Model implements HasMedia
     public function registerMediaCollections(): void
     {
         $this->addMediaCollection('company_product_variant_images');
+    }
+
+    public function registerMediaConversions(?\Spatie\MediaLibrary\MediaCollections\Models\Media $media = null): void
+    {
+        $this->registerWebImageConversions(['company_product_variant_images']);
     }
 
     // ─── Elasticsearch (Laravel Scout) ────────────────────────────────────────
@@ -385,7 +391,7 @@ class CompanyProductVariant extends Model implements HasMedia
     public function getListingHoverImageAttribute(): ?string
     {
         if ($this->relationLoaded('media') && $this->hasMedia('company_product_variant_images')) {
-            return $this->getFirstMediaUrl('company_product_variant_images');
+            return $this->getWebImageUrl('company_product_variant_images');
         }
 
         if ($this->relationLoaded('productVariant') && $this->productVariant) {
@@ -409,7 +415,7 @@ class CompanyProductVariant extends Model implements HasMedia
     public function getListingMainImageAttribute(): ?string
     {
         if ($this->relationLoaded('media') && $this->hasMedia('company_product_variant_images')) {
-            return $this->getFirstMediaUrl('company_product_variant_images');
+            return $this->getWebImageUrl('company_product_variant_images');
         }
 
         if ($this->relationLoaded('productVariant') && $this->productVariant) {
@@ -437,7 +443,7 @@ class CompanyProductVariant extends Model implements HasMedia
 
         if ($this->relationLoaded('media')) {
             foreach ($this->getMedia('company_product_variant_images') as $media) {
-                $gallery[] = ['source' => 'seller', 'url' => $media->getUrl()];
+                $gallery[] = ['source' => 'seller', 'url' => self::webUrlForMedia($media)];
             }
         }
 
@@ -446,13 +452,13 @@ class CompanyProductVariant extends Model implements HasMedia
 
             if ($variant->relationLoaded('media')) {
                 foreach ($variant->getMedia('product_variants_images') as $media) {
-                    $gallery[] = ['source' => 'variant', 'url' => $media->getUrl()];
+                    $gallery[] = ['source' => 'variant', 'url' => self::webUrlForMedia($media)];
                 }
             }
 
             if ($variant->relationLoaded('product') && $variant->product?->relationLoaded('media')) {
                 foreach ($variant->product->getMedia('products_images') as $media) {
-                    $gallery[] = ['source' => 'product', 'url' => $media->getUrl()];
+                    $gallery[] = ['source' => 'product', 'url' => self::webUrlForMedia($media)];
                 }
             }
         }

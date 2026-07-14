@@ -95,7 +95,7 @@ class ProductVariantResource extends JsonResource
                         ? CitiesListResource::make($sl->city)
                         : null,
                     'images'       => $sl->relationLoaded('media')
-                        ? $sl->getMedia('company_product_variant_images')->map(fn($m) => ['url' => $m->getUrl()])
+                        ? $sl->getMedia('company_product_variant_images')->map(fn($m) => ['url' => CompanyProductVariant::webUrlForMedia($m)])
                         : [],
                     'gallery'      => $sl->listing_gallery,
                 ];
@@ -115,7 +115,7 @@ class ProductVariantResource extends JsonResource
                     'stock'         => $cpv->stock,
                     'city'          => $cpv->relationLoaded('city') ? CitiesListResource::make($cpv->city) : null,
                     'images'        => $cpv->relationLoaded('media')
-                        ? $cpv->getMedia('company_product_variant_images')->map(fn($m) => ['url' => $m->getUrl()])
+                        ? $cpv->getMedia('company_product_variant_images')->map(fn($m) => ['url' => CompanyProductVariant::webUrlForMedia($m)])
                         : [],
                 ]);
             }),
