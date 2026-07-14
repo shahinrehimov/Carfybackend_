@@ -20,7 +20,7 @@ class ImageCast implements CastsAttributes
     public function get(SliderLayer|Model $model, string $key, mixed $value, array $attributes): mixed
     {
         if ($model->hasMedia('slider_layer_images')) {
-            return $model->getFirstMediaUrl('slider_layer_images');
+            return $model->getWebImageUrl('slider_layer_images');
         }
 
         return null;

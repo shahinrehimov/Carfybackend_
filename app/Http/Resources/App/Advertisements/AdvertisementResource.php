@@ -18,7 +18,7 @@ class AdvertisementResource extends JsonResource
         return [
             'title'     => $this->title,
             'key'       => $this->key,
-            'image_url' => $this->getFirstMediaUrl('advertisement_image') ?: null,
+            'image_url' => $this->getWebImageUrl('advertisement_image'),
             'link'      => route('advertisements.click', ['key' => $this->key]),
         ];
     }

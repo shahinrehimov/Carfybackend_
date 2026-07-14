@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Casts\UserCars\ImageCast;
 use App\Traits\ActionBy;
 use App\Traits\ActionUser;
+use App\Traits\HasWebImageConversions;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -16,7 +17,7 @@ use Spatie\MediaLibrary\InteractsWithMedia;
  */
 class UserCar extends Model implements HasMedia
 {
-    use SoftDeletes, ActionBy, ActionUser, InteractsWithMedia;
+    use SoftDeletes, ActionBy, ActionUser, InteractsWithMedia, HasWebImageConversions;
 
     protected $fillable = [
         'user_id',
@@ -41,6 +42,11 @@ class UserCar extends Model implements HasMedia
     public function registerMediaCollections(): void
     {
         $this->addMediaCollection('user_car_photos')->singleFile();
+    }
+
+    public function registerMediaConversions(?\Spatie\MediaLibrary\MediaCollections\Models\Media $media = null): void
+    {
+        $this->registerWebImageConversions(['user_car_photos']);
     }
 
     public function user(): BelongsTo

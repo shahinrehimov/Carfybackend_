@@ -29,7 +29,7 @@ class AdvertisementsResource extends JsonResource
             'title'               => $this->title,
             'key'                 => $this->key,
             'link'                => $this->link,
-            'image_url'           => $this->getFirstMediaUrl('advertisement_image') ?: null,
+            'image_url'           => $this->getWebImageUrl('advertisement_image'),
             'start_date'          => $this->start_date?->toDateString(),
             'end_date'            => $this->end_date?->toDateString(),
             'is_active'           => $this->is_active,

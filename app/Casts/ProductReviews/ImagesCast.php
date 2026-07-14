@@ -21,7 +21,7 @@ class ImagesCast implements CastsAttributes
             foreach ($model->getMedia('product_review_images') as $media) {
                 /** @var Media $media */
                 $ids[] = $media->getQueueableId();
-                $images[] = $media->getUrl();
+                $images[] = ProductReview::webUrlForMedia($media);
             }
         }
 

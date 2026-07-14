@@ -7,6 +7,7 @@ use App\Casts\Sliders\VideoCast;
 use App\Interfaces\TranslatableInterface;
 use App\Traits\ActionBy;
 use App\Traits\ActionUser;
+use App\Traits\HasWebImageConversions;
 use App\Traits\Translatable;
 use Dyrynda\Database\Support\CascadeSoftDeletes;
 use Illuminate\Database\Eloquent\Builder;
@@ -22,7 +23,7 @@ use Spatie\MediaLibrary\InteractsWithMedia;
  */
 class SliderLayer extends Model implements TranslatableInterface, HasMedia
 {
-    use SoftDeletes, ActionBy, ActionUser, Translatable, InteractsWithMedia, CascadeSoftDeletes;
+    use SoftDeletes, ActionBy, ActionUser, Translatable, InteractsWithMedia, CascadeSoftDeletes, HasWebImageConversions;
 
     protected $fillable = [
         'slider_id',
@@ -74,6 +75,12 @@ class SliderLayer extends Model implements TranslatableInterface, HasMedia
     {
         $this->addMediaCollection('slider_layer_images');
         $this->addMediaCollection('slider_layer_videos');
+    }
+
+    public function registerMediaConversions(?\Spatie\MediaLibrary\MediaCollections\Models\Media $media = null): void
+    {
+        // Only images; videos in slider_layer_videos must not be converted.
+        $this->registerWebImageConversions(['slider_layer_images']);
     }
 
     public function scopeActive(Builder $builder): void

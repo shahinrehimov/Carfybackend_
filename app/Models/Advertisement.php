@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Enum\AdvertisementPlatformEnum;
 use App\Traits\ActionBy;
 use App\Traits\ActionUser;
+use App\Traits\HasWebImageConversions;
 use Carbon\Carbon;
 use Dyrynda\Database\Support\CascadeSoftDeletes;
 use Illuminate\Database\Eloquent\Builder;
@@ -28,7 +29,7 @@ use Spatie\MediaLibrary\InteractsWithMedia;
  */
 class Advertisement extends Model implements HasMedia
 {
-    use SoftDeletes, ActionBy, ActionUser, InteractsWithMedia, CascadeSoftDeletes;
+    use SoftDeletes, ActionBy, ActionUser, InteractsWithMedia, CascadeSoftDeletes, HasWebImageConversions;
 
     protected $fillable = [
         'title',
@@ -56,6 +57,11 @@ class Advertisement extends Model implements HasMedia
     public function registerMediaCollections(): void
     {
         $this->addMediaCollection('advertisement_image')->singleFile();
+    }
+
+    public function registerMediaConversions(?\Spatie\MediaLibrary\MediaCollections\Models\Media $media = null): void
+    {
+        $this->registerWebImageConversions(['advertisement_image']);
     }
 
     public function clicks(): HasMany

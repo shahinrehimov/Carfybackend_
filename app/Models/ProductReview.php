@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Casts\ProductReviews\ImagesCast;
 use App\Traits\ActionBy;
 use App\Traits\ActionUser;
+use App\Traits\HasWebImageConversions;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -19,7 +20,7 @@ use Spatie\MediaLibrary\InteractsWithMedia;
  */
 class ProductReview extends Model implements HasMedia
 {
-    use SoftDeletes, ActionBy, ActionUser, InteractsWithMedia;
+    use SoftDeletes, ActionBy, ActionUser, InteractsWithMedia, HasWebImageConversions;
 
     protected $fillable = [
         'product_id',
@@ -40,6 +41,11 @@ class ProductReview extends Model implements HasMedia
         'approved_at' => 'datetime',
         'images'      => ImagesCast::class,
     ];
+
+    public function registerMediaConversions(?\Spatie\MediaLibrary\MediaCollections\Models\Media $media = null): void
+    {
+        $this->registerWebImageConversions(['product_review_images']);
+    }
 
     public function scopeApproved(Builder $builder): void
     {
