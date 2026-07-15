@@ -68,4 +68,15 @@ class CompanyProductVariantController extends Controller
                 ->getLang('admin_status_changed_successfully'),
         ]));
     }
+
+    public function destroy(CompanyProductVariant $companyProductVariant): JsonResponse
+    {
+        $this->repo->detach($companyProductVariant);
+
+        return response()->json(GeneralResource::make([
+            'message' => LangService::instance()
+                ->setDefault('Deleted successfully!')
+                ->getLang('product_deleted_successfully'),
+        ]));
+    }
 }

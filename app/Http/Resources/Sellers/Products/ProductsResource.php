@@ -53,6 +53,13 @@ class ProductsResource extends JsonResource
             'is_creator' => CompanyAdminService::instance()->checkUser()
                 ? $this->company_id === CompanyAdminService::instance()->getUser()->company_id
                 : null,
+            'company' => $this->whenLoaded('company', function () {
+                return $this->company ? [
+                    'id' => $this->company->id,
+                    'uuid' => $this->company->uuid,
+                    'title' => $this->company->getLang('title'),
+                ] : null;
+            }),
             'sets_count' => $this->whenCounted('sets'),
             'brand' => BrandsListResource::make($this->whenLoaded('brand')),
             'main_category' => CategoriesListResource::make($this->whenLoaded('mainCategory')),

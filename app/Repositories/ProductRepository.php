@@ -100,6 +100,7 @@ class ProductRepository
                 $builder
                     ->with([
                         'creatable',
+                        'company.translatable',
                         'categories',
                         'categories.translatable',
                         'groups',
