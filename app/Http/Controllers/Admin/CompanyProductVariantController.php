@@ -57,4 +57,15 @@ class CompanyProductVariantController extends Controller
                 ->getLang('admin_status_changed_successfully'),
         ]));
     }
+
+    public function changeActiveStatus(CompanyProductVariant $companyProductVariant): JsonResponse
+    {
+        $this->repo->changeActiveStatus($companyProductVariant);
+
+        return response()->json(GeneralResource::make([
+            'message' => LangService::instance()
+                ->setDefault('Status changed successfully!')
+                ->getLang('admin_status_changed_successfully'),
+        ]));
+    }
 }

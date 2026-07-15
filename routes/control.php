@@ -389,6 +389,7 @@ Route::middleware(['general_access:admin', RouteLogMiddleware::class])->prefix('
 
         Route::group(['prefix' => 'company-product-variants'], static function () {
             Route::get('load', [CompanyProductVariantController::class, 'index']);
+            Route::post('change-active-status/{companyProductVariant}', [CompanyProductVariantController::class, 'changeActiveStatus']);
 
             Route::group(['prefix' => '{companyProductVariant}/approval-status'], static function () {
                 Route::get('history', [CompanyProductVariantController::class, 'approvalStatusHistory']);
