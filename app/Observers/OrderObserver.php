@@ -40,6 +40,13 @@ class OrderObserver
                     'status' => $order->status,
                 ]);
 
+            // Order reaching PROCESSING means it is confirmed: online payment was
+            // marked PAID, or an instant method like cash placed it directly. Items
+            // exist by now, so alert the seller(s) exactly once here.
+            if ($order->status === OrderStatusEnum::PROCESSING) {
+                NotificationDispatchService::instance()->newOrderReceived($order);
+            }
+
             if ($order->status === OrderStatusEnum::CANCELED) {
                 NotificationDispatchService::instance()->orderCancelled($order);
                 ReferralService::instance()->handleOrderCancelled($order);

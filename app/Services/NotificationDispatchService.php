@@ -48,8 +48,9 @@ class NotificationDispatchService
             ]
         );
 
-        // Notify seller(s)
-        $this->newOrderReceived($order);
+        // Seller alerts are NOT sent here: at this point the order has no items yet
+        // and the payment is unconfirmed. newOrderReceived() fires once the order is
+        // confirmed (status = PROCESSING) — see OrderObserver::updated.
     }
 
     public function orderStatusChanged(Order $order): void
