@@ -36,6 +36,8 @@ class Company extends Model implements TranslatableInterface, HasMedia
         'store_code',
         'voen',
         'phone',
+        'notification_phone',
+        'notification_phone_verified_at',
         'email',
         'city_id',
         'latitude',
@@ -89,6 +91,7 @@ class Company extends Model implements TranslatableInterface, HasMedia
 
     protected $casts = [
         'tariff_expired_at' => 'datetime',
+        'notification_phone_verified_at' => 'datetime',
         'logo' => LogoCast::class,
         'banner' => BannerCast::class,
         'verified_at' => 'datetime',

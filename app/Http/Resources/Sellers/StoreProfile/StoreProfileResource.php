@@ -12,6 +12,8 @@ use Illuminate\Http\Resources\Json\JsonResource;
  * @property mixed $store_code
  * @property mixed $voen
  * @property mixed $phone
+ * @property mixed $notification_phone
+ * @property mixed $notification_phone_verified_at
  * @property mixed $email
  * @property mixed $website
  * @property mixed $city_id
@@ -35,6 +37,8 @@ class StoreProfileResource extends JsonResource
             'store_code'   => $this->store_code,
             'voen'         => $this->voen,
             'phone'        => $this->phone,
+            'notification_phone'              => $this->notification_phone,
+            'notification_phone_verified_at'  => $this->notification_phone_verified_at?->toDateTimeString(),
             'email'        => $this->email,
             'website'      => $this->website,
             'city_id'      => $this->city_id,

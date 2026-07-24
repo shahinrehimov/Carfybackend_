@@ -3,8 +3,10 @@
 namespace App\Http\Controllers\Sellers;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Sellers\StoreProfile\SendNotificationPhoneOtpRequest;
 use App\Http\Requests\Sellers\StoreProfile\UpdateStoreProfileRequest;
 use App\Http\Requests\Sellers\StoreProfile\UpdateWorkingHoursRequest;
+use App\Http\Requests\Sellers\StoreProfile\VerifyNotificationPhoneRequest;
 use App\Http\Resources\GeneralResource;
 use App\Http\Resources\Sellers\StoreProfile\StoreProfileResource;
 use App\Repositories\StoreProfileRepository;
@@ -65,6 +67,46 @@ class StoreProfileController extends Controller
             'message' => LangService::instance()
                 ->setDefault('Deleted successfully!')
                 ->getLang('deleted_successfully'),
+        ]));
+    }
+
+    public function sendNotificationPhoneOtp(SendNotificationPhoneOtpRequest $request): JsonResponse
+    {
+        $this->repo->sendNotificationPhoneOtp($request->validated()['phone']);
+
+        return response()->json(GeneralResource::make([
+            'message' => LangService::instance()
+                ->setDefault('OTP sent to your phone!')
+                ->getLang('phone_otp_sent'),
+        ]));
+    }
+
+    public function verifyNotificationPhone(VerifyNotificationPhoneRequest $request): JsonResponse
+    {
+        $company   = CompanyAdminService::instance()->getCompany();
+        $validated = $request->validated();
+
+        $this->repo->verifyNotificationPhone($company, $validated['phone'], (int) $validated['otp']);
+
+        return response()->json(GeneralResource::make([
+            'message' => LangService::instance()
+                ->setDefault('Saved successfully!')
+                ->getLang('company_admin_form_saved_successfully'),
+            'data' => StoreProfileResource::make($this->repo->show($company)),
+        ]));
+    }
+
+    public function deleteNotificationPhone(): JsonResponse
+    {
+        $company = CompanyAdminService::instance()->getCompany();
+
+        $this->repo->deleteNotificationPhone($company);
+
+        return response()->json(GeneralResource::make([
+            'message' => LangService::instance()
+                ->setDefault('Deleted successfully!')
+                ->getLang('deleted_successfully'),
+            'data' => StoreProfileResource::make($this->repo->show($company)),
         ]));
     }
 

@@ -70,6 +70,9 @@ Route::middleware(['general_access:sellers', RouteLogMiddleware::class])->prefix
             Route::delete('logo', [StoreProfileController::class, 'deleteLogo']);
             Route::delete('banner', [StoreProfileController::class, 'deleteBanner']);
             Route::post('working-hours', [StoreProfileController::class, 'updateWorkingHours']);
+            Route::post('notification-phone/send-otp', [StoreProfileController::class, 'sendNotificationPhoneOtp'])->middleware(['throttle:2,1']);
+            Route::post('notification-phone/verify', [StoreProfileController::class, 'verifyNotificationPhone'])->middleware(['throttle:5,1']);
+            Route::delete('notification-phone', [StoreProfileController::class, 'deleteNotificationPhone']);
         });
 
         // Logout routes

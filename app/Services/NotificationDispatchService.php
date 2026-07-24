@@ -129,20 +129,67 @@ class NotificationDispatchService
 
     public function newOrderReceived(Order $order): void
     {
-        // Load all company admins for sellers who have items in this order
-        $companyAdminIds = $order->items()
-            ->with('companyProductVariant.company.admins')
-            ->get()
-            ->flatMap(fn($item) => $item->companyProductVariant?->company?->admins ?? collect())
-            ->unique('id');
+        // Alert each seller (company) with items in this order via SMS (verified
+        // notification phone) and email (company email). CompanyAdmin is not a User
+        // model, so in-app notifications are not dispatched here.
+        $items = $order->items()
+            ->with('companyProductVariant.company')
+            ->get();
 
-        if ($companyAdminIds->isEmpty()) {
+        // Group items per company to build unique-company alerts with item counts.
+        $grouped = $items
+            ->filter(fn($item) => $item->companyProductVariant?->company)
+            ->groupBy(fn($item) => $item->companyProductVariant->company->id);
+
+        foreach ($grouped as $companyItems) {
+            /** @var \App\Models\Company $company */
+            $company   = $companyItems->first()->companyProductVariant->company;
+            $itemCount = $companyItems->count();
+
+            $this->sendNewOrderSms($order, $company);
+            $this->sendNewOrderEmail($order, $company, $itemCount);
+        }
+    }
+
+    private function sendNewOrderSms(Order $order, \App\Models\Company $company): void
+    {
+        if (empty($company->notification_phone) || empty($company->notification_phone_verified_at)) {
             return;
         }
 
-        // CompanyAdmin users — we only notify Users model, so skip for now
-        // This event notifies seller panel users (CompanyAdmin), not app Users
-        // Handle via separate in-app mechanism if needed
+        $message = LangService::instance()
+            ->setDefault('Carfy: @store magazaniza yeni sifaris geldi. Panele daxil olun.')
+            ->getLang('seller_new_order_sms', ['@store' => $company->store_code]);
+
+        // sendInfo logs its own failures; guard so one seller's SMS can't break the rest.
+        try {
+            SmsService::instance()->sendInfo($company->notification_phone, $message);
+        } catch (\Throwable $e) {
+            LoggerService::instance()->log('New-order seller SMS failed', [
+                'order_id'   => $order->id,
+                'company_id' => $company->id,
+                'error'      => $e->getMessage(),
+            ], true);
+        }
+    }
+
+    private function sendNewOrderEmail(Order $order, \App\Models\Company $company, int $itemCount): void
+    {
+        if (empty($company->email)) {
+            return;
+        }
+
+        // Guard so one seller's email failure can't break the rest of the dispatch.
+        try {
+            \Illuminate\Support\Facades\Mail::to($company->email)
+                ->send(new \App\Mail\SellerNewOrderMail($company, $itemCount));
+        } catch (\Throwable $e) {
+            LoggerService::instance()->log('New-order seller email failed', [
+                'order_id'   => $order->id,
+                'company_id' => $company->id,
+                'error'      => $e->getMessage(),
+            ], true);
+        }
     }
 
     public function orderItemCancelled(OrderItem $item): void

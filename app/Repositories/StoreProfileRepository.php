@@ -2,10 +2,15 @@
 
 namespace App\Repositories;
 
+use App\Enum\UserOtpProvidersEnum;
+use App\Enum\UserOtpTypesEnum;
 use App\Models\Company;
 use App\Models\CompanyWorkingHour;
 use App\Models\ProductReview;
 use App\Services\FileUpload;
+use App\Services\LangService;
+use App\Services\SmsService;
+use App\Services\UserService;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\DB;
 
@@ -68,6 +73,59 @@ class StoreProfileRepository
     public function deleteBanner(Company $company): void
     {
         $company->clearMediaCollection('companies_banner');
+    }
+
+    /**
+     * Generate and SMS an OTP to a candidate notification phone.
+     */
+    public function sendNotificationPhoneOtp(string $phone): void
+    {
+        $otp = UserService::instance()->generateOtp(
+            UserOtpTypesEnum::VERIFY_NOTIFICATION_PHONE,
+            UserOtpProvidersEnum::SMS,
+            null,
+            $phone
+        );
+
+        $message = LangService::instance()
+            ->setDefault('Your OTP code: @otp')
+            ->getLang('phone_otp_message', ['@otp' => $otp]);
+
+        SmsService::instance()->sendOtp($phone, $message);
+    }
+
+    /**
+     * Verify the OTP and, on success, persist the notification phone.
+     */
+    public function verifyNotificationPhone(Company $company, string $phone, int $otp): Company
+    {
+        UserService::instance()->checkOtp(
+            UserOtpTypesEnum::VERIFY_NOTIFICATION_PHONE,
+            $otp,
+            null,
+            UserOtpProvidersEnum::SMS,
+            $phone
+        );
+
+        $company->update([
+            'notification_phone'             => $phone,
+            'notification_phone_verified_at' => now(),
+        ]);
+
+        return $company;
+    }
+
+    /**
+     * Remove the notification phone, disabling new-order SMS alerts.
+     */
+    public function deleteNotificationPhone(Company $company): Company
+    {
+        $company->update([
+            'notification_phone'             => null,
+            'notification_phone_verified_at' => null,
+        ]);
+
+        return $company;
     }
 
     public function syncWorkingHours(Company $company, array $hours): void
