@@ -124,6 +124,7 @@ class CompanyRepository
                 'voen' => $validated['voen'] ?? $company->voen,
                 'phone' => $validated['phone'] ?? $company->phone,
                 'email' => $validated['email'] ?? $company->email,
+                'city_id' => $validated['city_id'] ?? $company->city_id,
                 'latitude' => $validated['latitude'] ?? $company->latitude,
                 'longitude' => $validated['longitude'] ?? $company->longitude,
                 'website' => $validated['website'] ?? $company->website,
