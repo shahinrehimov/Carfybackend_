@@ -117,27 +117,10 @@ class ProductController extends Controller
         return ProductVariantResource::make($this->repo->showByUuid($cpvUuid, $request->validated()));
     }
 
-    public function otherSellers(GeneralListRequest $request, ProductVariant $productVariant): JsonResponse
+    public function otherSellers(GeneralListRequest $request, ProductVariant $productVariant): AnonymousResourceCollection
     {
-        $paginated = $this->repo->otherSellers($productVariant, $request->validated());
-
-        $data = $paginated->through(function ($cpv) {
-            return [
-                'uuid'          => $cpv->uuid,
-                'price'         => $cpv->price,
-                'price_final'   => $cpv->price_final,
-                'has_discount'  => $cpv->price != $cpv->price_final,
-                'discount_type' => $cpv->discount_type,
-                'discount'      => $cpv->discount,
-                'stock'         => $cpv->stock,
-                'city'          => $cpv->relationLoaded('city') ? CitiesListResource::make($cpv->city) : null,
-                'seller_label'  => $cpv->company?->getSellerLabel(),
-                'images'        => $cpv->relationLoaded('media')
-                    ? $cpv->getMedia('company_product_variant_images')->map(fn($m) => ['url' => \App\Models\CompanyProductVariant::webUrlForMedia($m)])
-                    : [],
-            ];
-        });
-
-        return response()->json($data);
+        return CompanyProductVariantListResource::collection(
+            $this->repo->otherSellers($productVariant, $request->validated())
+        );
     }
 }

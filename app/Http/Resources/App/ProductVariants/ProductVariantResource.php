@@ -104,23 +104,10 @@ class ProductVariantResource extends JsonResource
             }),
             'sellers_count' => $this->whenNotNull($this->sellers_count),
 
-            // Other sellers
-            'other_sellers' => $this->when(isset($this->other_sellers), function () {
-                return $this->other_sellers->map(fn(CompanyProductVariant $cpv) => [
-                    'uuid'          => $cpv->uuid,
-                    'seller_label'  => $cpv->company?->getSellerLabel(),
-                    'price'         => $cpv->price,
-                    'price_final'   => $cpv->price_final,
-                    'has_discount'  => $cpv->price != $cpv->price_final,
-                    'discount_type' => $cpv->discount_type,
-                    'discount'      => $cpv->discount,
-                    'stock'         => $cpv->stock,
-                    'city'          => $cpv->relationLoaded('city') ? CitiesListResource::make($cpv->city) : null,
-                    'images'        => $cpv->relationLoaded('media')
-                        ? $cpv->getMedia('company_product_variant_images')->map(fn($m) => ['url' => CompanyProductVariant::webUrlForMedia($m)])
-                        : [],
-                ]);
-            }),
+            // Other sellers, in the canonical product list structure
+            'other_sellers' => CompanyProductVariantListResource::collection(
+                $this->whenNotNull($this->other_sellers)
+            ),
             'other_sellers_total' => $this->whenNotNull($this->other_sellers_total),
         ];
     }

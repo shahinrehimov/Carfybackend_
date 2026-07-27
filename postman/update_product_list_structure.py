@@ -93,8 +93,31 @@ ADDED = """UPDATED (2026-07-27) — nothing was removed or renamed here. Added t
 SHOW_NOTE = """UPDATED (2026-07-27) — the `seller` block gained `store_code` and `label`.
   `seller_label` is kept for backwards compatibility but is deprecated; use
   `label`. The same keys were added to `sets[].seller`.
-  `related_products[]` follows the canonical product list structure (see the
-  Products / Load description)."""
+  BREAKING: `related_products[]` and `other_sellers[]` now follow the canonical
+  product list structure below. In `other_sellers[]` the old top-level
+  `seller_label`, `city` and `images` moved into the `seller` object
+  (`seller.label`, `seller.city`, `seller.images`). `other_sellers_total`
+  is unchanged."""
+
+OTHER_SELLERS = """BREAKING (2026-07-27) — both the item shape and the pagination envelope changed.
+
+Item fields:
+  - `seller_label` (top level) -> `seller.label`
+  - `city`         (top level) -> `seller.city`   ({ id, title })
+  - `images`       (top level) -> `seller.images`
+  - unchanged: uuid, price, price_final, has_discount, discount_type,
+    discount, stock
+  - added: seller.store_code, variant_slug, title, oem_code, hover_image,
+    is_set, discount_type_title, in_wishlist, in_basket, basket_quantity,
+    price_in_basket, price_final_in_basket, ratings, product
+
+Pagination envelope — now identical to every other list endpoint:
+  before: { "current_page": 1, "data": [...], "first_page_url": ..., "total": 2, ... }
+  after:  { "data": [...],
+            "links": { "first", "last", "prev", "next" },
+            "meta":  { "current_page", "from", "last_page", "links",
+                       "path", "per_page", "to", "total" } }
+  So response.current_page -> response.meta.current_page, etc."""
 
 # path -> (mode, note). mode: "replace" appends the note + canonical block,
 # "note" appends the note only.
@@ -104,9 +127,10 @@ UPDATES = {
     ("App", "Wishlist", "Load"): ("full", BREAKING),
     ("App", "Groups", "Single with products"): ("note", ADDED),
     ("App", "Groups", "Bulk with products"): ("note", ADDED),
-    ("App", "Products", "Show by uuid"): ("note", SHOW_NOTE),
-    ("App", "Products", "Show by slug"): ("note", SHOW_NOTE),
-    ("App", "Products", "Show by slug (only sub category)"): ("note", SHOW_NOTE),
+    ("App", "Products", "Show by uuid"): ("full", SHOW_NOTE),
+    ("App", "Products", "Show by slug"): ("full", SHOW_NOTE),
+    ("App", "Products", "Show by slug (only sub category)"): ("full", SHOW_NOTE),
+    ("App", "Products", "Other Sellers"): ("full", OTHER_SELLERS),
     ("App", "Orders", "Checkout Preview"): (
         "note",
         "UPDATED (2026-07-27) — `sellers[].items[].product` follows the canonical\n"
@@ -126,6 +150,16 @@ UPDATES = {
 
 MARKER = "CANONICAL PRODUCT LIST ITEM"
 NOTE_MARKER = "(2026-07-27)"
+
+# Corrections to base description text that was inaccurate. path -> (old, new).
+BASE_FIXES = {
+    ("App", "Products", "Other Sellers"): (
+        "Excludes the currently-selected seller listing from the results.",
+        "Returns ALL active approved listings for the variant — the route takes no\n"
+        "seller param, so the currently-selected listing is NOT excluded. Filter it\n"
+        "out client-side by uuid. (products/show?other_sellers=yes does exclude it.)",
+    ),
+}
 
 
 def walk(items, path=()):
@@ -154,6 +188,13 @@ def main():
             index = description.find(marker)
             if index != -1:
                 description = description[:index].rstrip()
+
+        if path in BASE_FIXES:
+            old, new = BASE_FIXES[path]
+            if old in description:
+                description = description.replace(old, new)
+            elif new not in description:
+                raise SystemExit(f"Base text to fix not found in {' / '.join(path)}")
 
         block = note if mode == "note" else note + "\n\n" + CANONICAL
         request["description"] = (description + "\n\n" + block).strip() + "\n"

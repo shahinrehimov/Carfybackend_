@@ -1163,6 +1163,8 @@ class ProductVariantRepository
             $otherSellersTotal = $otherSellersQuery->count();
             $otherSellers = $otherSellersQuery->limit(50)->get();
 
+            $this->prepareCpvsForListing($otherSellers, $productVariant);
+
             $productVariant->other_sellers = $otherSellers;
             $productVariant->other_sellers_total = $otherSellersTotal;
         }
@@ -1238,12 +1240,39 @@ class ProductVariantRepository
 
     public function otherSellers(ProductVariant $productVariant, array $validated = []): LengthAwarePaginator
     {
-        return $productVariant->companyListings()
+        $paginator = $productVariant->companyListings()
             ->where('is_active', true)
             ->where('approval_status', ProductVariantApprovalStatusEnum::APPROVED->value)
             ->with(['city', 'city.translatable', 'media', 'company'])
             ->orderBy('price')
             ->paginate($validated['limit'] ?? 20);
+
+        $this->prepareCpvsForListing(collect($paginator->items()), $productVariant);
+
+        return $paginator;
+    }
+
+    /**
+     * Get a set of listings of one and the same variant ready for the canonical
+     * product list resource: every listing shares that variant, so it is loaded
+     * once and handed to each listing instead of being queried per row.
+     */
+    private function prepareCpvsForListing(SupportCollection $cpvs, ProductVariant $productVariant): void
+    {
+        if ($cpvs->isEmpty()) {
+            return;
+        }
+
+        $productVariant->loadMissing(
+            ProductService::instance()->getVariantRelationsForSite('', true)['with']
+        );
+
+        foreach ($cpvs as $cpv) {
+            $cpv->setRelation('productVariant', $productVariant);
+        }
+
+        $this->attachWishlistAndBasketToCpvsCollection($cpvs);
+        $this->attachRatingsToCpvsCollection($cpvs);
     }
 
     public function generateSearchToken(): string
