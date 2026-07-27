@@ -21,6 +21,8 @@ Every product list in the app/site API returns this exact object. No key is
 ever conditionally omitted — a missing value is null (or 0 / [] where noted).
 
 {
+  "id": 2,                           // product variant id — local key only, NOT
+                                     // unique in other-sellers (use uuid there)
   "uuid": "51ff7a5f-...",            // CPV uuid — add to basket/wishlist, products/show/{uuid}
   "variant_slug": "2",               // detail URL ?variant=
   "title": "Test salam az 2",
@@ -74,14 +76,15 @@ NAVIGATING TO THE DETAIL PAGE
             (no parent slug: GET /products/show/{sub_category_slug}/{product.slug}?...)
   The slug route REQUIRES `seller` and it is seller.store_code, not a uuid."""
 
-BREAKING = """BREAKING (2026-07-27) — this endpoint moved to the canonical list structure:
-  - `id` removed          -> use `uuid` (CPV) or `product.id`
-  - `slug`                -> renamed to `variant_slug`
-  - `seller.seller_label` -> renamed to `seller.label`
-  - added: `seller.store_code`, `variant_slug`, `ratings`
-  - `basket_quantity` is now always present (0 when not in basket)
-  - `product.category_slugs` now always has both parent + sub keys
-  Unchanged: hover_image, seller.images, price_in_basket,
+BREAKING = """BREAKING (2026-07-27) — this endpoint moved to the canonical list structure.
+  Only two fields were renamed:
+  - `slug`                -> `variant_slug` (it is the VARIANT slug; build the
+                             product URL from `product.slug`)
+  - `seller.seller_label` -> `seller.label`
+  Added: `seller.store_code`, `ratings`; `basket_quantity` is now always
+  present (0 when not in basket); `product.category_slugs` always has both
+  parent + sub keys.
+  Unchanged: id, uuid, hover_image, seller.images, price_in_basket,
   price_final_in_basket, sets, and the basket_data block."""
 
 ADDED = """UPDATED (2026-07-27) — nothing was removed or renamed here. Added to each item:
@@ -107,9 +110,10 @@ Item fields:
   - `images`       (top level) -> `seller.images`
   - unchanged: uuid, price, price_final, has_discount, discount_type,
     discount, stock
-  - added: seller.store_code, variant_slug, title, oem_code, hover_image,
+  - added: id, seller.store_code, variant_slug, title, oem_code, hover_image,
     is_set, discount_type_title, in_wishlist, in_basket, basket_quantity,
     price_in_basket, price_final_in_basket, ratings, product
+    (`id` is the variant id and repeats across sellers here — key by `uuid`)
 
 Pagination envelope — now identical to every other list endpoint:
   before: { "current_page": 1, "data": [...], "first_page_url": ..., "total": 2, ... }

@@ -38,6 +38,11 @@ class CompanyProductVariantListResource extends JsonResource
         $basketQuantity = (int) ($this->basket_quantity ?? 0);
 
         return [
+            // Product variant id. Kept because clients use it as a list key and
+            // as the local identity when removing a row. Note it is NOT unique
+            // in other-sellers, where several listings share one variant — use
+            // `uuid` there.
+            'id'            => $variant?->id,
             'uuid'          => $this->uuid,
             'variant_slug'  => $variant?->slug,
             'title'         => $variant?->title,

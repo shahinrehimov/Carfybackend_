@@ -65,6 +65,7 @@ class ProductVariantsInBasketResource extends JsonResource
         $basketQuantity = (int) ($this->basket_quantity ?? 0);
 
         return [
+            'id' => $this->id,
             'uuid' => $this->uuid,
             'variant_slug' => $this->slug,
             'title' => $this->title,
