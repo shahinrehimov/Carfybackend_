@@ -1231,6 +1231,7 @@ class ProductVariantRepository
             ->get();
 
         $this->attachWishlistAndBasketToCpvsCollection($relatedCpvs);
+        $this->attachRatingsToCpvsCollection($relatedCpvs);
 
         return $relatedCpvs;
     }
@@ -1467,8 +1468,9 @@ class ProductVariantRepository
     }
 
     /**
-     * Attach in_wishlist / in_basket flags to a Collection of CPV models.
-     * Can be called from any context that builds a CPV list (listing, groups, related).
+     * Attach in_wishlist / in_basket / basket_quantity to a Collection of CPV models.
+     * Can be called from any context that builds a CPV list (listing, groups, related,
+     * basket, wishlist).
      */
     public function attachWishlistAndBasketToCpvsCollection(SupportCollection $cpvs): void
     {
@@ -1490,16 +1492,17 @@ class ProductVariantRepository
             ->whereIn('company_product_variant_id', $cpvIds)
             ->pluck('company_product_variant_id');
 
-        $basketedIds = Basket::query()
+        $basketQuantities = Basket::query()
             ->where('userable_id', $user->id)
             ->where('userable_type', $user::class)
             ->whereNull('deleted_at')
             ->whereIn('company_product_variant_id', $cpvIds)
-            ->pluck('company_product_variant_id');
+            ->pluck('quantity', 'company_product_variant_id');
 
         foreach ($cpvs as $cpv) {
             $cpv->in_wishlist = $wishlistedIds->contains($cpv->id);
-            $cpv->in_basket = $basketedIds->contains($cpv->id);
+            $cpv->in_basket = $basketQuantities->has($cpv->id);
+            $cpv->basket_quantity = (int) ($basketQuantities->get($cpv->id) ?? 0);
         }
     }
 
@@ -1508,15 +1511,16 @@ class ProductVariantRepository
         $this->attachWishlistAndBasketToCpvsCollection(collect($paginator->items()));
     }
 
-    private function attachRatingsToCpvs(LengthAwarePaginator $paginator): void
+    /**
+     * Attach the approved review average/count to a Collection of CPV models.
+     */
+    public function attachRatingsToCpvsCollection(SupportCollection $cpvs): void
     {
-        $cpvs = collect($paginator->items());
-
         if ($cpvs->isEmpty()) {
             return;
         }
 
-        $cpvIds = $cpvs->pluck('id');
+        $cpvIds = $cpvs->pluck('id')->unique()->values();
 
         $ratingsMap = ProductReview::query()
             ->approved()
@@ -1533,6 +1537,11 @@ class ProductVariantRepository
                 'count' => $row ? (int) $row->count : 0,
             ];
         }
+    }
+
+    private function attachRatingsToCpvs(LengthAwarePaginator $paginator): void
+    {
+        $this->attachRatingsToCpvsCollection(collect($paginator->items()));
     }
 
     private function calculateCpvRating(CompanyProductVariant $cpv): array

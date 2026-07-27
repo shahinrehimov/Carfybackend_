@@ -2,7 +2,8 @@
 
 namespace App\Http\Resources\App\ProductVariants;
 
-use App\Http\Resources\App\Products\ProductsInBasketResource;
+use App\Http\Resources\App\CompanyProductVariants\CompanyProductVariantListResource;
+use App\Http\Resources\App\Products\ProductsResource;
 use App\Services\LangService;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -21,8 +22,7 @@ use Illuminate\Support\Str;
  * @property mixed $in_wishlist
  * @property mixed $in_basket
  * @property mixed $basket_quantity
- * @property mixed $price_in_basket
- * @property mixed $price_final_in_basket
+ * @property mixed $ratings
  * @property mixed $title
  * @property mixed $oem_code
  * @property mixed $seller_listing
@@ -32,7 +32,12 @@ use Illuminate\Support\Str;
 class ProductVariantsInBasketResource extends JsonResource
 {
     /**
-     * Transform the resource into an array.
+     * Basket / wishlist item.
+     *
+     * The item is always emitted in the canonical product list structure
+     * (see CompanyProductVariantListResource) so that basket, wishlist and
+     * products load are interchangeable on the client side. Only the nested
+     * `sets` breakdown is specific to this resource.
      *
      * @param Request $request
      * @return array
@@ -42,15 +47,29 @@ class ProductVariantsInBasketResource extends JsonResource
     {
         $sellerListing = $this->seller_listing ?? null;
 
+        $base = $sellerListing
+            ? CompanyProductVariantListResource::make($sellerListing)->resolve($request)
+            : $this->variantOnlyPayload();
+
+        return $base + [
+            'sets' => ProductVariantsInBasketResource::collection($this->whenLoaded('sets')),
+        ];
+    }
+
+    /**
+     * Fallback for variants without a seller listing (set items, legacy rows).
+     * Mirrors the canonical structure key for key.
+     */
+    private function variantOnlyPayload(): array
+    {
+        $basketQuantity = (int) ($this->basket_quantity ?? 0);
+
         return [
-            'id' => $this->id,
-            'uuid' => $sellerListing?->uuid ?? $this->uuid,
-            'slug' => $this->slug,
-            'oem_code' => $this->oem_code,
+            'uuid' => $this->uuid,
+            'variant_slug' => $this->slug,
             'title' => $this->title,
-            'hover_image' => $sellerListing
-                ? ($sellerListing->listing_hover_image ?? $this->whenLoaded('media', fn() => $this->hover_image))
-                : $this->whenLoaded('media', fn() => $this->hover_image),
+            'oem_code' => $this->oem_code,
+            'hover_image' => $this->relationLoaded('media') ? $this->hover_image : null,
             'is_set' => $this->isSet(),
             'stock' => $this->stock,
             'price' => $this->price,
@@ -63,27 +82,18 @@ class ProductVariantsInBasketResource extends JsonResource
                     ->getLang('discount_types_' . $this->discount_type)
                 : null,
             'discount' => $this->discount,
-            'in_wishlist'    => $this->in_wishlist ?? false,
-            'in_basket'      => $this->in_basket ?? false,
-            'basket_quantity' => $this->whenNotNull($this->basket_quantity),
-            'price_in_basket' => $this->price_in_basket,
-            'price_final_in_basket' => $this->price_final_in_basket,
+            'in_wishlist' => $this->in_wishlist ?? false,
+            'in_basket' => $this->in_basket ?? false,
+            'basket_quantity' => $basketQuantity,
+            'price_in_basket' => round($this->price_in_basket, 2),
+            'price_final_in_basket' => round($this->price_final_in_basket, 2),
+            'ratings' => $this->ratings ?? ['average' => 0, 'count' => 0],
 
-            'seller' => $sellerListing ? [
-                'uuid'         => $sellerListing->uuid,
-                'seller_label' => $sellerListing->company?->getSellerLabel(),
-                'city'         => $sellerListing->relationLoaded('city') && $sellerListing->city ? [
-                    'id'    => $sellerListing->city->id,
-                    'title' => $sellerListing->city->getLang('title'),
-                ] : null,
-                'images'       => $sellerListing->relationLoaded('media')
-                    ? $sellerListing->getMedia('company_product_variant_images')->map(fn($m) => ['url' => \App\Models\CompanyProductVariant::webUrlForMedia($m)])
-                    : [],
-            ] : null,
+            'seller' => null,
 
-            'product' => ProductsInBasketResource::make($this->whenLoaded('product')),
-
-            'sets' => ProductVariantsInBasketResource::collection($this->whenLoaded('sets')),
+            'product' => $this->relationLoaded('product') && $this->product
+                ? ProductsResource::make($this->product)
+                : null,
         ];
     }
 }

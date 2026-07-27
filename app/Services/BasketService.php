@@ -8,6 +8,7 @@ use App\Models\Guest;
 use App\Models\Order;
 use App\Models\ProductVariant;
 use App\Models\User;
+use App\Repositories\ProductVariantRepository;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
@@ -354,7 +355,32 @@ class BasketService
             $this->calculateBasketQuantity($product);
         }
 
+        $this->attachListingFlags($products);
+
         return [$products, $this->calculateBasketData($products)];
+    }
+
+    /**
+     * Fill in the in_wishlist / in_basket / ratings data the canonical product
+     * list structure expects, both on the seller listing and on the variant.
+     */
+    private function attachListingFlags(Collection $productVariants): void
+    {
+        $cpvs = $productVariants
+            ->map(fn(ProductVariant $pv) => $pv->seller_listing ?? null)
+            ->filter()
+            ->values();
+
+        $repository = new ProductVariantRepository();
+        $repository->attachWishlistAndBasketToCpvsCollection($cpvs);
+        $repository->attachRatingsToCpvsCollection($cpvs);
+
+        foreach ($productVariants as $productVariant) {
+            $cpv = $productVariant->seller_listing ?? null;
+
+            $productVariant->in_wishlist = $cpv?->in_wishlist ?? false;
+            $productVariant->in_basket = $cpv?->in_basket ?? true;
+        }
     }
 
     public function calculateBasketData(?Collection $productVariants = null): array
@@ -381,9 +407,16 @@ class BasketService
             $user = UserService::instance()->getUserOrGuest();
         }
 
+        // Site relations are needed because the checkout preview renders these
+        // listings through the canonical product list resource.
+        $relations = ProductService::instance()->getVariantRelationsForSite('', true);
+
         $productVariants = $user
             ->basketProductVariants()
             ->active()
+            ->when(count($relations['with']) > 0, fn($q) => $q->with($relations['with']))
+            ->when(count($relations['exists']) > 0, fn($q) => $q->withExists($relations['exists']))
+            ->when(count($relations['counts']) > 0, fn($q) => $q->withCount($relations['counts']))
             ->with([
                 'sets' => function ($query) {
                     $query->active();
@@ -427,6 +460,10 @@ class BasketService
             if ($cpvId && $cpvs->has($cpvId)) {
                 $cpv = $cpvs->get($cpvId);
 
+                // Swap in the variant that was already loaded with every relation
+                // the canonical list resource needs, so nothing gets lazy loaded.
+                $cpv->setRelation('productVariant', $productVariant);
+
                 $productVariant->seller_listing = $cpv;
                 // Override price fields with seller-specific raw values (bypass casts)
                 $productVariant->setRawAttributes(array_merge(
@@ -447,6 +484,12 @@ class BasketService
     private function calculateBasketQuantity(ProductVariant $productVariant, ?int $quantity = null, ?array $sets = null): void
     {
         $productVariant->basket_quantity = $quantity === null ? ($productVariant->pivot->quantity ?? 0) : $quantity;
+
+        // Keep the seller listing in sync so price_in_basket resolves on it too.
+        if ($productVariant->seller_listing ?? null) {
+            $productVariant->seller_listing->basket_quantity = $productVariant->basket_quantity;
+            $productVariant->seller_listing->in_basket = true;
+        }
 
         if ($productVariant->isSet()) {
             if ($sets === null) {

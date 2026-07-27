@@ -20,34 +20,31 @@ class ProductsResource extends JsonResource
     /**
      * Transform the resource into an array.
      *
+     * Every key is always present so that any list embedding a product exposes
+     * the exact same structure. Category slugs in particular are required by the
+     * clients to build the product detail URL, so they must never be omitted.
+     *
      * @param Request $request
      * @return array
      */
 
     public function toArray(Request $request): array
     {
-        $categorySlugs = $this->whenLoaded('mainCategory', function () {
-            $data = [
-                'sub_category_slug' => $this->mainCategory?->slug,
-            ];
-
-            if ($this->mainCategory && $this->mainCategory->relationLoaded('parent') && $this->mainCategory->parent) {
-                $data['parent_category_slug'] = $this->mainCategory->parent?->slug;
-            }
-
-            return $data;
-        });
+        $mainCategory = $this->relationLoaded('mainCategory') ? $this->mainCategory : null;
 
         return [
             'id' => $this->id,
             'uuid' => $this->uuid,
             'slug' => $this->slug,
-            'category_slugs' => $categorySlugs,
+            'category_slugs' => [
+                'parent_category_slug' => $mainCategory && $mainCategory->relationLoaded('parent')
+                    ? $mainCategory->parent?->slug
+                    : null,
+                'sub_category_slug' => $mainCategory?->slug,
+            ],
             'title' => $this->getLang('title'),
             'description_short' => $this->getLang('description_short'),
-            'hover_image' => $this->whenLoaded('media', function () {
-                return $this->hover_image;
-            }),
+            'hover_image' => $this->relationLoaded('media') ? $this->hover_image : null,
             'is_set' => $this->isSet(),
             'brand' => BrandsListResource::make($this->whenLoaded('brand')),
         ];

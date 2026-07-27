@@ -3,6 +3,7 @@
 namespace App\Http\Resources\App\CompanyProductVariants;
 
 use App\Http\Resources\App\Products\ProductsResource;
+use App\Models\CompanyProductVariant;
 use App\Services\LangService;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -22,12 +23,19 @@ use Illuminate\Support\Str;
  * @property mixed       $city
  * @property mixed       $productVariant
  * @property mixed       $ratings
+ * @property mixed       $basket_quantity
  */
 class CompanyProductVariantListResource extends JsonResource
 {
+    /**
+     * Canonical product list item. Every product list in the app/site API
+     * (products load, groups, related, basket, wishlist, order items) returns
+     * this exact structure, so no key may be conditionally omitted.
+     */
     public function toArray(Request $request): array
     {
         $variant = $this->productVariant;
+        $basketQuantity = (int) ($this->basket_quantity ?? 0);
 
         return [
             'uuid'          => $this->uuid,
@@ -49,25 +57,32 @@ class CompanyProductVariantListResource extends JsonResource
             'discount'    => $this->discount,
             'in_wishlist' => $this->in_wishlist ?? false,
             'in_basket'   => $this->in_basket ?? false,
-            'ratings'     => $this->whenNotNull($this->ratings),
+            'basket_quantity' => $basketQuantity,
+            'price_in_basket' => round($this->price * $basketQuantity, 2),
+            'price_final_in_basket' => round($this->price_final * $basketQuantity, 2),
+            'ratings'     => $this->ratings ?? ['average' => 0, 'count' => 0],
 
             'seller' => [
                 'uuid'       => $this->uuid,
                 'store_code' => $this->company?->store_code,
                 'label'      => $this->company?->getSellerLabel(),
-                'city'       => $this->when(
-                    $this->relationLoaded('city') && $this->city,
-                    fn() => [
+                'city'       => $this->relationLoaded('city') && $this->city
+                    ? [
                         'id'    => $this->city->id,
                         'title' => $this->city->getLang('title'),
                     ]
-                ),
+                    : null,
+                'images'     => $this->relationLoaded('media')
+                    ? $this->getMedia('company_product_variant_images')
+                        ->map(fn($media) => ['url' => CompanyProductVariant::webUrlForMedia($media)])
+                        ->values()
+                        ->all()
+                    : [],
             ],
 
-            'product' => $this->when(
-                $variant?->relationLoaded('product'),
-                fn() => ProductsResource::make($variant->product)
-            ),
+            'product' => $variant?->relationLoaded('product') && $variant->product
+                ? ProductsResource::make($variant->product)
+                : null,
         ];
     }
 }

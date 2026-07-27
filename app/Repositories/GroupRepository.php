@@ -386,7 +386,9 @@ class GroupRepository
             ->inRandomOrder()
             ->get();
 
-        (new ProductVariantRepository())->attachWishlistAndBasketToCpvsCollection($cpvs);
+        $productVariantRepository = new ProductVariantRepository();
+        $productVariantRepository->attachWishlistAndBasketToCpvsCollection($cpvs);
+        $productVariantRepository->attachRatingsToCpvsCollection($cpvs);
 
         return $cpvs;
     }

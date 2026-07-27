@@ -90,6 +90,8 @@ class ProductVariantResource extends JsonResource
                 $sl = $this->seller_listing;
                 return [
                     'uuid'         => $sl->uuid,
+                    'store_code'   => $sl->company?->store_code,
+                    'label'        => $sl->company?->getSellerLabel(),
                     'seller_label' => $sl->company?->getSellerLabel(),
                     'city'         => $sl->relationLoaded('city')
                         ? CitiesListResource::make($sl->city)

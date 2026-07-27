@@ -68,6 +68,8 @@ class ProductVariantsResource extends JsonResource
 
             'seller' => $this->seller_listing ? [
                 'uuid'         => $this->seller_listing->uuid,
+                'store_code'   => $this->seller_listing->company?->store_code,
+                'label'        => $this->seller_listing->company?->getSellerLabel(),
                 'seller_label' => $this->seller_listing->company?->getSellerLabel(),
                 'city'         => $this->seller_listing->relationLoaded('city') && $this->seller_listing->city ? [
                     'id'    => $this->seller_listing->city->id,

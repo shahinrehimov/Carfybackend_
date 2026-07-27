@@ -6,6 +6,7 @@ use App\Models\CompanyProductVariant;
 use App\Models\Guest;
 use App\Models\ProductVariant;
 use App\Models\User;
+use App\Repositories\ProductVariantRepository;
 use Carbon\Carbon;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
@@ -110,7 +111,9 @@ class WishlistService
 
     private function batchLoadSellerData(LengthAwarePaginator $productVariants): void
     {
-        $cpvIds = collect($productVariants->items())
+        $items = collect($productVariants->items());
+
+        $cpvIds = $items
             ->map(fn($pv) => $pv->pivot->company_product_variant_id ?? null)
             ->filter()
             ->unique()
@@ -124,13 +127,21 @@ class WishlistService
                 ->keyBy('id')
             : collect();
 
-        foreach ($productVariants as $productVariant) {
+        $attachedCpvs = collect();
+
+        foreach ($items as $productVariant) {
             $productVariant->in_wishlist = true;
 
             $cpvId = $productVariant->pivot->company_product_variant_id ?? null;
 
             if ($cpvId && $cpvs->has($cpvId)) {
                 $cpv = $cpvs->get($cpvId);
+
+                // The variant is already fully loaded here (media, product,
+                // categories, options), so hand it to the listing to keep the
+                // canonical list resource from lazy loading anything.
+                $cpv->setRelation('productVariant', $productVariant);
+                $attachedCpvs->push($cpv);
 
                 $productVariant->seller_listing = $cpv;
                 $productVariant->setRawAttributes(array_merge(
@@ -145,6 +156,19 @@ class WishlistService
                     ]
                 ), true);
             }
+        }
+
+        $repository = new ProductVariantRepository();
+        $repository->attachWishlistAndBasketToCpvsCollection($attachedCpvs);
+        $repository->attachRatingsToCpvsCollection($attachedCpvs);
+
+        // Mirror the listing flags onto the variant for consumers reading them there.
+        foreach ($items as $productVariant) {
+            $cpv = $productVariant->seller_listing ?? null;
+
+            $productVariant->in_wishlist = $cpv?->in_wishlist ?? true;
+            $productVariant->in_basket = $cpv?->in_basket ?? false;
+            $productVariant->basket_quantity = $cpv?->basket_quantity ?? 0;
         }
     }
 
