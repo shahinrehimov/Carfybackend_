@@ -2,7 +2,6 @@
 
 namespace App\Http\Requests\Sellers\Products;
 
-use App\Models\Brand;
 use App\Models\Category;
 use App\Models\Product;
 use App\Models\ProductVariant;
@@ -55,7 +54,6 @@ class ProductUpdateRequest extends FormRequest
             'sets.*.product_variant_id' => ['required', 'integer', Rule::exists(ProductVariant::class, 'id')->where('is_active', true)->where('is_set', 0)->whereNull('deleted_at')],
             'sets.*.quantity' => ['required', 'integer', 'min:1'],
 
-            'brand_id' => ['required', 'integer', Rule::exists(Brand::class, 'id')->where('is_active', true)->whereNull('deleted_at')],
             'main_category_id' => ['required', 'integer', Rule::in($this->categories ?? []), Rule::exists(Category::class, 'id')->where('is_active', true)->whereNull('deleted_at')],
             'categories' => ['required', 'array', 'min:1'],
             'categories.*' => ['required', 'integer', Rule::exists(Category::class, 'id')->where('is_active', true)->whereNull('deleted_at')],

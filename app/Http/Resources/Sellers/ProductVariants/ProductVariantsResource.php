@@ -2,7 +2,7 @@
 
 namespace App\Http\Resources\Sellers\ProductVariants;
 
-use App\Http\Resources\Admin\BrandModels\BrandModelsListResource;
+use App\Services\FitmentPresenter;
 use App\Http\Resources\Admin\Cities\CitiesListResource;
 use App\Http\Resources\Admin\Groups\GroupsListResource;
 use App\Http\Resources\Sellers\Products\ProductsResource;
@@ -106,8 +106,13 @@ class ProductVariantsResource extends JsonResource
                 : null,
             'discount' => $this->discount,
             'city' => CitiesListResource::make($this->whenLoaded('city')),
-            'brand_models' => BrandModelsListResource::collection($this->whenLoaded('brandModels')),
-            'year' => $this->year,
+            // Deprecated: derived from fitments so existing clients keep working.
+            'brand_models' => FitmentPresenter::instance()->brandModelsFor($this->resource),
+            'fitments' => FitmentPresenter::instance()->forVariant($this->resource),
+            'is_universal' => $this->is_universal,
+            'year' => $this->year, // deprecated, use year_from / year_to
+            'year_from' => $this->year_from,
+            'year_to' => $this->year_to,
             'is_default' => $this->isDefault(),
             'is_active' => $this->isActive(),
             'approval_status' => $this->approval_status,

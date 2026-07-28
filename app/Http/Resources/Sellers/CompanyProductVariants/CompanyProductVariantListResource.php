@@ -2,7 +2,7 @@
 
 namespace App\Http\Resources\Sellers\CompanyProductVariants;
 
-use App\Http\Resources\Admin\BrandModels\BrandModelsListResource;
+use App\Services\FitmentPresenter;
 use App\Http\Resources\Admin\Cities\CitiesListResource;
 use App\Http\Resources\Sellers\Products\ProductsResource;
 use App\Services\LangService;
@@ -42,10 +42,13 @@ class CompanyProductVariantListResource extends JsonResource
                     'hover_image' => $variant->relationLoaded('media') ? $variant->hover_image : null,
                     'is_set' => $variant->isSet(),
                     'is_creator' => $variant->company_id === $this->company_id,
-                    'brand_models' => $variant->relationLoaded('brandModels')
-                        ? BrandModelsListResource::collection($variant->brandModels)
-                        : [],
-                    'year' => $variant->year,
+                    // Deprecated: derived from fitments so existing clients keep working.
+                    'brand_models' => FitmentPresenter::instance()->brandModelsFor($variant),
+                    'fitments' => FitmentPresenter::instance()->forVariant($variant),
+                    'is_universal' => $variant->is_universal,
+                    'year' => $variant->year, // deprecated, use year_from / year_to
+                    'year_from' => $variant->year_from,
+                    'year_to' => $variant->year_to,
                     'has_pending_revision' => $variant->relationLoaded('pendingRevision')
                         ? $variant->pendingRevision->isNotEmpty()
                         : false,

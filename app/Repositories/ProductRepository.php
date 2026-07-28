@@ -123,7 +123,7 @@ class ProductRepository
                 }
             })
             ->when(count($brandsIds) > 0, function (Builder $builder) use ($brandsIds) {
-                $builder->whereIn('products.brand_id', $brandsIds);
+                $builder->whereHas('variants', fn (Builder $query) => $query->fitsBrands($brandsIds));
             })
             ->when(count($categoriesIds) > 0, function (Builder $builder) use ($categoriesIds) {
                 $builder->whereHas('categoriesRel', function (Builder $query) use ($categoriesIds) {
@@ -257,8 +257,6 @@ class ProductRepository
                 'mainCategory.translatable',
                 'categories',
                 'categories.translatable',
-                'brand',
-                'brand.translatable',
             ])
             ->loadCount([
                 'variants',
@@ -422,7 +420,6 @@ class ProductRepository
                 'company_id'  => $companyId,
                 'status'      => 'pending',
                 'data'        => [
-                    'brand_id'         => $validated['brand_id'] ?? null,
                     'main_category_id' => $validated['main_category_id'] ?? null,
                     'categories'       => $validated['categories'] ?? [],
                     'sets'             => $validated['sets'] ?? [],
@@ -445,10 +442,6 @@ class ProductRepository
             $data = $revision->data;
 
             $updateData = [];
-
-            if (!empty($data['brand_id'])) {
-                $updateData['brand_id'] = $data['brand_id'];
-            }
 
             if (!empty($data['main_category_id'])) {
                 $updateData['main_category_id'] = $data['main_category_id'];

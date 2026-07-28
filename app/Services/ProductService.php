@@ -115,10 +115,6 @@ class ProductService
                 },
                 $prefix . 'translatable',
                 $prefix . 'media',
-                $prefix . 'brand',
-                $prefix . 'brand.translatable',
-                $prefix . 'brand.brandModels',
-                $prefix . 'brand.brandModels.translatable',
                 $prefix . 'mainCategory',
                 $prefix . 'mainCategory.parent',
             ];
@@ -126,10 +122,6 @@ class ProductService
             $arr['with'] = [
                 $prefix . 'translatable',
                 $prefix . 'media',
-                $prefix . 'brand',
-                $prefix . 'brand.translatable',
-                $prefix . 'brand.brandModels',
-                $prefix . 'brand.brandModels.translatable',
                 $prefix . 'mainCategory',
                 $prefix . 'mainCategory.parent',
             ];

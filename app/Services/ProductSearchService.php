@@ -64,8 +64,9 @@ class ProductSearchService
             ->with([
                 'productVariant',
                 'productVariant.product.translatable',
-                'productVariant.product.brand.translatable',
                 'productVariant.product.categories.translatable',
+                'productVariant.fitments.brand.translatable',
+                'productVariant.fitments.brandModel.translatable',
             ])
             ->get();
 

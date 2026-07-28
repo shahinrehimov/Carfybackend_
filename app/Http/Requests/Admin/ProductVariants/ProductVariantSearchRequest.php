@@ -31,6 +31,7 @@ class ProductVariantSearchRequest extends GeneralListRequest
         return parent::rules() + [
                 'product_id' => ['nullable', 'integer', Rule::exists(Product::class, 'id')->whereNull('deleted_at')],
                 'is_set' => ['nullable', 'string', 'in:yes,no'],
+                'is_universal' => ['nullable', 'string', 'in:yes,no'],
                 'set_id' => ['nullable', 'integer', Rule::exists(ProductVariant::class, 'id')->where('is_active', true)->where('is_set', true)->whereNull('deleted_at')],
                 'group_id' => ['nullable', 'integer', Rule::exists(Group::class, 'id')->where('is_active', true)->whereNull('deleted_at')],
                 'company_id' => ['nullable', 'integer', Rule::exists(Company::class, 'id')->whereNull('deleted_at')],

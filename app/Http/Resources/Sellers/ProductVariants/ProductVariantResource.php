@@ -2,7 +2,7 @@
 
 namespace App\Http\Resources\Sellers\ProductVariants;
 
-use App\Http\Resources\Admin\BrandModels\BrandModelsListResource;
+use App\Services\FitmentPresenter;
 use App\Http\Resources\Admin\Cities\CitiesListResource;
 use App\Http\Resources\Admin\Groups\GroupsListResource;
 use App\Http\Resources\Sellers\Products\ProductsListResource;
@@ -21,7 +21,6 @@ use Illuminate\Support\Str;
  * @property mixed $main_image
  * @property mixed $hover_image
  * @property mixed $images
- * @property mixed $brand_id
  * @property mixed $stock
  * @property mixed $price
  * @property mixed $price_final
@@ -74,8 +73,13 @@ class ProductVariantResource extends JsonResource
             'discount_start_at' => $this->discount_start_at?->toDatetimeString(),
             'discount_end_at' => $this->discount_end_at?->toDatetimeString(),
             'city' => CitiesListResource::make($this->whenLoaded('city')),
-            'brand_models' => BrandModelsListResource::collection($this->whenLoaded('brandModels')),
-            'year' => $this->year,
+            // Deprecated: derived from fitments so existing clients keep working.
+            'brand_models' => FitmentPresenter::instance()->brandModelsFor($this->resource),
+            'fitments' => FitmentPresenter::instance()->forVariant($this->resource),
+            'is_universal' => $this->is_universal,
+            'year' => $this->year, // deprecated, use year_from / year_to
+            'year_from' => $this->year_from,
+            'year_to' => $this->year_to,
             'translations' => $this->translations,
             'is_default' => $this->isDefault(),
             'is_active' => $this->isActive(),

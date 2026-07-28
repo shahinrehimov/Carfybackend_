@@ -56,7 +56,6 @@ class Product extends Model implements TranslatableInterface, HasMedia
         'slug',
         'is_set',
         'main_category_id',
-        'brand_id',
         'is_active',
     ];
 
@@ -144,9 +143,18 @@ class Product extends Model implements TranslatableInterface, HasMedia
         return $this->hasMany(ProductCategory::class);
     }
 
-    public function brand(): BelongsTo
+    /**
+     * Every fitment rule across this product's variants. A product can now span
+     * several car brands, or none at all when it is universal.
+     */
+    public function fitments(): HasManyThrough
     {
-        return $this->belongsTo(Brand::class);
+        return $this->hasManyThrough(
+            ProductVariantFitment::class,
+            ProductVariant::class,
+            'product_id',
+            'product_variant_id'
+        );
     }
 
     public function groups(): BelongsToMany

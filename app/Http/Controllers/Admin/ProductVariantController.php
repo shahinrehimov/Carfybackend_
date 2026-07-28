@@ -11,6 +11,7 @@ use App\Http\Resources\Sellers\ProductVariants\ProductVariantsResource;
 use App\Models\ProductVariant;
 use App\Models\ProductVariantRevision;
 use App\Repositories\ProductVariantRepository;
+use App\Services\FitmentPresenter;
 use App\Services\LangService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -89,7 +90,7 @@ class ProductVariantController extends Controller
     public function revisions(ProductVariant $productVariant): JsonResponse
     {
         $revisions = $productVariant->revisions()
-            ->with(['productVariant', 'productVariant.options', 'productVariant.options.option', 'productVariant.brandModels', 'media', 'company'])
+            ->with(['productVariant', 'productVariant.options', 'productVariant.options.option', 'productVariant.fitments.brand.translatable', 'productVariant.fitments.brandModel.translatable', 'media', 'company'])
             ->latest()
             ->get()
             ->map(fn(ProductVariantRevision $r) => $this->formatRevision($r));
@@ -128,11 +129,15 @@ class ProductVariantController extends Controller
             'status'             => $revision->status,
             'rejection_message'  => $revision->rejection_message,
             'company'            => $revision->company ? ['id' => $revision->company->id, 'title' => $revision->company->getLang('title')] : null,
-            'data'               => $revision->data,
+            // Fitment ids inside the raw payload are resolved to titles so the
+            // diff is readable; the rest of the payload is passed through as-is.
+            'data'               => array_merge($revision->data, [
+                'fitments' => FitmentPresenter::instance()->forRawRows($revision->data['fitments'] ?? []),
+            ]),
             'current'            => [
                 'oem_code'    => $pv->oem_code,
-                'brand_models' => $pv->brandModels->map(fn($m) => ['id' => $m->id, 'title' => $m->title])->values(),
-                'year'        => $pv->year,
+                'fitments'    => FitmentPresenter::instance()->forVariant($pv),
+                'is_universal' => $pv->is_universal,
                 'options'        => $pv->options->map(fn($o) => [
                     'option_id' => $o->product_option_id,
                     'value'     => $o->product_option_item_id ?? $o->value,

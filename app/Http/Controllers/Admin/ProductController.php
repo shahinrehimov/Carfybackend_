@@ -161,7 +161,6 @@ class ProductController extends Controller
                 : null,
             'data'             => $revision->data,
             'current'          => [
-                'brand_id'         => $product->brand_id,
                 'main_category_id' => $product->main_category_id,
             ],
             'images'           => [

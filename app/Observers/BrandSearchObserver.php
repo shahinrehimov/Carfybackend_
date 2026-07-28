@@ -14,7 +14,12 @@ class BrandSearchObserver
 {
     public function saved(Brand $brand): void
     {
-        $productIds = Product::query()->where('brand_id', $brand->id)->pluck('id')->all();
+        // Products reach a brand through their variants' fitment rules now, and a
+        // single product can span several brands.
+        $productIds = Product::query()
+            ->whereHas('fitments', fn ($query) => $query->where('product_variant_fitments.brand_id', $brand->id))
+            ->pluck('id')
+            ->all();
 
         ProductSearchService::instance()->reindexForProductIds($productIds);
     }

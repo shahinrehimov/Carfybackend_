@@ -12,6 +12,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 /**
@@ -61,8 +62,13 @@ class BrandModel extends Model implements TranslatableInterface
         return $this->belongsTo(Brand::class);
     }
 
+    public function fitments(): HasMany
+    {
+        return $this->hasMany(ProductVariantFitment::class);
+    }
+
     public function productVariants(): BelongsToMany
     {
-        return $this->belongsToMany(ProductVariant::class, 'product_variant_brand_models');
+        return $this->belongsToMany(ProductVariant::class, 'product_variant_fitments');
     }
 }

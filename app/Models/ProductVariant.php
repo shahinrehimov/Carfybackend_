@@ -50,6 +50,11 @@ use Spatie\MediaLibrary\InteractsWithMedia;
  * @property mixed $company_id
  * @property mixed $approval_status
  * @property mixed|null $approval_status_message
+ * @property Collection|mixed $fitments
+ * @property bool $is_universal
+ * @property int|null $year_from
+ * @property int|null $year_to
+ * @property int|null $year deprecated, use year_from / year_to
  */
 
 class ProductVariant extends Model implements HasMedia
@@ -74,7 +79,6 @@ class ProductVariant extends Model implements HasMedia
         'approval_status', // ProductVariantApprovalStatusEnum
         'approval_status_message', // nullable, max 3000
         'city_id',
-        'year',
     ];
 
     protected $casts = [
@@ -91,7 +95,6 @@ class ProductVariant extends Model implements HasMedia
         'main_image' => MainImageCast::class,
         'hover_image' => HoverImageCast::class,
         'images' => ImagesCast::class,
-        'year' => 'integer'
     ];
 
     protected array $cascadeDeletes = [
@@ -253,9 +256,150 @@ class ProductVariant extends Model implements HasMedia
         return $this->belongsTo(City::class);
     }
 
+    public function fitments(): HasMany
+    {
+        return $this->hasMany(ProductVariantFitment::class);
+    }
+
+    /**
+     * The concrete models this variant fits. Universal and brand-wide fitment rows
+     * name no model, so they are absent here by design — read fitments for those.
+     * Kept so existing resources keep resolving while clients migrate.
+     */
     public function brandModels(): BelongsToMany
     {
-        return $this->belongsToMany(BrandModel::class, 'product_variant_brand_models');
+        return $this->belongsToMany(BrandModel::class, 'product_variant_fitments');
+    }
+
+    /**
+     * Fits every car, whatever the brand.
+     */
+    public function getIsUniversalAttribute(): bool
+    {
+        return $this->fitments->contains(fn (ProductVariantFitment $fitment) => $fitment->brand_id === null);
+    }
+
+    /**
+     * Earliest covered year, or null when any fitment is open-ended on that side.
+     */
+    public function getYearFromAttribute(): ?int
+    {
+        return $this->yearBound('year_from', 'min');
+    }
+
+    /**
+     * Latest covered year, or null when any fitment is open-ended on that side.
+     */
+    public function getYearToAttribute(): ?int
+    {
+        return $this->yearBound('year_to', 'max');
+    }
+
+    /**
+     * Legacy single-year attribute, kept so app and site responses do not break
+     * while they move to year_from / year_to. Deprecated.
+     */
+    public function getYearAttribute(): ?int
+    {
+        return $this->year_from;
+    }
+
+    private function yearBound(string $column, string $aggregate): ?int
+    {
+        $fitments = $this->fitments;
+
+        // One open-ended row makes the whole variant unbounded on that side.
+        if ($fitments->isEmpty() || $fitments->contains(fn ($fitment) => $fitment->{$column} === null)) {
+            return null;
+        }
+
+        return (int) $fitments->{$aggregate}($column);
+    }
+
+    /**
+     * Listings that fit any of the given brands, plus universal ones.
+     */
+    public function scopeFitsBrands(Builder $builder, array $brandIds): void
+    {
+        if (! $brandIds) {
+            return;
+        }
+
+        $builder->whereHas('fitments', fn (Builder $query) => $query->where(
+            fn (Builder $inner) => $inner->whereIn('brand_id', $brandIds)->orWhereNull('brand_id')
+        ));
+    }
+
+    /**
+     * Listings that fit any of the given models, plus the wildcard rows covering
+     * them — "every model of this brand" and "every car".
+     */
+    public function scopeFitsModels(Builder $builder, array $modelIds): void
+    {
+        if (! $modelIds) {
+            return;
+        }
+
+        $brandIds = BrandModel::query()->whereKey($modelIds)->pluck('brand_id')->unique()->all();
+
+        $builder->whereHas('fitments', fn (Builder $query) => $query->where(
+            fn (Builder $inner) => $inner
+                ->whereIn('brand_model_id', $modelIds)
+                ->orWhere(fn (Builder $wildcard) => $wildcard
+                    ->whereNull('brand_model_id')
+                    ->where(fn (Builder $scope) => $scope
+                        ->whereNull('brand_id')
+                        ->orWhereIn('brand_id', $brandIds)))
+        ));
+    }
+
+    /**
+     * Listings whose covered years overlap the requested range.
+     */
+    public function scopeFitsYearRange(Builder $builder, ?int $min, ?int $max): void
+    {
+        if ($min === null && $max === null) {
+            return;
+        }
+
+        $builder->whereHas('fitments', function (Builder $query) use ($min, $max) {
+            if ($max !== null) {
+                $query->where(fn (Builder $q) => $q->whereNull('year_from')->orWhere('year_from', '<=', $max));
+            }
+
+            if ($min !== null) {
+                $query->where(fn (Builder $q) => $q->whereNull('year_to')->orWhere('year_to', '>=', $min));
+            }
+        });
+    }
+
+    /**
+     * Listings fitting one specific car. Model and year are matched against the
+     * same fitment row, so a variant fitting an X5 2012-2017 and an X3 2018-2022
+     * is not offered for an X5 2020.
+     */
+    public function scopeFitsCar(Builder $builder, ?int $brandModelId, ?int $year): void
+    {
+        if ($brandModelId === null) {
+            return;
+        }
+
+        $brandId = BrandModel::query()->whereKey($brandModelId)->value('brand_id');
+
+        $builder->whereHas('fitments', function (Builder $query) use ($brandModelId, $brandId, $year) {
+            $query->where(fn (Builder $inner) => $inner
+                ->where('brand_model_id', $brandModelId)
+                ->orWhere(fn (Builder $wildcard) => $wildcard
+                    ->whereNull('brand_model_id')
+                    ->where(fn (Builder $scope) => $scope
+                        ->whereNull('brand_id')
+                        ->orWhere('brand_id', $brandId))));
+
+            if ($year !== null) {
+                $query->where(fn (Builder $q) => $q->whereNull('year_from')->orWhere('year_from', '<=', $year))
+                    ->where(fn (Builder $q) => $q->whereNull('year_to')->orWhere('year_to', '>=', $year));
+            }
+        });
     }
 
     public function companyListings(): HasMany

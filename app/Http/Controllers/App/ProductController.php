@@ -73,13 +73,15 @@ class ProductController extends Controller
             ?->map(fn($item) => ['slug' => $item->slug, 'title' => $item->getLang('title')])
             ?? [];
 
-        $yearRange = ProductVariant::query()
-            ->whereHas('companyListings', fn($q) => $q
+        // Bounds come from the fitment rules now. Open-ended rules contribute no
+        // bound of their own, so the slider still spans what sellers actually
+        // listed rather than collapsing to a hardcoded window.
+        $yearRange = \App\Models\ProductVariantFitment::query()
+            ->whereHas('productVariant.companyListings', fn($q) => $q
                 ->where('is_active', true)
                 ->where('approval_status', \App\Enum\ProductVariantApprovalStatusEnum::APPROVED->value)
             )
-            ->whereNotNull('year')
-            ->selectRaw('MIN(year) as min_year, MAX(year) as max_year')
+            ->selectRaw('MIN(year_from) as min_year, MAX(year_to) as max_year')
             ->first();
 
         return response()->json([

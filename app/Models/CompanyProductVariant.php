@@ -43,6 +43,13 @@ class CompanyProductVariant extends Model implements HasMedia
 {
     use ActionBy, ActionUser, CascadeSoftDeletes, InteractsWithMedia, Searchable, SoftDeletes, HasWebImageConversions;
 
+    /**
+     * Oldest year an open-ended fitment is expanded down to when indexing. Parts
+     * for cars older than this are niche enough that the year filter serves them
+     * better than free-text search.
+     */
+    private const SEARCHABLE_YEAR_FLOOR = 1950;
+
     protected $table = 'company_product_variant';
 
     protected $fillable = [
@@ -156,16 +163,24 @@ class CompanyProductVariant extends Model implements HasMedia
             $langKeyById[$lang['id']] = $lang['key'];
         }
 
+        $fitments = $variant?->relationLoaded('fitments') ? $variant->fitments : null;
+
         $document = [
             'oem_code' => $variant?->oem_code,
-            'year' => $variant?->year,
+            'year' => $this->searchableYears($fitments),
         ];
 
         // Product title + descriptions per language (e.g. title_az, description_en).
         $document += $this->flattenTranslations($product, ['title', 'description_short', 'description'], $langKeyById);
 
-        // Brand name per language (brand_az, brand_en, ...).
-        $document += $this->flattenTranslations($product?->brand, ['title'], $langKeyById, 'brand');
+        // Brand names per language (brand_az, brand_en, ...). Concatenated rather
+        // than flattened because a listing can now fit several car brands.
+        $document += $this->concatTranslatablesByLang(
+            $fitments?->pluck('brand')->filter()->unique('id'),
+            'title',
+            'brand',
+            $langKeyById
+        );
 
         // Category names per language, concatenated (categories_az, ...).
         $document += $this->concatTranslatablesByLang(
@@ -176,8 +191,9 @@ class CompanyProductVariant extends Model implements HasMedia
         );
 
         // Compatible car models per language, concatenated (model_az, ...).
+        // Universal and brand-wide rows name no model and so add nothing here.
         $document += $this->concatTranslatablesByLang(
-            $variant?->relationLoaded('brandModels') ? $variant->brandModels : null,
+            $fitments?->pluck('brandModel')->filter()->unique('id'),
             'title',
             'model',
             $langKeyById
@@ -190,6 +206,42 @@ class CompanyProductVariant extends Model implements HasMedia
     }
 
     /**
+     * Every year the listing covers, as space-separated tokens.
+     *
+     * The mapped `year` field is analyzed text, so expanding a range into tokens
+     * keeps the existing exact-match query working — typing 2015 finds a part
+     * sold as fitting 2012-2017 without the query needing range logic.
+     *
+     * Open-ended bounds are clamped to a plausible window; without a bound there
+     * is nothing finite to expand, and a part that fits any year should still
+     * turn up when someone types one.
+     */
+    private function searchableYears(?iterable $fitments): string
+    {
+        if ($fitments === null) {
+            return '';
+        }
+
+        $floor = self::SEARCHABLE_YEAR_FLOOR;
+        $ceiling = (int) date('Y') + 1;
+
+        $years = [];
+
+        foreach ($fitments as $fitment) {
+            $from = max($fitment->year_from ?? $floor, $floor);
+            $to = min($fitment->year_to ?? $ceiling, $ceiling);
+
+            for ($year = $from; $year <= $to; $year++) {
+                $years[$year] = true;
+            }
+        }
+
+        ksort($years);
+
+        return implode(' ', array_keys($years));
+    }
+
+    /**
      * @return array<int, string>
      */
     private function searchableRelations(): array
@@ -197,9 +249,9 @@ class CompanyProductVariant extends Model implements HasMedia
         return [
             'productVariant',
             'productVariant.product.translatable',
-            'productVariant.product.brand.translatable',
             'productVariant.product.categories.translatable',
-            'productVariant.brandModels.translatable',
+            'productVariant.fitments.brand.translatable',
+            'productVariant.fitments.brandModel.translatable',
             'productVariant.options.option',
             'productVariant.options.item.translatable',
             'productVariant.options.translatable',

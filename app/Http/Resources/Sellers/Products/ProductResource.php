@@ -19,7 +19,6 @@ use Illuminate\Http\Resources\Json\JsonResource;
  * @property mixed $main_image
  * @property mixed $hover_image
  * @property mixed $images
- * @property mixed $brand_id
  * @property mixed $stock
  * @property mixed $price
  * @property mixed $price_final
@@ -55,7 +54,6 @@ class ProductResource extends JsonResource
                 return $this->images;
             }),
             'is_set' => $this->isSet(),
-            'brand_id' => $this->brand_id,
             'brand' => BrandsListResource::make($this->whenLoaded('brand')),
             'main_category' => CategoriesListResource::make($this->whenLoaded('mainCategory')),
             'categories' => CategoriesListResource::collection($this->whenLoaded('categories')),

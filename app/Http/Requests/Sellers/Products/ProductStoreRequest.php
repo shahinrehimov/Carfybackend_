@@ -4,8 +4,7 @@ namespace App\Http\Requests\Sellers\Products;
 
 use App\Enum\DiscountTypeEnum;
 use App\Enum\ProductSizeCategoryEnum;
-use App\Models\Brand;
-use App\Models\BrandModel;
+use App\Http\Requests\Concerns\ValidatesFitments;
 use App\Models\Category;
 use App\Models\City;
 use App\Models\ProductOption;
@@ -21,10 +20,11 @@ use Illuminate\Validation\Rules\File;
 /**
  * @property mixed $has_discount
  * @property mixed $is_set
- * @property mixed $brand_id
  */
 class ProductStoreRequest extends FormRequest
 {
+    use ValidatesFitments;
+
     /**
      * Determine if the user is authorized to make this request.
      *
@@ -56,7 +56,6 @@ class ProductStoreRequest extends FormRequest
 
             'slug' => ['nullable', 'string', 'max:10000'],
 
-            'brand_id' => ['required', 'integer', Rule::exists(Brand::class, 'id')->where('is_active', true)->whereNull('deleted_at')],
             'main_category_id' => ['required', 'integer', Rule::in($this->categories ?? []), Rule::exists(Category::class, 'id')->where('is_active', true)->whereNull('deleted_at')],
             'categories' => ['required', 'array', 'min:1'],
             'categories.*' => ['required', 'integer', Rule::exists(Category::class, 'id')->where('is_active', true)->whereNull('deleted_at')],
@@ -76,16 +75,9 @@ class ProductStoreRequest extends FormRequest
             'size_category' => ['required', 'string', Rule::in(ProductSizeCategoryEnum::cases())],
             'weight_gram'   => ['required', 'integer', 'min:1', 'max:' . config('wolt.max_weight_gram', 20000)],
 
-            'brand_model_ids' => ['required', 'array', 'min:1'],
-            'brand_model_ids.*' => ['required', 'integer',
-                Rule::exists(BrandModel::class, 'id')
-                    ->where('is_active', true)
-                    ->whereNull('deleted_at')
-            ],
+            ...$this->fitmentRules(),
 
             'oem_code' => ['nullable', 'string', 'max:100'],
-
-            'year' => ['required', 'integer', 'min:1900', 'max:' . date('Y')],
 
             'is_set' => ['required', 'boolean'],
             'sets' => ['filled', Rule::requiredIf(fn() => $this->is_set), Rule::excludeIf(fn() => !$this->is_set), 'array', 'min:1'],

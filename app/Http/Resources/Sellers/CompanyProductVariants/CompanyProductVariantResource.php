@@ -2,7 +2,7 @@
 
 namespace App\Http\Resources\Sellers\CompanyProductVariants;
 
-use App\Http\Resources\Admin\BrandModels\BrandModelsListResource;
+use App\Services\FitmentPresenter;
 use App\Http\Resources\Admin\Cities\CitiesListResource;
 use App\Http\Resources\Admin\Groups\GroupsListResource;
 use App\Http\Resources\Sellers\Products\ProductsListResource;
@@ -56,10 +56,13 @@ class CompanyProductVariantResource extends JsonResource
                     'options' => $variant->relationLoaded('options')
                         ? ProductVariantOptionsResource::collection($variant->options)
                         : [],
-                    'brand_models' => $variant->relationLoaded('brandModels')
-                        ? BrandModelsListResource::collection($variant->brandModels)
-                        : [],
-                    'year' => $variant->year,
+                    // Deprecated: derived from fitments so existing clients keep working.
+                    'brand_models' => FitmentPresenter::instance()->brandModelsFor($variant),
+                    'fitments' => FitmentPresenter::instance()->forVariant($variant),
+                    'is_universal' => $variant->is_universal,
+                    'year' => $variant->year, // deprecated, use year_from / year_to
+                    'year_from' => $variant->year_from,
+                    'year_to' => $variant->year_to,
                     'product' => $variant->relationLoaded('product')
                         ? ProductsListResource::make($variant->product)
                         : null,

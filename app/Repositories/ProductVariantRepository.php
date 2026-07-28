@@ -127,8 +127,11 @@ class ProductVariantRepository
                 'groups.translatable',
                 'city',
                 'city.translatable',
-                'brandModels',
-                'brandModels.translatable',
+                'fitments',
+                'fitments.brand',
+                'fitments.brand.translatable',
+                'fitments.brandModel',
+                'fitments.brandModel.translatable',
                 'product.creatable',
                 'product.categories',
                 'product.categories.translatable',
@@ -146,7 +149,14 @@ class ProductVariantRepository
                 }
             })
             ->when($validated['oem_code'] ?? null, fn (Builder $b) => $b->where('oem_code', $validated['oem_code']))
-            ->when(count($brandsIds) > 0, fn (Builder $b) => $b->whereHas('product', fn (Builder $q) => $q->whereIn('products.brand_id', $brandsIds)))
+            ->when($validated['is_universal'] ?? null, function (Builder $b) use ($validated) {
+                // Universal listings surface in every brand and model search, so
+                // moderators need to be able to single them out.
+                $validated['is_universal'] === 'yes'
+                    ? $b->whereHas('fitments', fn (Builder $q) => $q->whereNull('brand_id'))
+                    : $b->whereDoesntHave('fitments', fn (Builder $q) => $q->whereNull('brand_id'));
+            })
+            ->when(count($brandsIds) > 0, fn (Builder $b) => $b->fitsBrands($brandsIds))
             ->when(count($categoriesIds) > 0, fn (Builder $b) => $b->whereHas('product.categoriesRel', fn (Builder $q) => $q->whereIn('product_categories.category_id', $categoriesIds)))
             ->when(count($subCategoriesIds) > 0, fn (Builder $b) => $b->whereHas('product.categoriesRel', fn (Builder $q) => $q->whereIn('product_categories.category_id', $subCategoriesIds)))
             ->when($validated['group_id'] ?? null, fn (Builder $b) => $b->whereHas('groupsRel', fn (Builder $q) => $q->where('group_products.group_id', $validated['group_id'])))
@@ -233,8 +243,8 @@ class ProductVariantRepository
 
         // Car-based search: resolve the selected user car to its model. Ownership
         // is already enforced in ProductSearchRequest, so a plain lookup is safe.
-        $userCarBrandModelId = ! empty($validated['user_car_id'])
-            ? UserCar::query()->whereKey($validated['user_car_id'])->value('brand_model_id')
+        $userCar = ! empty($validated['user_car_id'])
+            ? UserCar::query()->whereKey($validated['user_car_id'])->first(['brand_model_id', 'year'])
             : null;
 
         $currentLangId = LangService::instance()->getCurrentLangId();
@@ -264,8 +274,6 @@ class ProductVariantRepository
                 'productVariant.product.mainCategory.translatable',
                 'productVariant.product.mainCategory.parent',
                 'productVariant.product.mainCategory.parent.translatable',
-                'productVariant.product.brand',
-                'productVariant.product.brand.translatable',
                 'productVariant.options',
                 'productVariant.options.option',
                 'productVariant.options.option.translatable',
@@ -283,7 +291,7 @@ class ProductVariantRepository
                 }
             })
             ->when($validated['oem_code'] ?? null, fn (Builder $b) => $b->whereHas('productVariant', fn (Builder $q) => $q->where('oem_code', $validated['oem_code'])))
-            ->when(count($brandsIds) > 0, fn (Builder $b) => $b->whereHas('productVariant.product', fn (Builder $q) => $q->whereIn('brand_id', $brandsIds)))
+            ->when(count($brandsIds) > 0, fn (Builder $b) => $b->whereHas('productVariant', fn (Builder $q) => $q->fitsBrands($brandsIds)))
             ->when(count($categoriesIds) > 0, fn (Builder $b) => $b->whereHas('productVariant.product.categoriesRel', fn (Builder $q) => $q->whereIn('product_categories.category_id', $categoriesIds)))
             ->when(count($subCategoriesIds) > 0, fn (Builder $b) => $b->whereHas('productVariant.product.categoriesRel', fn (Builder $q) => $q->whereIn('product_categories.category_id', $subCategoriesIds)))
             ->when($validated['group_id'] ?? null, fn (Builder $b) => $b->whereHas('productVariant.groupsRel', fn (Builder $q) => $q->where('group_products.group_id', $validated['group_id'])))
@@ -303,15 +311,20 @@ class ProductVariantRepository
                 ->whereHas('option', fn (Builder $oq) => $oq->where('name', 'condition'))
                 ->whereHas('item', fn (Builder $iq) => $iq->whereIn('slug', $validated['conditions']))
             ))
-            ->when(isset($validated['min_year']), fn (Builder $b) => $b->whereHas('productVariant', fn (Builder $q) => $q->where('year', '>=', $validated['min_year'])))
-            ->when(isset($validated['max_year']), fn (Builder $b) => $b->whereHas('productVariant', fn (Builder $q) => $q->where('year', '<=', $validated['max_year'])))
-            ->when(! empty($validated['models']), fn (Builder $b) => $b->whereHas('productVariant.brandModels', fn (Builder $q) => $q->whereIn('brand_models.id', $validated['models'])))
-            // Car-based search: keep listings that fit the car's model, plus
-            // universal products (no model assigned at all).
-            ->when($userCarBrandModelId, fn (Builder $b) => $b->where(function (Builder $w) use ($userCarBrandModelId) {
-                $w->whereHas('productVariant.brandModels', fn (Builder $q) => $q->where('brand_models.id', $userCarBrandModelId))
-                    ->orWhereDoesntHave('productVariant.brandModels');
-            }))
+            ->when(
+                isset($validated['min_year']) || isset($validated['max_year']),
+                fn (Builder $b) => $b->whereHas('productVariant', fn (Builder $q) => $q->fitsYearRange(
+                    $validated['min_year'] ?? null,
+                    $validated['max_year'] ?? null
+                ))
+            )
+            ->when(! empty($validated['models']), fn (Builder $b) => $b->whereHas('productVariant', fn (Builder $q) => $q->fitsModels($validated['models'])))
+            // Car-based search. Unlike before, the car's year is honoured as well,
+            // so a part fitting the model but not that year is no longer offered.
+            ->when($userCar, fn (Builder $b) => $b->whereHas('productVariant', fn (Builder $q) => $q->fitsCar(
+                $userCar->brand_model_id,
+                $userCar->year
+            )))
             ->when(! empty($validated['ratings']), function (Builder $b) use ($validated) {
                 // Match listings whose approved-review average rounds to any of the
                 // selected star values (e.g. [2,3,4] → avg rounds to 2, 3 or 4).
@@ -478,14 +491,15 @@ class ProductVariantRepository
             'groups.translatable',
             'city',
             'city.translatable',
-            'brandModels',
-            'brandModels.translatable',
+            'fitments',
+            'fitments.brand',
+            'fitments.brand.translatable',
+            'fitments.brandModel',
+            'fitments.brandModel.translatable',
 
             'product',
             'product.translatable',
             'product.media',
-            'product.brand',
-            'product.brand.translatable',
         ]);
 
         return $productVariant;
@@ -502,8 +516,11 @@ class ProductVariantRepository
                 'groups.translatable',
                 'city',
                 'city.translatable',
-                'brandModels',
-                'brandModels.translatable',
+                'fitments',
+                'fitments.brand',
+                'fitments.brand.translatable',
+                'fitments.brandModel',
+                'fitments.brandModel.translatable',
                 'product.creatable',
                 'product.categories',
                 'product.categories.translatable',
@@ -545,7 +562,6 @@ class ProductVariantRepository
             $data['is_default'] = $isDefault;
             $data['oem_code'] = $validated['oem_code'] ?? null;
             $data['is_set'] = (bool) ($validated['is_set'] ?? false);
-            $data['year'] = $validated['year'];
 
             if (CompanyAdminService::instance()->checkUser()) {
                 $data['company_id'] = CompanyAdminService::instance()->getUser()->company_id;
@@ -554,7 +570,7 @@ class ProductVariantRepository
             /** @var ProductVariant $productVariant */
             $productVariant = $product->variants()->create($data);
 
-            $productVariant->brandModels()->sync($validated['brand_model_ids'] ?? []);
+            $_this->syncFitments($productVariant, $_this->fitmentsFromValidated($validated));
 
             $_this->syncSets($productVariant, $sets);
 
@@ -616,13 +632,13 @@ class ProductVariantRepository
             $options = $validated['options'] ?? [];
             unset($validated['options']);
 
-            $brandModelIds = $validated['brand_model_ids'] ?? null;
-            unset($validated['brand_model_ids']);
+            $fitments = $_this->fitmentsFromValidated($validated);
+            unset($validated['fitments'], $validated['is_universal']);
 
             $productVariant->update($validated);
 
-            if ($brandModelIds !== null) {
-                $productVariant->brandModels()->sync($brandModelIds);
+            if ($fitments !== null) {
+                $_this->syncFitments($productVariant, $fitments);
             }
 
             $_this->syncSets($productVariant, $sets, true);
@@ -665,8 +681,7 @@ class ProductVariantRepository
                 'status' => 'pending',
                 'data' => [
                     'oem_code' => $validated['oem_code'] ?? null,
-                    'brand_model_ids' => $validated['brand_model_ids'] ?? [],
-                    'year' => $validated['year'] ?? null,
+                    'fitments' => $this->fitmentsFromValidated($validated) ?? [],
                     'options' => $validated['options'] ?? [],
                 ],
             ]);
@@ -687,16 +702,24 @@ class ProductVariantRepository
             $productVariant = $revision->productVariant;
             $data = $revision->data;
 
+            // Revisions created before the fitment refactor carry brand_model_ids
+            // and a single year instead. Production had none pending when this
+            // shipped, so rather than translating them we reject them and let the
+            // seller resubmit against the current form.
+            if (! isset($data['fitments']) && isset($data['brand_model_ids'])) {
+                throw new BadRequestHttpException(
+                    LangService::instance()
+                        ->setDefault('This revision predates the fitment update and must be resubmitted by the seller.')
+                        ->getLang('revision_predates_fitment_update')
+                );
+            }
+
             // Apply scalar fields
             $productVariant->update([
                 'oem_code' => $data['oem_code'] ?? $productVariant->oem_code,
-                'year' => $data['year'] ?? $productVariant->year,
             ]);
 
-            // Apply brand models
-            if (! empty($data['brand_model_ids'])) {
-                $productVariant->brandModels()->sync($data['brand_model_ids']);
-            }
+            $this->syncFitments($productVariant, $data['fitments'] ?: null);
 
             // Apply options
             if (! empty($data['options'])) {
@@ -797,6 +820,51 @@ class ProductVariantRepository
         if (! empty($productVariantSlugs)) {
             $this->saveSlug($productVariant, implode('-', $productVariantSlugs));
         }
+    }
+
+    /**
+     * Pull the fitment list out of a validated payload, expanding the
+     * is_universal shorthand into the single all-null row it stands for.
+     *
+     * Returns null when the payload says nothing about fitment, so callers can
+     * tell "leave as is" apart from "replace with this".
+     */
+    public function fitmentsFromValidated(array $validated): ?array
+    {
+        if (! empty($validated['is_universal'])) {
+            return [['brand_id' => null, 'brand_model_id' => null, 'year_from' => null, 'year_to' => null]];
+        }
+
+        if (! isset($validated['fitments'])) {
+            return null;
+        }
+
+        return array_map(static fn (array $fitment) => [
+            'brand_id' => $fitment['brand_id'] ?? null,
+            'brand_model_id' => $fitment['brand_model_id'] ?? null,
+            'year_from' => $fitment['year_from'] ?? null,
+            'year_to' => $fitment['year_to'] ?? null,
+        ], $validated['fitments']);
+    }
+
+    /**
+     * Replace a variant's fitment rules wholesale. Rows have no identity of their
+     * own — the seller edits the list, not individual rules — so a clean sweep is
+     * both simpler and avoids stale rows surviving an edit.
+     */
+    public function syncFitments(ProductVariant $productVariant, ?array $fitments): void
+    {
+        if ($fitments === null) {
+            return;
+        }
+
+        $productVariant->fitments()->delete();
+
+        if (! $fitments) {
+            return;
+        }
+
+        $productVariant->fitments()->createMany($fitments);
     }
 
     public function syncSets(ProductVariant $productVariant, array $sets, bool $detach = false): void
@@ -1099,8 +1167,11 @@ class ProductVariantRepository
             'options.option.translatable',
             'options.item',
             'options.item.translatable',
-            'brandModels',
-            'brandModels.translatable',
+            'fitments',
+            'fitments.brand',
+            'fitments.brand.translatable',
+            'fitments.brandModel',
+            'fitments.brandModel.translatable',
         ]);
 
         if ($productVariant->isSet()) {
@@ -1336,8 +1407,11 @@ class ProductVariantRepository
                 'options.option.translatable',
                 'options.item',
                 'options.item.translatable',
-                'brandModels',
-                'brandModels.translatable',
+                'fitments',
+                'fitments.brand',
+                'fitments.brand.translatable',
+                'fitments.brandModel',
+                'fitments.brandModel.translatable',
             ])
             ->when($companyId, function (Builder $builder) use ($companyId) {
                 $builder->with([
@@ -1350,12 +1424,10 @@ class ProductVariantRepository
                 $builder->where('oem_code', 'ILIKE', '%'.$validated['oem_code'].'%');
             })
             ->when($validated['brand_model_id'] ?? null, function (Builder $builder) use ($validated) {
-                $builder->whereHas('brandModels', function (Builder $q) use ($validated) {
-                    $q->where('brand_models.id', $validated['brand_model_id']);
-                });
+                $builder->fitsModels([$validated['brand_model_id']]);
             })
             ->when($validated['year'] ?? null, function (Builder $builder) use ($validated) {
-                $builder->where('year', $validated['year']);
+                $builder->fitsYearRange($validated['year'], $validated['year']);
             })
             ->when($validated['product_id'] ?? null, function (Builder $builder) use ($validated) {
                 $builder->where('product_id', $validated['product_id']);

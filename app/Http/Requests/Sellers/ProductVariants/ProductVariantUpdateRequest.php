@@ -2,7 +2,7 @@
 
 namespace App\Http\Requests\Sellers\ProductVariants;
 
-use App\Models\BrandModel;
+use App\Http\Requests\Concerns\ValidatesFitments;
 use App\Models\ProductOption;
 use App\Models\ProductVariant;
 use App\Rules\NestedDistinctRule;
@@ -17,6 +17,8 @@ use Illuminate\Validation\Rules\File;
  */
 class ProductVariantUpdateRequest extends FormRequest
 {
+    use ValidatesFitments;
+
     /**
      * Determine if the user is authorized to make this request.
      *
@@ -49,16 +51,9 @@ class ProductVariantUpdateRequest extends FormRequest
             'images' => ['filled', 'array', 'min:1'],
             'images.*' => ['required', File::image()->max(10 * 1024)],
 
-            'brand_model_ids' => ['required', 'array', 'min:1'],
-            'brand_model_ids.*' => ['required', 'integer',
-                Rule::exists(BrandModel::class, 'id')
-                    ->where('is_active', true)
-                    ->whereNull('deleted_at')
-            ],
+            ...$this->fitmentRules(),
 
             'oem_code' => ['nullable', 'string', 'max:100'],
-
-            'year' => ['required', 'integer', 'min:1900', 'max:' . date('Y')],
 
             'sets' => ['filled', Rule::requiredIf(fn() => $productVariant->isSet()), Rule::excludeIf(fn() => !$productVariant->isSet()), 'array', 'min:1'],
             'sets.*.product_variant_id' => ['required', 'integer', Rule::exists(ProductVariant::class, 'id')->where('is_active', true)->where('is_set', 0)->whereNull('deleted_at')],

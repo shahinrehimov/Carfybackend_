@@ -2,7 +2,7 @@
 
 namespace App\Http\Resources\App\ProductVariants;
 
-use App\Http\Resources\Admin\BrandModels\BrandModelsListResource;
+use App\Services\FitmentPresenter;
 use App\Http\Resources\Admin\Cities\CitiesListResource;
 use App\Http\Resources\App\CompanyProductVariants\CompanyProductVariantListResource;
 use App\Http\Resources\App\Products\ProductResource;
@@ -62,7 +62,10 @@ class ProductVariantResource extends JsonResource
                 return $this->images['urls'] ?? [];
             }),
             'city' => CitiesListResource::make($this->whenLoaded('city')),
-            'brand_models' => BrandModelsListResource::collection($this->whenLoaded('brandModels')),
+            // Deprecated: derived from fitments so existing clients keep working.
+            'brand_models' => FitmentPresenter::instance()->brandModelsFor($this->resource),
+            'fitments' => FitmentPresenter::instance()->forVariant($this->resource),
+            'is_universal' => $this->is_universal,
             'product' => ProductResource::make($this->whenLoaded('product')),
             'is_set' => $this->isSet(),
             'sets' => ProductVariantsResource::collection($this->whenLoaded('sets')),
@@ -77,7 +80,9 @@ class ProductVariantResource extends JsonResource
                     ->getLang('discount_types_' . $this->discount_type)
                 : null,
             'discount' => $this->discount,
-            'year' => $this->year,
+            'year' => $this->year, // deprecated, use year_from / year_to
+            'year_from' => $this->year_from,
+            'year_to' => $this->year_to,
             'in_wishlist' => $this->in_wishlist ?? false,
             'in_basket' => $this->in_basket ?? false,
             'options' => ProductVariantOptionsResource::collection($this->whenLoaded('options')),

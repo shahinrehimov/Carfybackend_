@@ -47,8 +47,13 @@ class Brand extends Model implements TranslatableInterface, HasMedia
         'media',
     ];
 
+    /**
+     * Guards deletion of a brand still referenced by listings. This moved from
+     * products to fitments when products.brand_id was dropped — leaving it on
+     * products would have silently protected nothing.
+     */
     protected array $softDeleteAcceptableRelations = [
-        'products',
+        'fitments',
     ];
 
     public function registerMediaCollections(): void
@@ -65,9 +70,9 @@ class Brand extends Model implements TranslatableInterface, HasMedia
         return $this->is_active ?? true;
     }
 
-    public function products(): HasMany
+    public function fitments(): HasMany
     {
-        return $this->hasMany(Product::class);
+        return $this->hasMany(ProductVariantFitment::class);
     }
 
     public function brandModels(): HasMany
