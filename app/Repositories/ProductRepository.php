@@ -101,6 +101,7 @@ class ProductRepository
                     ->with([
                         'creatable',
                         'company.translatable',
+                        'fitments.brand.translatable',
                         'categories',
                         'categories.translatable',
                         'groups',
@@ -209,6 +210,7 @@ class ProductRepository
             ->active()
             ->with([
                 'translatable',
+                'fitments.brand.translatable',
             ])
             ->when(CompanyAdminService::instance()->checkUser(), function (Builder $builder) {
                 // for sellers
@@ -253,6 +255,7 @@ class ProductRepository
         $product
             ->load([
                 'media',
+                'fitments.brand.translatable',
                 'mainCategory',
                 'mainCategory.translatable',
                 'categories',
@@ -308,6 +311,7 @@ class ProductRepository
         return $product
             ->load([
                 'creatable',
+                'fitments.brand.translatable',
                 'categories',
                 'categories.translatable',
                 //'groups',

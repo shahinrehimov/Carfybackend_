@@ -2,7 +2,7 @@
 
 namespace App\Http\Resources\Sellers\Products;
 
-use App\Http\Resources\Admin\Brands\BrandsListResource;
+use App\Services\FitmentPresenter;
 use App\Http\Resources\Admin\Categories\CategoriesListResource;
 use App\Http\Resources\Admin\Groups\GroupsListResource;
 use App\Http\Resources\Sellers\ProductVariants\ProductVariantsListResource;
@@ -54,7 +54,12 @@ class ProductResource extends JsonResource
                 return $this->images;
             }),
             'is_set' => $this->isSet(),
-            'brand' => BrandsListResource::make($this->whenLoaded('brand')),
+            // Brand moved onto the variants' fitment rules, so a product can now
+            // span several. `brand` stays for existing clients and answers only
+            // when the fitments agree on one.
+            'brand' => FitmentPresenter::instance()->singleBrandForProduct($this->resource),
+            'brands' => FitmentPresenter::instance()->brandsForProduct($this->resource),
+            'is_universal' => FitmentPresenter::instance()->isUniversalProduct($this->resource),
             'main_category' => CategoriesListResource::make($this->whenLoaded('mainCategory')),
             'categories' => CategoriesListResource::collection($this->whenLoaded('categories')),
             'groups' => GroupsListResource::collection($this->whenLoaded('groups')),

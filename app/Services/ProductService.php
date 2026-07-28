@@ -115,6 +115,8 @@ class ProductService
                 },
                 $prefix . 'translatable',
                 $prefix . 'media',
+                // Brand now reaches the product through its variants' fitments.
+                $prefix . 'fitments.brand.translatable',
                 $prefix . 'mainCategory',
                 $prefix . 'mainCategory.parent',
             ];
@@ -122,6 +124,8 @@ class ProductService
             $arr['with'] = [
                 $prefix . 'translatable',
                 $prefix . 'media',
+                // Brand now reaches the product through its variants' fitments.
+                $prefix . 'fitments.brand.translatable',
                 $prefix . 'mainCategory',
                 $prefix . 'mainCategory.parent',
             ];

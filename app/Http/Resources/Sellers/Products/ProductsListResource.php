@@ -2,7 +2,7 @@
 
 namespace App\Http\Resources\Sellers\Products;
 
-use App\Http\Resources\Admin\Brands\BrandsListResource;
+use App\Services\FitmentPresenter;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -46,7 +46,12 @@ class ProductsListResource extends JsonResource
             'quantity' => $this->whenLoaded('pivot', function () {
                 return $this->pivot->quantity;
             }),
-            'brand' => BrandsListResource::make($this->whenLoaded('brand')),
+            // Brand moved onto the variants' fitment rules, so a product can now
+            // span several. `brand` stays for existing clients and answers only
+            // when the fitments agree on one.
+            'brand' => FitmentPresenter::instance()->singleBrandForProduct($this->resource),
+            'brands' => FitmentPresenter::instance()->brandsForProduct($this->resource),
+            'is_universal' => FitmentPresenter::instance()->isUniversalProduct($this->resource),
         ];
     }
 }
