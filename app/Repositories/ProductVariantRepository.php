@@ -576,6 +576,8 @@ class ProductVariantRepository
 
             $_this->setOptions($productVariant, $options);
 
+            $_this->ensureSlug($productVariant);
+
             if (! $withoutImages) {
                 FileUpload::upload($request, 'main_image', 'product_variants_main', $productVariant);
                 FileUpload::upload($request, 'hover_image', 'product_variants_hover', $productVariant);
@@ -644,6 +646,8 @@ class ProductVariantRepository
             $_this->syncSets($productVariant, $sets, true);
 
             $_this->setOptions($productVariant, $options);
+
+            $_this->ensureSlug($productVariant);
 
             if (! $withoutImages) {
                 FileUpload::upload($request, 'main_image', 'product_variants_main', $productVariant);
@@ -726,6 +730,8 @@ class ProductVariantRepository
                 $this->setOptionsFromArray($productVariant, $data['options']);
             }
 
+            $this->ensureSlug($productVariant);
+
             // Move images from revision to product variant
             foreach ($revision->getMedia('revision_main_image') as $media) {
                 $media->move($productVariant, 'product_variants_main');
@@ -794,14 +800,10 @@ class ProductVariantRepository
 
                 $data['slug'] = $selectedItem->slug;
 
-                if ($productOption->isInTitle()) {
-                    $productVariantSlugs[] = $data['slug'];
-                }
-
-                ProductVariantProductOption::query()->create($data);
+                $createdOption = ProductVariantProductOption::query()->create($data);
             } elseif ($productOption->isTranslatable() && ! empty($option['translations']) && is_array($option['translations'])) {
                 $data['translations'] = $option['translations'];
-                ProductVariantProductOption::createWithLangs($data, null, false, 'translatable_value');
+                $createdOption = ProductVariantProductOption::createWithLangs($data, null, false, 'translatable_value');
             } else {
                 $data['value'] = $option['value'];
                 $data['slug'] = ProductVariantProductOption::instanceSlug()
@@ -809,13 +811,15 @@ class ProductVariantRepository
                     ->make()
                     ->getRealSlug();
 
-                if ($productOption->isInTitle()) {
-                    $productVariantSlugs[] = $data['slug'];
-                }
+                $createdOption = ProductVariantProductOption::query()->create($data);
+            }
 
-                ProductVariantProductOption::query()->create($data);
+            if ($productOption->isInTitle()) {
+                $productVariantSlugs[] = $createdOption->slug;
             }
         }
+
+        $productVariantSlugs = array_filter($productVariantSlugs);
 
         if (! empty($productVariantSlugs)) {
             $this->saveSlug($productVariant, implode('-', $productVariantSlugs));
@@ -964,35 +968,94 @@ class ProductVariantRepository
                     ->getRealSlug();
             }
 
-            if ($productOption->isInTitle()) {
-                $productVariantSlugs[] = $data['slug'] ?? null;
-            }
-
             if ($productOption->isTranslatable() && ! empty($option['translations']) && is_array($option['translations'])) {
                 $data['translations'] = $option['translations'];
 
-                ProductVariantProductOption::createWithLangs($data, null, false, 'translatable_value');
+                $createdOption = ProductVariantProductOption::createWithLangs($data, null, false, 'translatable_value');
             } else {
-                ProductVariantProductOption::query()->create($data);
+                $createdOption = ProductVariantProductOption::query()->create($data);
+            }
+
+            if ($productOption->isInTitle()) {
+                $productVariantSlugs[] = $createdOption->slug;
             }
         }
+
+        $productVariantSlugs = array_filter($productVariantSlugs);
 
         if (! empty($productVariantSlugs)) {
             $this->saveSlug($productVariant, implode('-', $productVariantSlugs));
         }
     }
 
+    /**
+     * A variant must always end up with a slug — the site resolves variants by
+     * `?variant={slug}` and a NULL slug makes every such variant collapse into
+     * the first one found (`where slug is null`). Called after options are set;
+     * falls back to a per-product "v" counter when options produced no slug.
+     */
+    public function ensureSlug(ProductVariant $productVariant): void
+    {
+        if (empty($productVariant->slug)) {
+            $this->saveSlug($productVariant, 'v');
+        }
+    }
+
+    /**
+     * Rebuild a variant's slug from its already-saved options, falling back to
+     * the "v" counter when they yield nothing. Used by the slug backfill
+     * command for variants created while option-less ones were left NULL.
+     */
+    public function rebuildSlug(ProductVariant $productVariant): void
+    {
+        $optionSlugs = $productVariant->options()
+            ->with('option')
+            ->orderBy('id')
+            ->get()
+            ->filter(fn (ProductVariantProductOption $variantOption) => $variantOption->option?->isInTitle())
+            ->pluck('slug')
+            ->filter();
+
+        if ($optionSlugs->isNotEmpty()) {
+            $this->saveSlug($productVariant, $optionSlugs->implode('-'));
+        }
+
+        $this->ensureSlug($productVariant);
+    }
+
     private function saveSlug(ProductVariant $productVariant, string $slug): void
     {
         $query = $productVariant->slug ? $productVariant : ProductVariant::instanceSlug();
 
-        $productVariant->slug = $query
+        $generated = $query
             ->setText($slug)
             ->setModelNameSuffix('_product_'.$productVariant->product_id)
             ->make()
             ->getRealSlug();
 
+        // The slugs-table counter can drift from the actual variant rows, so
+        // verify against sibling variants before trusting the generated value.
+        if ($this->variantSlugTaken($productVariant, $generated)) {
+            $base = $generated;
+            $generated = $base.'-'.$productVariant->id;
+
+            for ($attempt = 2; $this->variantSlugTaken($productVariant, $generated); $attempt++) {
+                $generated = $base.'-'.$productVariant->id.'-'.$attempt;
+            }
+        }
+
+        $productVariant->slug = $generated;
+
         $productVariant->save();
+    }
+
+    private function variantSlugTaken(ProductVariant $productVariant, string $slug): bool
+    {
+        return ProductVariant::query()
+            ->where('product_id', $productVariant->product_id)
+            ->where('id', '!=', $productVariant->id)
+            ->where('slug', $slug)
+            ->exists();
     }
 
     public function destroy(ProductVariant $productVariant): void
