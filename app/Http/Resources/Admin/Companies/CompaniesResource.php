@@ -17,6 +17,7 @@ use Illuminate\Http\Resources\Json\JsonResource;
  * @property mixed $creatable
  * @property mixed $logo
  * @property mixed $store_code
+ * @property mixed $commission_percent
  * @method getLang(string $string)
  * @method isActive()
  */
@@ -44,6 +45,8 @@ class CompaniesResource extends JsonResource
             'city' => CitiesListResource::make($this->whenLoaded('city')),
             'is_active' => $this->isActive(),
             'is_verified' => !is_null($this->verified_at),
+            // null = inherits the category rate, or the platform default
+            'commission_percent' => $this->commission_percent,
             'created_user' => $this->whenLoaded('creatable', function () {
                 return $this->creatable?->username;
             }),

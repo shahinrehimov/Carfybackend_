@@ -35,6 +35,8 @@ class CategoryUpdateRequest extends FormRequest
             'slug' => ['nullable', 'string', 'max:10000'],
             'parent_id' => ['nullable', 'integer', Rule::exists(Category::class, 'id')->whereNull('parent_id')->where('is_active', true)->whereNull('deleted_at')->whereNot('id', $this->route('category')?->id)],
             'sort' => ['filled', 'integer', 'min:0'],
+            // null = inherit the platform default commission rate
+            'commission_percent' => ['nullable', 'numeric', 'min:0', 'max:100'],
             'translations' => ['required', 'array', 'size:' . count(LangService::instance()->getLanguages())],
             'translations.*.language_id' => ['required', 'integer', 'distinct', Rule::in(data_get(LangService::instance()->getLanguages(), '*.id'))],
             'translations.*.title' => ['required', 'string', 'max:500'],

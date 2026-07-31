@@ -33,6 +33,7 @@ class Category extends Model implements TranslatableInterface, HasMedia
         'parent_id',
         'sort',
         'is_active',
+        'commission_percent',
     ];
 
     protected array $translatableFields = [
@@ -43,6 +44,8 @@ class Category extends Model implements TranslatableInterface, HasMedia
         'image' => ImageCast::class,
         'sort' => 'integer',
         'is_active' => 'boolean',
+        // null = inherit the platform default rate
+        'commission_percent' => 'float',
     ];
 
     protected array $cascadeDeletes = [

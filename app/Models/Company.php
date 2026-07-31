@@ -47,6 +47,7 @@ class Company extends Model implements TranslatableInterface, HasMedia
         'verified_at',
         'is_active',
         'show_reviews',
+        'commission_percent',
     ];
 
     protected static function boot(): void
@@ -97,6 +98,8 @@ class Company extends Model implements TranslatableInterface, HasMedia
         'verified_at' => 'datetime',
         'is_active' => 'boolean',
         'show_reviews' => 'boolean',
+        // null = inherit the category / platform default rate
+        'commission_percent' => 'float',
     ];
 
     protected array $cascadeDeletes = [

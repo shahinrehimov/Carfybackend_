@@ -24,6 +24,7 @@ use Illuminate\Http\Resources\Json\JsonResource;
  * @property mixed $city_id
  * @property mixed $avg_rating
  * @property mixed $review_count
+ * @property mixed $commission_percent
  * @method isActive()
  */
 class CompanyResource extends JsonResource
@@ -44,6 +45,8 @@ class CompanyResource extends JsonResource
             'root_admin_email' => $this->root_admin_email,
             'verified_at' => $this->verified_at,
             'is_active' => $this->isActive(),
+            // null = inherits the category rate, or the platform default
+            'commission_percent' => $this->commission_percent,
             'logo' => $this->whenLoaded('media', function () {
                 return $this->logo;
             }),

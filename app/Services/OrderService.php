@@ -293,6 +293,7 @@ class OrderService
             foreach ($productVariants as $productVariant) {
                 /** @var ProductVariant $productVariant */
                 $cpvId = $productVariant->pivot->company_product_variant_id ?? null;
+                $cpv   = null;
 
                 if ($cpvId) {
                     $cpv = $cpvs->get($cpvId);
@@ -327,6 +328,10 @@ class OrderService
                     }
                 }
 
+                // Freeze the commission on the line so a later rate change never
+                // rewrites what the platform earned on this order.
+                $commissionPercent = CommissionService::instance()->percentFor($cpv);
+
                 $items[] = [
                     'basket_id' => $productVariant->pivot->id,
                     'product_variant_id' => $productVariant->id,
@@ -334,6 +339,11 @@ class OrderService
                     'company_product_variant_id' => $cpvId,
                     'amount' => $productVariant->price_in_basket,
                     'amount_final' => $productVariant->price_final_in_basket,
+                    'commission_percent' => $commissionPercent,
+                    'commission_amount' => CommissionService::instance()->applyPercent(
+                        $productVariant->price_final_in_basket,
+                        $commissionPercent
+                    ),
                     'is_set' => $productVariant->isSet(),
                     'quantity' => $productVariant->basket_quantity,
                     'sets' => $productVariant->pivot?->sets ?? [],

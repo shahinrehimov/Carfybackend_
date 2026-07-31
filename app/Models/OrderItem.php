@@ -26,6 +26,8 @@ class OrderItem extends Model
         'company_product_variant_id',
         'amount',
         'amount_final',
+        'commission_percent',
+        'commission_amount',
         'is_set',
         'quantity',
         'sets', // [id, quantity]
@@ -38,6 +40,9 @@ class OrderItem extends Model
     protected $casts = [
         'amount' => AmountCast::class,
         'amount_final' => AmountCast::class,
+        // Platform commission frozen when the order was placed
+        'commission_percent' => 'float',
+        'commission_amount' => AmountCast::class,
         'is_set' => 'boolean',
         'quantity' => 'integer',
         'sets' => 'array',

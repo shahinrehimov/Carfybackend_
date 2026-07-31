@@ -29,6 +29,8 @@ class CompanyUpdateRequest extends FormRequest
             'longitude' => ['nullable', 'numeric'],
             'website' => ['nullable', 'url', 'max:255'],
             'is_active' => ['sometimes', 'boolean'],
+            // null = inherit the category / platform default commission rate
+            'commission_percent' => ['nullable', 'numeric', 'min:0', 'max:100'],
 
             // Translatable fields
             'translations' => ['sometimes', 'array', 'size:' . count(LangService::instance()->getLanguages())],

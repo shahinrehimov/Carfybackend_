@@ -13,6 +13,7 @@ use Illuminate\Http\Resources\Json\JsonResource;
  * @property mixed $sort
  * @property mixed $parent_id
  * @property mixed $slug
+ * @property mixed $commission_percent
  * @method isActive()
  */
 class CategoryResource extends JsonResource
@@ -37,6 +38,8 @@ class CategoryResource extends JsonResource
             'translations' => $this->translations,
             'sort' => $this->sort,
             'is_active' => $this->isActive(),
+            // null = inherits the platform default
+            'commission_percent' => $this->commission_percent,
         ];
     }
 }

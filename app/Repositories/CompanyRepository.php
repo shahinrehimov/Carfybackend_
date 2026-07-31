@@ -109,6 +109,7 @@ class CompanyRepository
             'root_admin_email' => $validated['root_admin_email'],
             'verified_at' => $validated['verified_at'] ?? null,
             'is_active' => $validated['is_active'] ?? true,
+            'commission_percent' => $validated['commission_percent'] ?? null,
             'translations' => $validated['translations'] ?? [],
         ];
 
@@ -131,6 +132,12 @@ class CompanyRepository
                 //'root_admin_email' => $validated['root_admin_email'] ?? $company->root_admin_email,
                 'is_active' => $validated['is_active'] ?? $company->is_active,
             ];
+
+            // Sent as null on purpose = drop the seller override and inherit again,
+            // so array_key_exists rather than ?? here.
+            if (array_key_exists('commission_percent', $validated)) {
+                $data['commission_percent'] = $validated['commission_percent'];
+            }
 
             if (isset($validated['translations'])) {
                 $data['translations'] = $validated['translations'];
