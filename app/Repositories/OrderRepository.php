@@ -100,7 +100,12 @@ class OrderRepository
                             $q->withTrashed();
                             $q->when(count($productVariantRelations['with']) > 0, fn($q) => $q->with($productVariantRelations['with']));
                         },
-                        'companyProductVariant.company',
+                        // media is required by the listing image cascade in
+                        // OrderItemsListResource — without it the seller's own
+                        // photo is skipped and the product image wins.
+                        'companyProductVariant' => function ($q) {
+                            $q->with(['company', 'media']);
+                        },
                         'itemStatuses' => function ($q) {
                             $q->orderBy('id');
                         },
