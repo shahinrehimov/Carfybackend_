@@ -2420,6 +2420,13 @@
                       "value": "test",
                       "description": "nullable",
                       "type": "text"
+                    },
+                    {
+                      "key": "commission_percent",
+                      "value": "",
+                      "type": "text",
+                      "disabled": true,
+                      "description": "0-100. Boş = kateqoriya/platforma faizi miras alınır"
                     }
                   ]
                 },
@@ -2515,6 +2522,13 @@
                       "description": "nullable",
                       "type": "text",
                       "disabled": true
+                    },
+                    {
+                      "key": "commission_percent",
+                      "value": "",
+                      "type": "text",
+                      "disabled": true,
+                      "description": "0-100. Boş = kateqoriya/platforma faizi miras alınır"
                     }
                   ]
                 },
@@ -10183,7 +10197,8 @@
                       "disabled": true
                     }
                   ]
-                }
+                },
+                "description": "Ləğv statistikası: həm tam ləğv olunmuş sifarişlər, həm də sağ qalan sifarişdə satıcının ləğv etdiyi ayrı-ayrı item-lər.\n\nParams: date_from, date_to, company_id, limit (1-50)\n\nCavab: total_cancelled (order + item), cancelled_orders, cancelled_items, by_actor[], top_reasons[]"
               },
               "response": []
             },
@@ -10214,7 +10229,7 @@
                   }
                 ],
                 "url": {
-                  "raw": "{{url}}/control/statistics/commissions?date_from=2026-01-01&date_to=2026-04-30&company_id=&period=daily",
+                  "raw": "{{url}}/control/statistics/commissions?date_from=2026-01-01&date_to=2026-04-30&company_id=&period=daily&limit=10",
                   "host": [
                     "{{url}}"
                   ],
@@ -10243,9 +10258,15 @@
                       "key": "period",
                       "value": "daily",
                       "disabled": true
+                    },
+                    {
+                      "key": "limit",
+                      "value": "10",
+                      "disabled": true
                     }
                   ]
-                }
+                },
+                "description": "Platformanın komissiya gəliri. Hər order item-də sifariş anında dondurulmuş snapshot-dan (commission_percent + commission_amount) oxunur, ona görə faiz sonradan dəyişəndə keçmiş hesabatlar dəyişmir. Yalnız gəlir gətirən sətirlər sayılır (ləğv/qaytarılmış sifariş və ləğv edilmiş item xaric).\n\nParams: period (daily|weekly|monthly), date_from, date_to, company_id, limit (1-50)\n\nCavab: summary { total_commission, total_revenue, effective_rate, items_without_snapshot }, chart[], by_company[]. items_without_snapshot > 0 olarsa `php artisan app:backfill-order-commissions` işlədilməlidir."
               },
               "response": []
             }
@@ -13949,7 +13970,7 @@
                 ],
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n    \"voen\": \"1234512890\",\n    \"phone\": \"+994501214567\",\n    \"email\": \"company11@example.com\",\n    \"city_id\": 4,\n    \"latitude\": 40.4093,\n    \"longitude\": 49.8671,\n    \"website\": \"https://example.com\",\n    \"is_active\": true,\n    \"translations\": [\n        {\n            \"language_id\": 1,\n            \"title\": \"Test Company\",\n            \"info\": \"Company info\",\n            \"address\": \"Baku, Azerbaijan\"\n        },\n        {\n            \"language_id\": 2,\n            \"title\": null,\n            \"info\": null,\n            \"address\": null\n        },\n        {\n            \"language_id\": 3,\n            \"title\": null,\n            \"info\": null,\n            \"address\": null\n        }\n    ],\n    \"root_admin_username\": \"companyadmin\",\n    \"root_admin_email\": \"admin4@example.com\",\n    \"root_admin_name\": \"John\",\n    \"root_admin_surname\": \"Doe\"\n}",
+                  "raw": "{\n    \"voen\": \"1234512890\",\n    \"phone\": \"+994501214567\",\n    \"email\": \"company11@example.com\",\n    \"city_id\": 4,\n    \"latitude\": 40.4093,\n    \"longitude\": 49.8671,\n    \"website\": \"https://example.com\",\n    \"is_active\": true,\n    \"translations\": [\n        {\n            \"language_id\": 1,\n            \"title\": \"Test Company\",\n            \"info\": \"Company info\",\n            \"address\": \"Baku, Azerbaijan\"\n        },\n        {\n            \"language_id\": 2,\n            \"title\": null,\n            \"info\": null,\n            \"address\": null\n        },\n        {\n            \"language_id\": 3,\n            \"title\": null,\n            \"info\": null,\n            \"address\": null\n        }\n    ],\n    \"root_admin_username\": \"companyadmin\",\n    \"root_admin_email\": \"admin4@example.com\",\n    \"root_admin_name\": \"John\",\n    \"root_admin_surname\": \"Doe\",\n    \"commission_percent\": null\n}",
                   "options": {
                     "raw": {
                       "language": "json"
@@ -13998,7 +14019,7 @@
                 ],
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n    \"voen\": \"1234567890\",\n    \"phone\": \"+994501234567\",\n    \"email\": \"company@example.com\",\n    \"city_id\": 8,\n    \"latitude\": 40.4093,\n    \"longitude\": 49.8671,\n    \"website\": \"https://example.com\",\n    \"is_active\": true,\n    \"translations\": [\n        {\n            \"language_id\": 1,\n            \"title\": \"Updated Company\",\n            \"info\": \"Updated info\",\n            \"address\": \"Baku, Azerbaijan\"\n        },\n        {\n            \"language_id\": 2,\n            \"title\": null,\n            \"info\": null,\n            \"address\": null\n        },\n        {\n            \"language_id\": 3,\n            \"title\": null,\n            \"info\": null,\n            \"address\": null\n        }\n    ]\n}",
+                  "raw": "{\n    \"voen\": \"1234567890\",\n    \"phone\": \"+994501234567\",\n    \"email\": \"company@example.com\",\n    \"city_id\": 8,\n    \"latitude\": 40.4093,\n    \"longitude\": 49.8671,\n    \"website\": \"https://example.com\",\n    \"is_active\": true,\n    \"translations\": [\n        {\n            \"language_id\": 1,\n            \"title\": \"Updated Company\",\n            \"info\": \"Updated info\",\n            \"address\": \"Baku, Azerbaijan\"\n        },\n        {\n            \"language_id\": 2,\n            \"title\": null,\n            \"info\": null,\n            \"address\": null\n        },\n        {\n            \"language_id\": 3,\n            \"title\": null,\n            \"info\": null,\n            \"address\": null\n        }\n    ],\n    \"commission_percent\": null\n}",
                   "options": {
                     "raw": {
                       "language": "json"

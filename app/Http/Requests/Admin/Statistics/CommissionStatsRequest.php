@@ -19,6 +19,7 @@ class CommissionStatsRequest extends FormRequest
             'date_from'  => ['nullable', 'date_format:Y-m-d'],
             'date_to'    => ['nullable', 'date_format:Y-m-d', 'after_or_equal:date_from'],
             'company_id' => ['nullable', 'integer', 'exists:companies,id'],
+            'limit'      => ['nullable', 'integer', 'min:1', 'max:50'],
         ];
     }
 }

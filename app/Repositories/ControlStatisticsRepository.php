@@ -2,13 +2,18 @@
 
 namespace App\Repositories;
 
+use App\Enum\OrderItemStatusEnum;
 use App\Enum\OrderStatusEnum;
 use App\Models\Company;
+use App\Models\CompanyProductVariant;
+use App\Models\User;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
 class ControlStatisticsRepository
 {
+    use Concerns\StatisticsQueries;
+
     // ─── Order Statistics ────────────────────────────────────────────────────
 
     public function getOrderStats(array $validated): array
@@ -19,22 +24,23 @@ class ControlStatisticsRepository
         $status    = $validated['status'] ?? null;
         $companyId = $validated['company_id'] ?? null;
 
-        $base = $this->orderBaseQuery($dateFrom, $dateTo, $status, $companyId);
+        $base    = $this->orderBaseQuery($dateFrom, $dateTo, $status, $companyId);
+        $revenue = $this->revenueCondition($status !== null);
 
         $summary = (clone $base)
-            ->selectRaw('
-                COUNT(DISTINCT o.id)          as total_orders,
-                COALESCE(SUM(oi.amount_final), 0) as total_revenue_cents,
-                COALESCE(SUM(oi.quantity), 0)     as total_quantity
-            ')
+            ->selectRaw("
+                COUNT(DISTINCT o.id) as total_orders,
+                COALESCE(SUM(oi.amount_final) FILTER (WHERE {$revenue}), 0) as total_revenue_cents,
+                COALESCE(SUM(oi.quantity)     FILTER (WHERE {$revenue}), 0) as total_quantity
+            ")
             ->first();
 
         $chart = (clone $base)
             ->selectRaw("
                 DATE_TRUNC('{$period}', o.created_at) as period_date,
-                COUNT(DISTINCT o.id)                   as order_count,
-                COALESCE(SUM(oi.amount_final), 0)      as revenue_cents,
-                COALESCE(SUM(oi.quantity), 0)          as quantity
+                COUNT(DISTINCT o.id)                  as order_count,
+                COALESCE(SUM(oi.amount_final) FILTER (WHERE {$revenue}), 0) as revenue_cents,
+                COALESCE(SUM(oi.quantity)     FILTER (WHERE {$revenue}), 0) as quantity
             ")
             ->groupByRaw("DATE_TRUNC('{$period}', o.created_at)")
             ->orderByRaw("DATE_TRUNC('{$period}', o.created_at) ASC")
@@ -71,24 +77,23 @@ class ControlStatisticsRepository
             ->whereNull('oi.deleted_at')
             ->whereNull('cpv.deleted_at')
             ->whereNull('c.deleted_at')
+            ->whereIn('o.status', OrderStatusEnum::revenueValues())
+            ->where('oi.status', '!=', OrderItemStatusEnum::CANCELED->value)
             ->when($dateFrom, fn($q) => $q->where('o.created_at', '>=', $dateFrom))
             ->when($dateTo, fn($q) => $q->where('o.created_at', '<=', $dateTo . ' 23:59:59'))
             ->selectRaw('
                 c.id                              as company_id,
-                c.uuid                            as company_uuid,
                 COALESCE(SUM(oi.quantity), 0)     as quantity_sold,
                 COALESCE(SUM(oi.amount_final), 0) as revenue_cents,
                 COUNT(DISTINCT o.id)              as order_count
             ')
-            ->groupBy('c.id', 'c.uuid')
+            ->groupBy('c.id')
             ->orderByDesc('revenue_cents')
             ->limit($limit)
             ->get();
 
-        $companyIds = $rows->pluck('company_id')->all();
-
         $companies = Company::query()
-            ->whereIn('id', $companyIds)
+            ->whereIn('id', $rows->pluck('company_id')->all())
             ->with(['translatable'])
             ->get()
             ->keyBy('id');
@@ -116,6 +121,8 @@ class ControlStatisticsRepository
             ->whereNull('o.deleted_at')
             ->whereNull('oi.deleted_at')
             ->whereNull('cpv.deleted_at')
+            ->whereIn('o.status', OrderStatusEnum::revenueValues())
+            ->where('oi.status', '!=', OrderItemStatusEnum::CANCELED->value)
             ->when($companyId, fn($q) => $q->where('cpv.company_id', $companyId))
             ->when($dateFrom, fn($q) => $q->where('o.created_at', '>=', $dateFrom))
             ->when($dateTo, fn($q) => $q->where('o.created_at', '<=', $dateTo . ' 23:59:59'))
@@ -142,17 +149,9 @@ class ControlStatisticsRepository
             ->limit($limit)
             ->get();
 
-        $cpvIds = $selling->pluck('cpv_id')
-            ->merge($viewed->pluck('cpv_id'))
-            ->unique()
-            ->values()
-            ->all();
-
-        $cpvs = \App\Models\CompanyProductVariant::query()
-            ->whereIn('id', $cpvIds)
-            ->with(['productVariant.product', 'productVariant.media', 'media'])
-            ->get()
-            ->keyBy('id');
+        $cpvs = $this->loadCpvsForDisplay(
+            $selling->pluck('cpv_id')->merge($viewed->pluck('cpv_id'))->unique()->values()->all()
+        );
 
         return [
             'top_selling' => $selling->map(fn($row) => [
@@ -182,24 +181,26 @@ class ControlStatisticsRepository
             ->when($dateTo, fn($q) => $q->where('created_at', '<=', $dateTo . ' 23:59:59'))
             ->count();
 
-        // Users active via last Sanctum token creation in period
+        // Users who obtained an access token in the period (i.e. logged in)
         $activeViaLogin = DB::table('users as u')
-            ->join(
-                DB::raw('(SELECT tokenable_id, MAX(created_at) as last_login FROM personal_access_tokens WHERE tokenable_type = \'App\\\Models\\\User\' GROUP BY tokenable_id) as t'),
-                't.tokenable_id', '=', 'u.id'
-            )
+            ->join('personal_access_tokens as t', function ($join) {
+                $join->on('t.tokenable_id', '=', 'u.id')
+                    ->where('t.tokenable_type', '=', (new User())->getMorphClass());
+            })
             ->whereNull('u.deleted_at')
-            ->when($dateFrom, fn($q) => $q->where('t.last_login', '>=', $dateFrom))
-            ->when($dateTo, fn($q) => $q->where('t.last_login', '<=', $dateTo . ' 23:59:59'))
-            ->count();
+            ->when($dateFrom, fn($q) => $q->where('t.created_at', '>=', $dateFrom))
+            ->when($dateTo, fn($q) => $q->where('t.created_at', '<=', $dateTo . ' 23:59:59'))
+            ->distinct()
+            ->count('u.id');
 
         $activeViaOrder = DB::table('users as u')
             ->join('orders as o', 'o.user_id', '=', 'u.id')
             ->whereNull('u.deleted_at')
             ->whereNull('o.deleted_at')
+            ->whereIn('o.status', OrderStatusEnum::placedValues())
             ->when($dateFrom, fn($q) => $q->where('o.created_at', '>=', $dateFrom))
             ->when($dateTo, fn($q) => $q->where('o.created_at', '<=', $dateTo . ' 23:59:59'))
-            ->distinct('u.id')
+            ->distinct()
             ->count('u.id');
 
         $chart = DB::table('users')
@@ -226,6 +227,12 @@ class ControlStatisticsRepository
 
     // ─── Cancellation Statistics ──────────────────────────────────────────────
 
+    /**
+     * Cancellations happen on two levels: the whole order (customer / admin) and
+     * a single item (a seller dropping their part of a multi-seller order). Both
+     * are reported, so `total_cancelled` counts fully cancelled orders plus the
+     * orders that lost at least one item while staying alive.
+     */
     public function getCancellations(array $validated): array
     {
         $dateFrom  = $validated['date_from'] ?? null;
@@ -233,72 +240,187 @@ class ControlStatisticsRepository
         $companyId = $validated['company_id'] ?? null;
         $limit     = $validated['limit'] ?? 10;
 
-        $base = DB::table('orders as o')
+        $orderBase = DB::table('orders as o')
             ->whereNull('o.deleted_at')
             ->where('o.status', OrderStatusEnum::CANCELED->value)
             ->when($dateFrom, fn($q) => $q->where('o.created_at', '>=', $dateFrom))
+            ->when($dateTo, fn($q) => $q->where('o.created_at', '<=', $dateTo . ' 23:59:59'))
+            ->when($companyId, fn($q) => $q
+                ->whereExists(fn($sub) => $sub
+                    ->from('order_items as oi')
+                    ->join('company_product_variant as cpv', 'cpv.id', '=', 'oi.company_product_variant_id')
+                    ->whereColumn('oi.order_id', 'o.id')
+                    ->whereNull('oi.deleted_at')
+                    ->whereNull('cpv.deleted_at')
+                    ->where('cpv.company_id', $companyId)
+                ));
+
+        $itemBase = DB::table('order_items as oi')
+            ->join('orders as o', 'o.id', '=', 'oi.order_id')
+            ->join('company_product_variant as cpv', 'cpv.id', '=', 'oi.company_product_variant_id')
+            ->whereNull('o.deleted_at')
+            ->whereNull('oi.deleted_at')
+            ->whereNull('cpv.deleted_at')
+            ->where('oi.status', OrderItemStatusEnum::CANCELED->value)
+            // Items of a fully cancelled order are already covered by $orderBase
+            ->where('o.status', '!=', OrderStatusEnum::CANCELED->value)
+            ->when($companyId, fn($q) => $q->where('cpv.company_id', $companyId))
+            ->when($dateFrom, fn($q) => $q->where('o.created_at', '>=', $dateFrom))
             ->when($dateTo, fn($q) => $q->where('o.created_at', '<=', $dateTo . ' 23:59:59'));
 
-        if ($companyId) {
-            $base->join('order_items as oi', 'oi.order_id', '=', 'o.id')
-                ->join('company_product_variant as cpv', 'cpv.id', '=', 'oi.company_product_variant_id')
-                ->whereNull('oi.deleted_at')
-                ->whereNull('cpv.deleted_at')
-                ->where('cpv.company_id', $companyId);
-        }
+        $cancelledOrders = (clone $orderBase)->count('o.id');
+        $cancelledItems  = (clone $itemBase)->distinct()->count('oi.id');
 
-        $total = (clone $base)->distinct()->count('o.id');
+        $byActor = collect()
+            ->merge(
+                (clone $orderBase)
+                    ->whereNotNull('o.cancelled_by_type')
+                    ->selectRaw('o.cancelled_by_type as actor_type, COUNT(DISTINCT o.id) as count')
+                    ->groupBy('o.cancelled_by_type')
+                    ->get()
+            )
+            ->merge(
+                (clone $itemBase)
+                    ->whereNotNull('oi.cancelled_by_type')
+                    ->selectRaw('oi.cancelled_by_type as actor_type, COUNT(DISTINCT oi.id) as count')
+                    ->groupBy('oi.cancelled_by_type')
+                    ->get()
+            )
+            ->groupBy(fn($row) => $this->actorLabel($row->actor_type))
+            ->map(fn($rows, $actor) => [
+                'actor' => $actor,
+                'count' => (int) $rows->sum('count'),
+            ])
+            ->sortByDesc('count')
+            ->values();
 
-        $byActor = (clone $base)
-            ->selectRaw('o.cancelled_by_type, COUNT(DISTINCT o.id) as count')
-            ->whereNotNull('o.cancelled_by_type')
-            ->groupBy('o.cancelled_by_type')
-            ->get()
-            ->map(fn($r) => [
-                'actor' => class_basename($r->cancelled_by_type),
-                'count' => (int) $r->count,
-            ]);
-
-        $topReasons = (clone $base)
-            ->selectRaw('o.cancel_reason, COUNT(DISTINCT o.id) as count')
-            ->whereNotNull('o.cancel_reason')
-            ->groupBy('o.cancel_reason')
-            ->orderByDesc('count')
-            ->limit($limit)
-            ->get()
-            ->map(fn($r) => [
-                'reason' => $r->cancel_reason,
-                'count'  => (int) $r->count,
-            ]);
+        $topReasons = collect()
+            ->merge(
+                (clone $orderBase)
+                    ->whereNotNull('o.cancel_reason')
+                    ->selectRaw('o.cancel_reason as reason, COUNT(DISTINCT o.id) as count')
+                    ->groupBy('o.cancel_reason')
+                    ->get()
+            )
+            ->merge(
+                (clone $itemBase)
+                    ->whereNotNull('oi.cancel_reason')
+                    ->selectRaw('oi.cancel_reason as reason, COUNT(DISTINCT oi.id) as count')
+                    ->groupBy('oi.cancel_reason')
+                    ->get()
+            )
+            ->groupBy('reason')
+            ->map(fn($rows, $reason) => [
+                'reason' => $reason,
+                'count'  => (int) $rows->sum('count'),
+            ])
+            ->sortByDesc('count')
+            ->take($limit)
+            ->values();
 
         return [
-            'total_cancelled' => $total,
-            'by_actor'        => $byActor->values(),
-            'top_reasons'     => $topReasons->values(),
+            'total_cancelled'          => $cancelledOrders + $cancelledItems,
+            'cancelled_orders'         => $cancelledOrders,
+            'cancelled_items'          => $cancelledItems,
+            'by_actor'                 => $byActor,
+            'top_reasons'              => $topReasons,
         ];
     }
 
     // ─── Commission Statistics ────────────────────────────────────────────────
 
+    /**
+     * What the platform earned on the sellers' sales.
+     *
+     * Reads the snapshot frozen on each order item at checkout, so a rate edit
+     * today never changes what last month reports. Only revenue-eligible rows
+     * count — the platform earns nothing on a cancelled or returned line.
+     */
     public function getCommissions(array $validated): array
     {
-        // TODO: commission logic to be defined — returning zero values for now
+        $period    = $this->pgPeriod($validated['period'] ?? 'daily');
+        $dateFrom  = $validated['date_from'] ?? null;
+        $dateTo    = $validated['date_to'] ?? null;
+        $companyId = $validated['company_id'] ?? null;
+        $limit     = $validated['limit'] ?? 10;
+
+        $base = DB::table('order_items as oi')
+            ->join('orders as o', 'o.id', '=', 'oi.order_id')
+            ->join('company_product_variant as cpv', 'cpv.id', '=', 'oi.company_product_variant_id')
+            ->whereNull('o.deleted_at')
+            ->whereNull('oi.deleted_at')
+            ->whereNull('cpv.deleted_at')
+            ->whereIn('o.status', OrderStatusEnum::revenueValues())
+            ->where('oi.status', '!=', OrderItemStatusEnum::CANCELED->value)
+            ->when($companyId, fn($q) => $q->where('cpv.company_id', $companyId))
+            ->when($dateFrom, fn($q) => $q->where('o.created_at', '>=', $dateFrom))
+            ->when($dateTo, fn($q) => $q->where('o.created_at', '<=', $dateTo . ' 23:59:59'));
+
+        $summary = (clone $base)
+            ->selectRaw('
+                COALESCE(SUM(oi.commission_amount), 0) as commission_cents,
+                COALESCE(SUM(oi.amount_final), 0)      as revenue_cents,
+                COUNT(*) FILTER (WHERE oi.commission_amount IS NULL) as items_without_snapshot
+            ')
+            ->first();
+
+        $commissionCents = (int) ($summary->commission_cents ?? 0);
+        $revenueCents    = (int) ($summary->revenue_cents ?? 0);
+
+        $chart = (clone $base)
+            ->selectRaw("
+                DATE_TRUNC('{$period}', o.created_at) as period_date,
+                COALESCE(SUM(oi.commission_amount), 0) as commission_cents,
+                COALESCE(SUM(oi.amount_final), 0)      as revenue_cents
+            ")
+            ->groupByRaw("DATE_TRUNC('{$period}', o.created_at)")
+            ->orderByRaw("DATE_TRUNC('{$period}', o.created_at) ASC")
+            ->get();
+
+        $byCompanyRows = (clone $base)
+            ->selectRaw('
+                cpv.company_id                         as company_id,
+                COALESCE(SUM(oi.commission_amount), 0) as commission_cents,
+                COALESCE(SUM(oi.amount_final), 0)      as revenue_cents
+            ')
+            ->groupBy('cpv.company_id')
+            ->orderByDesc('commission_cents')
+            ->limit($limit)
+            ->get();
+
+        $companies = Company::query()
+            ->whereIn('id', $byCompanyRows->pluck('company_id')->all())
+            ->with(['translatable'])
+            ->get()
+            ->keyBy('id');
+
         return [
-            'total_commission' => 0,
-            'chart'            => [],
+            'summary' => [
+                'total_commission' => round($commissionCents / 100, 2),
+                'total_revenue'    => round($revenueCents / 100, 2),
+                // Effective take rate across the period, not the configured one
+                'effective_rate'   => $revenueCents > 0
+                    ? round($commissionCents / $revenueCents * 100, 2)
+                    : 0,
+                // > 0 means historical rows still need app:backfill-order-commissions
+                'items_without_snapshot' => (int) ($summary->items_without_snapshot ?? 0),
+            ],
+            // Kept for backwards compatibility with the original flat response
+            'total_commission' => round($commissionCents / 100, 2),
+            'chart' => $chart->map(fn($row) => [
+                'date'       => substr($row->period_date, 0, $period === 'month' ? 7 : 10),
+                'commission' => round($row->commission_cents / 100, 2),
+                'revenue'    => round($row->revenue_cents / 100, 2),
+            ])->values(),
+            'by_company' => $byCompanyRows->map(fn($row) => [
+                'company'    => $this->formatCompany($companies->get($row->company_id)),
+                'commission' => round($row->commission_cents / 100, 2),
+                'revenue'    => round($row->revenue_cents / 100, 2),
+            ])->values(),
         ];
     }
 
     // ─── Helpers ─────────────────────────────────────────────────────────────
-
-    private function pgPeriod(string $period): string
-    {
-        return match($period) {
-            'weekly'  => 'week',
-            'monthly' => 'month',
-            default   => 'day',
-        };
-    }
 
     private function orderBaseQuery(?string $dateFrom, ?string $dateTo, ?string $status, ?int $companyId): \Illuminate\Database\Query\Builder
     {
@@ -311,7 +433,11 @@ class ControlStatisticsRepository
             ->when($companyId, fn($q) => $q->where('cpv.company_id', $companyId))
             ->when($dateFrom, fn($q) => $q->where('o.created_at', '>=', $dateFrom))
             ->when($dateTo, fn($q) => $q->where('o.created_at', '<=', $dateTo . ' 23:59:59'))
-            ->when($status, fn($q) => $q->where('o.status', $status));
+            ->when(
+                $status,
+                fn($q) => $q->where('o.status', $status),
+                fn($q) => $q->whereIn('o.status', OrderStatusEnum::placedValues())
+            );
     }
 
     private function formatCompany(?Company $company): ?array
@@ -323,23 +449,25 @@ class ControlStatisticsRepository
         return [
             'id'   => $company->id,
             'uuid' => $company->uuid,
-            'name' => $company->title,
+            'name' => $company->getLang('title'),
         ];
     }
 
-    private function formatCpv(?\App\Models\CompanyProductVariant $cpv): ?array
+    private function actorLabel(?string $morphClass): string
     {
-        if (!$cpv) {
-            return null;
+        return class_basename($morphClass ?? 'Unknown');
+    }
+
+    private function loadCpvsForDisplay(array $cpvIds): Collection
+    {
+        if (empty($cpvIds)) {
+            return collect();
         }
 
-        $variant = $cpv->relationLoaded('productVariant') ? $cpv->productVariant : null;
-
-        return [
-            'id'         => $cpv->id,
-            'uuid'       => $cpv->uuid,
-            'title'      => $variant?->title,
-            'main_image' => $cpv->listing_main_image,
-        ];
+        return CompanyProductVariant::query()
+            ->whereIn('id', $cpvIds)
+            ->with($this->cpvDisplayRelations())
+            ->get()
+            ->keyBy('id');
     }
 }

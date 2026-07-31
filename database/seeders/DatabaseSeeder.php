@@ -22,6 +22,8 @@ class DatabaseSeeder extends Seeder
             ColorProductOptionSeeder::class,
             BrandsSeeder::class,
             CarLibrariesSeeder::class,
+            DashboardTranslationsSeeder::class,
+            DefaultCommissionPercentSeeder::class,
         ]);
     }
 }

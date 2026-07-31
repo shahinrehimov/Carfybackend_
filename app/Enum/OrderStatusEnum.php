@@ -33,4 +33,43 @@ enum OrderStatusEnum: string
 
         return $array;
     }
+
+    /**
+     * Statuses of orders that were actually placed by a customer.
+     *
+     * Orders sitting in pending / payment_pending never completed checkout and
+     * failed ones never got paid, so they are not real orders and must stay out
+     * of every count on the dashboards.
+     *
+     * @return string[]
+     */
+    public static function placedValues(): array
+    {
+        return [
+            self::PROCESSING->value,
+            self::CONFIRMED->value,
+            self::COURIER_ASSIGNED->value,
+            self::SHIPPED->value,
+            self::DELIVERED->value,
+            self::CANCELED->value,
+            self::RETURNED->value,
+        ];
+    }
+
+    /**
+     * Statuses whose money actually counts as revenue: placed orders minus the
+     * ones the customer never paid for in the end (cancelled / returned).
+     *
+     * @return string[]
+     */
+    public static function revenueValues(): array
+    {
+        return [
+            self::PROCESSING->value,
+            self::CONFIRMED->value,
+            self::COURIER_ASSIGNED->value,
+            self::SHIPPED->value,
+            self::DELIVERED->value,
+        ];
+    }
 }

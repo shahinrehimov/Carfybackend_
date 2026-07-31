@@ -21,6 +21,7 @@ use App\Services\AdminService;
 use App\Services\CompanyAdminService;
 use App\Services\FileUpload;
 use App\Services\LangService;
+use App\Services\LoggerService;
 use App\Services\ProductSearchService;
 use App\Services\ProductService;
 use App\Services\RouteService;
@@ -1258,6 +1259,23 @@ class ProductVariantRepository
         if ($sellerListing) {
             $this->overrideWithSellerData($productVariant, $sellerListing);
             $productVariant->ratings = $this->calculateCpvRating($sellerListing);
+        }
+
+        // Every storefront visit to the detail page is a view of this listing.
+        // Recorded here so the seller dashboard does not depend on the client
+        // remembering to call the separate track-view endpoint. Analytics must
+        // never take the product page down, hence the catch.
+        if ($sellerListing && in_array(RouteService::instance()->getName(), ['app', 'site'])) {
+            try {
+                (new SellerStatisticsRepository())->trackView($sellerListing, request());
+            } catch (\Throwable $e) {
+                LoggerService::instance()->log(
+                    'Failed to track product view: ' . $e->getMessage(),
+                    ['company_product_variant_id' => $sellerListing->id],
+                    true,
+                    'warning'
+                );
+            }
         }
 
         // CPV-level in_wishlist / in_basket for detail page
