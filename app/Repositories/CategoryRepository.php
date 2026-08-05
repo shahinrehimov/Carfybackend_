@@ -120,6 +120,7 @@ class CategoryRepository
     {
         $category->load([
             'media',
+            'commissionTiers',
         ]);
 
         return $category;
@@ -149,6 +150,10 @@ class CategoryRepository
 
             $category = Category::createWithLangs($validated);
 
+            if (!empty($validated['commission_tiers'])) {
+                (new CommissionTierRepository())->replaceFor($category, $validated['commission_tiers']);
+            }
+
             FileUpload::upload($request, 'image', 'categories', $category);
 
             return $category;
@@ -158,7 +163,15 @@ class CategoryRepository
     public function update(Category $category, FormRequest $request): Category
     {
         return DB::transaction(static function () use ($category, $request) {
-            $category->updateWithLangs($request->validated());
+            $validated = $request->validated();
+
+            $category->updateWithLangs($validated);
+
+            // Same convention as commission_percent: an explicit empty array
+            // drops the tiers so the category inherits again.
+            if (array_key_exists('commission_tiers', $validated)) {
+                (new CommissionTierRepository())->replaceFor($category, $validated['commission_tiers'] ?? []);
+            }
 
             FileUpload::upload($request, 'image', 'categories', $category);
 

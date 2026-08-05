@@ -65,6 +65,7 @@ class CompanyRepository
             'city',
             'city.translatable',
             'workingHours',
+            'commissionTiers',
         ]);
 
         $stats = ProductReview::query()
@@ -113,7 +114,13 @@ class CompanyRepository
             'translations' => $validated['translations'] ?? [],
         ];
 
-        return $this->createFromData($data, $request);
+        $company = $this->createFromData($data, $request);
+
+        if (!empty($validated['commission_tiers'])) {
+            (new CommissionTierRepository())->replaceFor($company, $validated['commission_tiers']);
+        }
+
+        return $company;
     }
 
     public function update(Company $company, FormRequest $request): Company
@@ -144,6 +151,12 @@ class CompanyRepository
             }
 
             $company->updateWithLangs($data);
+
+            // Same convention as commission_percent: an explicit empty array
+            // drops the tiers so the seller inherits again.
+            if (array_key_exists('commission_tiers', $validated)) {
+                (new CommissionTierRepository())->replaceFor($company, $validated['commission_tiers'] ?? []);
+            }
 
             FileUpload::upload($request, 'logo', 'companies_logo', $company);
             FileUpload::upload($request, 'banner', 'companies_banner', $company);

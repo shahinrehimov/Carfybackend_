@@ -51,7 +51,7 @@ class BackfillOrderCommissionsCommand extends Command
             $this->info("{$total} order item(s) would be updated. First 20:");
 
             (clone $query)->limit(20)->get()->each(function (OrderItem $item) use ($commission, $forcedPercent) {
-                $percent = $forcedPercent ?? $commission->percentFor($item->companyProductVariant);
+                $percent = $forcedPercent ?? $commission->percentFor($item->companyProductVariant, (float) $item->amount_final);
                 $amount  = $commission->applyPercent((float) $item->amount_final, $percent);
 
                 $this->line("- item #{$item->id}: {$item->amount_final} × {$percent}% => {$amount}");
@@ -75,7 +75,7 @@ class BackfillOrderCommissionsCommand extends Command
             }
 
             foreach ($items as $item) {
-                $percent = $forcedPercent ?? $commission->percentFor($item->companyProductVariant);
+                $percent = $forcedPercent ?? $commission->percentFor($item->companyProductVariant, (float) $item->amount_final);
                 $amount  = $commission->applyPercent((float) $item->amount_final, $percent);
 
                 DB::table('order_items')

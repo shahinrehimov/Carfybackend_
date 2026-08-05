@@ -14,6 +14,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\DB;
 use Spatie\MediaLibrary\HasMedia;
@@ -153,5 +154,10 @@ class Company extends Model implements TranslatableInterface, HasMedia
     public function productVariantListings(): HasMany
     {
         return $this->hasMany(CompanyProductVariant::class);
+    }
+
+    public function commissionTiers(): MorphMany
+    {
+        return $this->morphMany(CommissionTier::class, 'tierable')->orderBy('min_amount');
     }
 }

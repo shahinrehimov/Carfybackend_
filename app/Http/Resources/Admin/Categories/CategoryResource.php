@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources\Admin\Categories;
 
+use App\Http\Resources\Admin\CommissionTiers\CommissionTierResource;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -40,6 +41,9 @@ class CategoryResource extends JsonResource
             'is_active' => $this->isActive(),
             // null = inherits the platform default
             'commission_percent' => $this->commission_percent,
+            'commission_tiers' => CommissionTierResource::collection(
+                $this->whenLoaded('commissionTiers')
+            ),
         ];
     }
 }

@@ -15,6 +15,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
@@ -107,6 +108,11 @@ class Category extends Model implements TranslatableInterface, HasMedia
     public function productRel(): HasMany
     {
         return $this->hasMany(ProductCategory::class);
+    }
+
+    public function commissionTiers(): MorphMany
+    {
+        return $this->morphMany(CommissionTier::class, 'tierable')->orderBy('min_amount');
     }
 }
 

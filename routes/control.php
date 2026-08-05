@@ -26,6 +26,7 @@ use App\Http\Controllers\Admin\BrandModelController;
 use App\Http\Controllers\Admin\CategoryController;
 use App\Http\Controllers\Admin\CityController;
 use App\Http\Controllers\Admin\CompanyAdminController;
+use App\Http\Controllers\Admin\CommissionTierController;
 use App\Http\Controllers\Admin\CompanyController;
 use App\Http\Controllers\Admin\CompanyProductVariantController;
 use App\Http\Controllers\Admin\CountryController;
@@ -113,6 +114,13 @@ Route::middleware(['general_access:admin', RouteLogMiddleware::class])->prefix('
             Route::delete('delete/{group}/{key}', [TranslationController::class, 'destroy'])
                 ->withoutMiddleware(['role:' . RoleEnum::ADMIN->value . '|' . RoleEnum::MARKETING->value])
                 ->middleware(['role:' . RoleEnum::ADMIN->value]);
+        });
+
+        // Platform-wide commission tiers (company/category tiers live on
+        // their own forms)
+        Route::group(['prefix' => 'commission-tiers', 'middleware' => ['role:' . RoleEnum::ADMIN->value]], static function () {
+            Route::get('load', [CommissionTierController::class, 'index']);
+            Route::post('update', [CommissionTierController::class, 'update']);
         });
 
         Route::group(['prefix' => 'settings', 'middleware' => ['role:' . RoleEnum::ADMIN->value . '|' . RoleEnum::MARKETING->value]], static function () {

@@ -1493,6 +1493,100 @@
           ]
         },
         {
+          "name": "Commission tiers",
+          "item": [
+            {
+              "name": "Load global tiers",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{token}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Token",
+                    "value": "{{app_token}}",
+                    "type": "text"
+                  },
+                  {
+                    "key": "accept",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{url}}/control/commission-tiers/load",
+                  "host": [
+                    "{{url}}"
+                  ],
+                  "path": [
+                    "control",
+                    "commission-tiers",
+                    "load"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Update global tiers",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{token}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Token",
+                    "value": "{{app_token}}",
+                    "type": "text"
+                  },
+                  {
+                    "key": "accept",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"commission_tiers\": [\n        {\n            \"min_amount\": 0,\n            \"max_amount\": 100,\n            \"percent\": 5\n        },\n        {\n            \"min_amount\": 100,\n            \"max_amount\": 150,\n            \"percent\": 6\n        },\n        {\n            \"min_amount\": 150,\n            \"max_amount\": null,\n            \"percent\": 7\n        }\n    ]\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{url}}/control/commission-tiers/update",
+                  "host": [
+                    "{{url}}"
+                  ],
+                  "path": [
+                    "control",
+                    "commission-tiers",
+                    "update"
+                  ]
+                }
+              },
+              "response": []
+            }
+          ]
+        },
+        {
           "name": "Metas",
           "item": [
             {
@@ -2427,6 +2521,60 @@
                       "type": "text",
                       "disabled": true,
                       "description": "0-100. Boş = kateqoriya/platforma faizi miras alınır"
+                    },
+                    {
+                      "key": "commission_tiers[0][min_amount]",
+                      "value": "0",
+                      "type": "text",
+                      "disabled": true
+                    },
+                    {
+                      "key": "commission_tiers[0][max_amount]",
+                      "value": "100",
+                      "type": "text",
+                      "disabled": true
+                    },
+                    {
+                      "key": "commission_tiers[0][percent]",
+                      "value": "5",
+                      "type": "text",
+                      "disabled": true
+                    },
+                    {
+                      "key": "commission_tiers[1][min_amount]",
+                      "value": "100",
+                      "type": "text",
+                      "disabled": true
+                    },
+                    {
+                      "key": "commission_tiers[1][max_amount]",
+                      "value": "150",
+                      "type": "text",
+                      "disabled": true
+                    },
+                    {
+                      "key": "commission_tiers[1][percent]",
+                      "value": "6",
+                      "type": "text",
+                      "disabled": true
+                    },
+                    {
+                      "key": "commission_tiers[2][min_amount]",
+                      "value": "150",
+                      "type": "text",
+                      "disabled": true
+                    },
+                    {
+                      "key": "commission_tiers[2][max_amount]",
+                      "value": "",
+                      "type": "text",
+                      "disabled": true
+                    },
+                    {
+                      "key": "commission_tiers[2][percent]",
+                      "value": "7",
+                      "type": "text",
+                      "disabled": true
                     }
                   ]
                 },
@@ -2529,6 +2677,60 @@
                       "type": "text",
                       "disabled": true,
                       "description": "0-100. Boş = kateqoriya/platforma faizi miras alınır"
+                    },
+                    {
+                      "key": "commission_tiers[0][min_amount]",
+                      "value": "0",
+                      "type": "text",
+                      "disabled": true
+                    },
+                    {
+                      "key": "commission_tiers[0][max_amount]",
+                      "value": "100",
+                      "type": "text",
+                      "disabled": true
+                    },
+                    {
+                      "key": "commission_tiers[0][percent]",
+                      "value": "5",
+                      "type": "text",
+                      "disabled": true
+                    },
+                    {
+                      "key": "commission_tiers[1][min_amount]",
+                      "value": "100",
+                      "type": "text",
+                      "disabled": true
+                    },
+                    {
+                      "key": "commission_tiers[1][max_amount]",
+                      "value": "150",
+                      "type": "text",
+                      "disabled": true
+                    },
+                    {
+                      "key": "commission_tiers[1][percent]",
+                      "value": "6",
+                      "type": "text",
+                      "disabled": true
+                    },
+                    {
+                      "key": "commission_tiers[2][min_amount]",
+                      "value": "150",
+                      "type": "text",
+                      "disabled": true
+                    },
+                    {
+                      "key": "commission_tiers[2][max_amount]",
+                      "value": "",
+                      "type": "text",
+                      "disabled": true
+                    },
+                    {
+                      "key": "commission_tiers[2][percent]",
+                      "value": "7",
+                      "type": "text",
+                      "disabled": true
                     }
                   ]
                 },
@@ -13970,7 +14172,7 @@
                 ],
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n    \"voen\": \"1234512890\",\n    \"phone\": \"+994501214567\",\n    \"email\": \"company11@example.com\",\n    \"city_id\": 4,\n    \"latitude\": 40.4093,\n    \"longitude\": 49.8671,\n    \"website\": \"https://example.com\",\n    \"is_active\": true,\n    \"translations\": [\n        {\n            \"language_id\": 1,\n            \"title\": \"Test Company\",\n            \"info\": \"Company info\",\n            \"address\": \"Baku, Azerbaijan\"\n        },\n        {\n            \"language_id\": 2,\n            \"title\": null,\n            \"info\": null,\n            \"address\": null\n        },\n        {\n            \"language_id\": 3,\n            \"title\": null,\n            \"info\": null,\n            \"address\": null\n        }\n    ],\n    \"root_admin_username\": \"companyadmin\",\n    \"root_admin_email\": \"admin4@example.com\",\n    \"root_admin_name\": \"John\",\n    \"root_admin_surname\": \"Doe\",\n    \"commission_percent\": null\n}",
+                  "raw": "{\n    \"voen\": \"1234512890\",\n    \"phone\": \"+994501214567\",\n    \"email\": \"company11@example.com\",\n    \"city_id\": 4,\n    \"latitude\": 40.4093,\n    \"longitude\": 49.8671,\n    \"website\": \"https://example.com\",\n    \"is_active\": true,\n    \"translations\": [\n        {\n            \"language_id\": 1,\n            \"title\": \"Test Company\",\n            \"info\": \"Company info\",\n            \"address\": \"Baku, Azerbaijan\"\n        },\n        {\n            \"language_id\": 2,\n            \"title\": null,\n            \"info\": null,\n            \"address\": null\n        },\n        {\n            \"language_id\": 3,\n            \"title\": null,\n            \"info\": null,\n            \"address\": null\n        }\n    ],\n    \"root_admin_username\": \"companyadmin\",\n    \"root_admin_email\": \"admin4@example.com\",\n    \"root_admin_name\": \"John\",\n    \"root_admin_surname\": \"Doe\",\n    \"commission_percent\": null,\n    \"commission_tiers\": [\n        {\n            \"min_amount\": 0,\n            \"max_amount\": 100,\n            \"percent\": 5\n        },\n        {\n            \"min_amount\": 100,\n            \"max_amount\": 150,\n            \"percent\": 6\n        },\n        {\n            \"min_amount\": 150,\n            \"max_amount\": null,\n            \"percent\": 7\n        }\n    ]\n}",
                   "options": {
                     "raw": {
                       "language": "json"
@@ -14019,7 +14221,7 @@
                 ],
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n    \"voen\": \"1234567890\",\n    \"phone\": \"+994501234567\",\n    \"email\": \"company@example.com\",\n    \"city_id\": 8,\n    \"latitude\": 40.4093,\n    \"longitude\": 49.8671,\n    \"website\": \"https://example.com\",\n    \"is_active\": true,\n    \"translations\": [\n        {\n            \"language_id\": 1,\n            \"title\": \"Updated Company\",\n            \"info\": \"Updated info\",\n            \"address\": \"Baku, Azerbaijan\"\n        },\n        {\n            \"language_id\": 2,\n            \"title\": null,\n            \"info\": null,\n            \"address\": null\n        },\n        {\n            \"language_id\": 3,\n            \"title\": null,\n            \"info\": null,\n            \"address\": null\n        }\n    ],\n    \"commission_percent\": null\n}",
+                  "raw": "{\n    \"voen\": \"1234567890\",\n    \"phone\": \"+994501234567\",\n    \"email\": \"company@example.com\",\n    \"city_id\": 8,\n    \"latitude\": 40.4093,\n    \"longitude\": 49.8671,\n    \"website\": \"https://example.com\",\n    \"is_active\": true,\n    \"translations\": [\n        {\n            \"language_id\": 1,\n            \"title\": \"Updated Company\",\n            \"info\": \"Updated info\",\n            \"address\": \"Baku, Azerbaijan\"\n        },\n        {\n            \"language_id\": 2,\n            \"title\": null,\n            \"info\": null,\n            \"address\": null\n        },\n        {\n            \"language_id\": 3,\n            \"title\": null,\n            \"info\": null,\n            \"address\": null\n        }\n    ],\n    \"commission_percent\": null,\n    \"commission_tiers\": [\n        {\n            \"min_amount\": 0,\n            \"max_amount\": 100,\n            \"percent\": 5\n        },\n        {\n            \"min_amount\": 100,\n            \"max_amount\": 150,\n            \"percent\": 6\n        },\n        {\n            \"min_amount\": 150,\n            \"max_amount\": null,\n            \"percent\": 7\n        }\n    ]\n}",
                   "options": {
                     "raw": {
                       "language": "json"

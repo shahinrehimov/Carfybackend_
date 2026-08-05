@@ -3,6 +3,7 @@
 namespace App\Http\Requests\Admin\Company;
 
 use App\Models\City;
+use App\Rules\CommissionTiersRule;
 use App\Rules\FirstTranslationRequired;
 use App\Services\LangService;
 use Illuminate\Foundation\Http\FormRequest;
@@ -29,6 +30,12 @@ class CompanyStoreRequest extends FormRequest
             'is_active' => ['sometimes', 'boolean'],
             // null = inherit the category / platform default commission rate
             'commission_percent' => ['nullable', 'numeric', 'min:0', 'max:100'],
+            // Tiered override, amounts in manats: the order line amount picks
+            // the percent. Empty array / null = drop the tiers.
+            'commission_tiers' => ['sometimes', 'nullable', 'array', new CommissionTiersRule()],
+            'commission_tiers.*.min_amount' => ['required', 'numeric', 'min:0'],
+            'commission_tiers.*.max_amount' => ['nullable', 'numeric', 'min:0'],
+            'commission_tiers.*.percent' => ['required', 'numeric', 'min:0', 'max:100'],
 
             // Translatable fields
             'translations' => ['required', 'array', 'size:' . count(LangService::instance()->getLanguages())],

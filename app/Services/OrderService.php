@@ -329,8 +329,12 @@ class OrderService
                 }
 
                 // Freeze the commission on the line so a later rate change never
-                // rewrites what the platform earned on this order.
-                $commissionPercent = CommissionService::instance()->percentFor($cpv);
+                // rewrites what the platform earned on this order. The line
+                // amount decides which commission tier applies.
+                $commissionPercent = CommissionService::instance()->percentFor(
+                    $cpv,
+                    (float) $productVariant->price_final_in_basket
+                );
 
                 $items[] = [
                     'basket_id' => $productVariant->pivot->id,

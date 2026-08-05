@@ -3,6 +3,7 @@
 namespace App\Http\Resources\Admin\Companies;
 
 use App\Http\Resources\Admin\Cities\CitiesListResource;
+use App\Http\Resources\Admin\CommissionTiers\CommissionTierResource;
 use App\Http\Resources\Sellers\StoreProfile\StoreProfileWorkingHourResource;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -47,6 +48,9 @@ class CompanyResource extends JsonResource
             'is_active' => $this->isActive(),
             // null = inherits the category rate, or the platform default
             'commission_percent' => $this->commission_percent,
+            'commission_tiers' => CommissionTierResource::collection(
+                $this->whenLoaded('commissionTiers')
+            ),
             'logo' => $this->whenLoaded('media', function () {
                 return $this->logo;
             }),
