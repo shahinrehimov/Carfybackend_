@@ -27,7 +27,9 @@ class CommissionTiersRule implements Rule
 
         foreach ($tiers as $index => $tier) {
             $min = (float) $tier['min_amount'];
-            $max = isset($tier['max_amount']) ? (float) $tier['max_amount'] : null;
+            // An omitted, null or blank max means "no upper bound". Blank
+            // arrives from the multipart forms, which cannot send a real null.
+            $max = self::openEnded($tier) ? null : (float) $tier['max_amount'];
 
             if ($max !== null && $max <= $min) {
                 $this->message = LangService::instance()
@@ -66,5 +68,15 @@ class CommissionTiersRule implements Rule
     public function message(): string
     {
         return $this->message;
+    }
+
+    /**
+     * Whether a tier row carries no upper bound.
+     */
+    public static function openEnded(array $tier): bool
+    {
+        $max = $tier['max_amount'] ?? null;
+
+        return $max === null || $max === '';
     }
 }

@@ -3,6 +3,7 @@
 namespace App\Repositories;
 
 use App\Models\CommissionTier;
+use App\Rules\CommissionTiersRule;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
@@ -39,7 +40,9 @@ class CommissionTierRepository
                     'tierable_type' => $tierable?->getMorphClass(),
                     'tierable_id' => $tierable?->getKey(),
                     'min_amount' => $tier['min_amount'],
-                    'max_amount' => $tier['max_amount'] ?? null,
+                    // Blank comes from the multipart forms, which cannot send
+                    // a real null, and means "no upper bound".
+                    'max_amount' => CommissionTiersRule::openEnded($tier) ? null : $tier['max_amount'],
                     'percent' => $tier['percent'],
                 ]);
             }

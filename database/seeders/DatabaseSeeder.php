@@ -24,6 +24,7 @@ class DatabaseSeeder extends Seeder
             CarLibrariesSeeder::class,
             DashboardTranslationsSeeder::class,
             DefaultCommissionPercentSeeder::class,
+            CommissionTierTranslationsSeeder::class,
         ]);
     }
 }
