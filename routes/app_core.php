@@ -203,6 +203,10 @@ return static function () {
                     Route::post('change-password', [ProfileController::class, 'changePassword'])->withoutMiddleware(RouteLogMiddleware::class);
                     Route::post('change-password/verify-otp', [ProfileController::class, 'changePasswordVerifyOtp'])->withoutMiddleware(RouteLogMiddleware::class);
                     Route::post('update', [ProfileController::class, 'updateProfile']);
+                    Route::post('change-email/send-otp', [ProfileController::class, 'sendChangeEmailOtp'])->middleware(['throttle:2,1']);
+                    Route::post('change-email/verify', [ProfileController::class, 'verifyChangeEmail'])->middleware(['throttle:5,1']);
+                    Route::post('change-phone/send-otp', [ProfileController::class, 'sendChangePhoneOtp'])->middleware(['throttle:2,1']);
+                    Route::post('change-phone/verify', [ProfileController::class, 'verifyChangePhone'])->middleware(['throttle:5,1']);
                     Route::post('image', [ProfileController::class, 'updateProfileImage']);
                     Route::delete('image', [ProfileController::class, 'deleteProfileImage']);
                     Route::delete('delete-account', [ProfileController::class, 'deleteAccount']);

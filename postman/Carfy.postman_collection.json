@@ -24902,7 +24902,7 @@
                 ],
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n    \"name\": \"Sahib\",\n    \"surname\": \"Fermanli\",\n    \"gender\": \"male\",\n    \"birth_date\": \"23.05.1997\"\n}",
+                  "raw": "{\n    \"name\": \"Sahib\",\n    \"surname\": \"Fermanli\",\n    \"gender\": \"male\", // optional, may be omitted or null\n    \"birth_date\": \"23.05.1997\"\n}",
                   "options": {
                     "raw": {
                       "language": "json"
@@ -25137,6 +25137,234 @@
                     "profile",
                     "change-password",
                     "verify-otp"
+                  ],
+                  "variable": [
+                    {
+                      "key": "provider",
+                      "value": "site",
+                      "description": "site or app"
+                    }
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Change email send OTP",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{login_token_site}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Token",
+                    "value": "{{app_site_token}}",
+                    "type": "text"
+                  },
+                  {
+                    "key": "accept",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"email\": \"new.email@example.com\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{url}}/:provider/profile/change-email/send-otp",
+                  "host": [
+                    "{{url}}"
+                  ],
+                  "path": [
+                    ":provider",
+                    "profile",
+                    "change-email",
+                    "send-otp"
+                  ],
+                  "variable": [
+                    {
+                      "key": "provider",
+                      "value": "site",
+                      "description": "site or app"
+                    }
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Change email verify",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{login_token_site}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Token",
+                    "value": "{{app_site_token}}",
+                    "type": "text"
+                  },
+                  {
+                    "key": "accept",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"email\": \"new.email@example.com\",\n    \"otp\": 1907\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{url}}/:provider/profile/change-email/verify",
+                  "host": [
+                    "{{url}}"
+                  ],
+                  "path": [
+                    ":provider",
+                    "profile",
+                    "change-email",
+                    "verify"
+                  ],
+                  "variable": [
+                    {
+                      "key": "provider",
+                      "value": "site",
+                      "description": "site or app"
+                    }
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Change phone send OTP",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{login_token_site}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Token",
+                    "value": "{{app_site_token}}",
+                    "type": "text"
+                  },
+                  {
+                    "key": "accept",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"phone\": \"994501234567\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{url}}/:provider/profile/change-phone/send-otp",
+                  "host": [
+                    "{{url}}"
+                  ],
+                  "path": [
+                    ":provider",
+                    "profile",
+                    "change-phone",
+                    "send-otp"
+                  ],
+                  "variable": [
+                    {
+                      "key": "provider",
+                      "value": "site",
+                      "description": "site or app"
+                    }
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Change phone verify",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{login_token_site}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Token",
+                    "value": "{{app_site_token}}",
+                    "type": "text"
+                  },
+                  {
+                    "key": "accept",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"phone\": \"994501234567\",\n    \"otp\": 1907\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{url}}/:provider/profile/change-phone/verify",
+                  "host": [
+                    "{{url}}"
+                  ],
+                  "path": [
+                    ":provider",
+                    "profile",
+                    "change-phone",
+                    "verify"
                   ],
                   "variable": [
                     {

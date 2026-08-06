@@ -149,6 +149,24 @@ class User extends Authenticatable implements MustVerifyEmail, HasMedia
         });
     }
 
+    public function markPhoneAsVerified(): bool
+    {
+        $_this = $this;
+
+        return DB::transaction(function () use($_this) {
+            $res = $_this
+                ->forceFill([
+                    'phone_verified_at' => $_this->freshTimestamp(),
+                    'phone_unique_key' => md5($_this->phone),
+                ])
+                ->save();
+
+            UserService::instance()->removeFakePhones($_this);
+
+            return $res;
+        });
+    }
+
     public function scopeActive(Builder $builder): void
     {
         $builder->where('is_active', true);
@@ -187,6 +205,11 @@ class User extends Authenticatable implements MustVerifyEmail, HasMedia
     public function isEmailVerified(): bool
     {
         return $this->email_verified_at !== null;
+    }
+
+    public function hasVerifiedPhone(): bool
+    {
+        return $this->phone_verified_at !== null;
     }
 
     public function otpCodes(): HasMany

@@ -7,6 +7,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\App\Auth\VerifyOtpRequest;
 use App\Http\Resources\App\Auth\UserResource;
 use App\Models\User;
+use App\Models\UserOtpCode;
 use App\Services\LangService;
 use App\Services\UserService;
 use Illuminate\Foundation\Application;
@@ -23,13 +24,21 @@ class EmailVerificationController extends Controller
 
         UserService::instance()->sendEmailVerificationNotification($user);
 
-        return response()->json([
-            'step' => User::EMAIL_VERIFICATION_TYPE === 'otp' ? 'otp_email' : 'verify_email',
-            'user' => UserResource::make($user),
-            'message' => LangService::instance()
-                ->setDefault('Verification email sent successfully!')
-                ->getLang('email_verification_notification_sent')
-        ]);
+        $isOtp = User::EMAIL_VERIFICATION_TYPE === 'otp';
+
+        $response = ['step' => $isOtp ? 'otp_email' : 'verify_email'];
+
+        // Link verification has no code to count down.
+        if ($isOtp) {
+            $response['otp_expires_in'] = UserOtpCode::expiresInSeconds();
+        }
+
+        $response['user'] = UserResource::make($user);
+        $response['message'] = LangService::instance()
+            ->setDefault('Verification email sent successfully!')
+            ->getLang('email_verification_notification_sent');
+
+        return response()->json($response);
     }
 
     public function verify(int $id, string $hash): Application|Redirector|RedirectResponse

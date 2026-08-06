@@ -8,6 +8,8 @@ enum UserOtpTypesEnum: string
 {
     case REGISTER = 'register';
     case CHANGE_PASSWORD = 'change_password';
+    case CHANGE_EMAIL = 'change_email';
+    case CHANGE_PHONE = 'change_phone';
     case LOGIN = 'login';
     case VERIFY_NOTIFICATION_PHONE = 'verify_notification_phone';
 

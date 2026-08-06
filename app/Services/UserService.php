@@ -10,11 +10,13 @@ use App\Services\ReferralService;
 use App\Models\ThirdPartyProviderLoginToken;
 use App\Models\User;
 use App\Models\UserOtpCode;
+use App\Notifications\CustomChangeEmailNotificationOTP;
 use Carbon\Carbon;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Str;
 use Laravel\Sanctum\PersonalAccessToken;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
@@ -170,17 +172,114 @@ class UserService
         });
     }
 
+    /**
+     * Email and phone are deliberately not updatable here; both require OTP
+     * confirmation and go through sendChangeEmailOtp()/sendChangePhoneOtp().
+     */
     public function updateProfile(User $user, array $validated): User
     {
-        if (isset($validated['email'])) {
-            $this->checkEmail($validated['email'], $user->id);
-        }
-
         return DB::transaction(function () use ($user, $validated) {
             $user->update($validated);
 
             return $user;
         });
+    }
+
+    public function sendChangeEmailOtp(User $user, string $email): void
+    {
+        $this->guardEmailChangeAllowed($user);
+
+        if ($user->email === $email) {
+            throw new BadRequestHttpException(
+                LangService::instance()
+                    ->setDefault('This is already your current email address')
+                    ->getLang('email_same_as_current')
+            );
+        }
+
+        $this->checkEmail($email, $user->id);
+
+        $otp = $this->generateOtp(UserOtpTypesEnum::CHANGE_EMAIL, UserOtpProvidersEnum::EMAIL, $user, $email);
+
+        // The address is not on the user record yet, so the mail is routed on demand.
+        Notification::route('mail', $email)->notify(new CustomChangeEmailNotificationOTP($otp));
+    }
+
+    public function changeEmail(User $user, string $email, int $otp): User
+    {
+        $this->guardEmailChangeAllowed($user);
+
+        $this->checkEmail($email, $user->id);
+
+        $this->checkOtp(UserOtpTypesEnum::CHANGE_EMAIL, $otp, $user, UserOtpProvidersEnum::EMAIL, $email);
+
+        return DB::transaction(function () use ($user, $email) {
+            $user->update(['email' => $email]);
+
+            // Also refreshes email_unique_key and clears the address off unverified accounts.
+            $user->markEmailAsVerified();
+
+            return $user;
+        });
+    }
+
+    public function sendChangePhoneOtp(User $user, string $phone): void
+    {
+        if ($user->phone === $phone) {
+            throw new BadRequestHttpException(
+                LangService::instance()
+                    ->setDefault('This is already your current phone number')
+                    ->getLang('phone_same_as_current')
+            );
+        }
+
+        $this->checkPhone($phone, $user->id);
+
+        $otp = $this->generateOtp(UserOtpTypesEnum::CHANGE_PHONE, UserOtpProvidersEnum::SMS, $user, $phone);
+
+        $message = LangService::instance()
+            ->setDefault('Your OTP code: @otp')
+            ->getLang('phone_otp_message', [
+                '@otp' => $otp,
+            ]);
+
+        SmsService::instance()->sendOtp($phone, $message);
+    }
+
+    public function changePhone(User $user, string $phone, int $otp): User
+    {
+        $this->checkPhone($phone, $user->id);
+
+        $this->checkOtp(UserOtpTypesEnum::CHANGE_PHONE, $otp, $user, UserOtpProvidersEnum::SMS, $phone);
+
+        return DB::transaction(function () use ($user, $phone) {
+            $user->update(['phone' => $phone]);
+
+            // Also refreshes phone_unique_key and clears the number off unverified accounts.
+            $user->markPhoneAsVerified();
+
+            return $user;
+        });
+    }
+
+    /**
+     * Social accounts are matched back to the provider by email on every login,
+     * so changing it here would lock the user out of their own account.
+     */
+    private function guardEmailChangeAllowed(User $user): void
+    {
+        $socialTypes = [
+            UserRegisterTypesEnum::GOOGLE->value,
+            UserRegisterTypesEnum::APPLE->value,
+        ];
+
+        if (in_array($user->register_type, $socialTypes, true)) {
+            throw new BadRequestHttpException(
+                LangService::instance()
+                    ->setDefault('The email address of an account created with Google or Apple cannot be changed.')
+                    ->getLang('change_email_not_allowed_for_social_login')
+            );
+        }
     }
 
     public function updateProfileImage(User $user, FormRequest $request): User
@@ -330,9 +429,11 @@ class UserService
         $otp = config('app.otp_debug_mode') ? 1907 : rand(1000, 9999);
 
         if ($user) {
+            // An explicit receiver wins over the user's current contact details, so an OTP
+            // can be sent to an address the user does not own yet (email/phone change).
             $user->otpCodes()
                 ->create([
-                    'receiver' => $provider->value === UserOtpProvidersEnum::SMS->value ? $user->phone : $user->email,
+                    'receiver' => $receiver ?? ($provider->value === UserOtpProvidersEnum::SMS->value ? $user->phone : $user->email),
                     'code' => $otp,
                     'type' => $type->value,
                     'provider' => $provider->value,
@@ -370,6 +471,11 @@ class UserService
             $checkOtp = $user->otpCodes()
                 ->where('type', $type->value)
                 ->where('provider', $provider)
+                // Binds the code to the address it was sent to, so an OTP delivered to one
+                // address cannot be replayed to claim a different one.
+                ->when($receiver, function ($query) use ($receiver) {
+                    $query->where('receiver', $receiver);
+                })
                 ->where('created_at', '>=', Carbon::now()->subMinutes(UserOtpCode::EXPIRED_MINUTE))
                 ->orderByDesc('id')
                 ->first();

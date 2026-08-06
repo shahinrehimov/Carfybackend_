@@ -9,6 +9,7 @@ use App\Http\Requests\Sellers\StoreProfile\UpdateWorkingHoursRequest;
 use App\Http\Requests\Sellers\StoreProfile\VerifyNotificationPhoneRequest;
 use App\Http\Resources\GeneralResource;
 use App\Http\Resources\Sellers\StoreProfile\StoreProfileResource;
+use App\Models\UserOtpCode;
 use App\Repositories\StoreProfileRepository;
 use App\Services\CompanyAdminService;
 use App\Services\LangService;
@@ -75,6 +76,7 @@ class StoreProfileController extends Controller
         $this->repo->sendNotificationPhoneOtp($request->validated()['phone']);
 
         return response()->json(GeneralResource::make([
+            'otp_expires_in' => UserOtpCode::expiresInSeconds(),
             'message' => LangService::instance()
                 ->setDefault('OTP sent to your phone!')
                 ->getLang('phone_otp_sent'),

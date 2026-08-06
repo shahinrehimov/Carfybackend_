@@ -31,13 +31,14 @@ class UserResource extends JsonResource
     {
         return [
             'uuid' => $this->uuid,
+            'register_type' => $this->register_type,
             'image' => $this->image,
             'email' => $this->email,
             'phone' => $this->phone,
             'name' => $this->name,
             'surname' => $this->surname,
             'gender' => $this->gender,
-            'gender_label' => LangService::instance()
+            'gender_label' => $this->gender === null ? null : LangService::instance()
                 ->setDefault(Str::title($this->gender))
                 ->getLang('gender_' . $this->gender),
             'birth_date' => $this->birth_date?->toDateString(),

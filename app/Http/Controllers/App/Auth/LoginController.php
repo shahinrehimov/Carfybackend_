@@ -12,6 +12,7 @@ use App\Http\Requests\App\Auth\LoginWithThirdPartyProviderRequest;
 use App\Http\Requests\App\Auth\SendPhoneOtpRequest;
 use App\Http\Resources\App\Auth\UserResource;
 use App\Models\User;
+use App\Models\UserOtpCode;
 use App\Services\SmsService;
 use App\Services\UserService;
 use App\Services\LangService;
@@ -60,6 +61,7 @@ class LoginController extends Controller
 
         return response()->json([
             'step' => 'otp_phone',
+            'otp_expires_in' => UserOtpCode::expiresInSeconds(),
             'message' => LangService::instance()
                 ->setDefault('OTP sent to your phone!')
                 ->getLang('phone_otp_sent')

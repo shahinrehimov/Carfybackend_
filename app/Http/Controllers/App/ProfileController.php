@@ -8,11 +8,16 @@ use App\Enum\UserRegisterTypesEnum;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\App\Auth\ChangePasswordRequest;
 use App\Http\Requests\App\Auth\ChangePasswordVerifyOtpRequest;
+use App\Http\Requests\App\Profile\SendChangeEmailOtpRequest;
+use App\Http\Requests\App\Profile\SendChangePhoneOtpRequest;
 use App\Http\Requests\App\Profile\UpdateProfileImageRequest;
 use App\Http\Requests\App\Profile\UpdateProfileRequest;
+use App\Http\Requests\App\Profile\VerifyChangeEmailRequest;
+use App\Http\Requests\App\Profile\VerifyChangePhoneRequest;
 use App\Http\Resources\App\Auth\UserResource;
 use App\Http\Resources\GeneralResource;
 use App\Models\User;
+use App\Models\UserOtpCode;
 use App\Services\AppleService;
 use App\Services\LangService;
 use App\Services\UserService;
@@ -40,6 +45,72 @@ class ProfileController extends Controller
             'message' => LangService::instance()
                 ->setDefault('Profile updated successfully')
                 ->getLang('profile_updated_successfully'),
+        ]);
+    }
+
+    public function sendChangeEmailOtp(SendChangeEmailOtpRequest $request): GeneralResource
+    {
+        $validated = $request->validated();
+
+        UserService::instance()->sendChangeEmailOtp(UserService::instance()->getUser(), $validated['email']);
+
+        return GeneralResource::make([
+            'step' => 'otp_email',
+            'otp_expires_in' => UserOtpCode::expiresInSeconds(),
+            'message' => LangService::instance()
+                ->setDefault('An OTP has been sent to your new email address. Please verify to complete the change.')
+                ->getLang('change_email_otp_sent'),
+        ]);
+    }
+
+    public function verifyChangeEmail(VerifyChangeEmailRequest $request): JsonResponse
+    {
+        $validated = $request->validated();
+
+        $user = UserService::instance()->changeEmail(
+            UserService::instance()->getUser(),
+            $validated['email'],
+            $validated['otp']
+        );
+
+        return response()->json([
+            'user' => UserResource::make($user),
+            'message' => LangService::instance()
+                ->setDefault('Your email address has been changed successfully')
+                ->getLang('email_changed_successfully'),
+        ]);
+    }
+
+    public function sendChangePhoneOtp(SendChangePhoneOtpRequest $request): GeneralResource
+    {
+        $validated = $request->validated();
+
+        UserService::instance()->sendChangePhoneOtp(UserService::instance()->getUser(), $validated['phone']);
+
+        return GeneralResource::make([
+            'step' => 'otp_phone',
+            'otp_expires_in' => UserOtpCode::expiresInSeconds(),
+            'message' => LangService::instance()
+                ->setDefault('An OTP has been sent to your new phone number. Please verify to complete the change.')
+                ->getLang('change_phone_otp_sent'),
+        ]);
+    }
+
+    public function verifyChangePhone(VerifyChangePhoneRequest $request): JsonResponse
+    {
+        $validated = $request->validated();
+
+        $user = UserService::instance()->changePhone(
+            UserService::instance()->getUser(),
+            $validated['phone'],
+            $validated['otp']
+        );
+
+        return response()->json([
+            'user' => UserResource::make($user),
+            'message' => LangService::instance()
+                ->setDefault('Your phone number has been changed successfully')
+                ->getLang('phone_changed_successfully'),
         ]);
     }
 
@@ -82,6 +153,7 @@ class ProfileController extends Controller
 
             return GeneralResource::make([
                 'step' => 'otp_email',
+                'otp_expires_in' => UserOtpCode::expiresInSeconds(),
                 'message' => LangService::instance()
                     ->setDefault('An OTP has been sent to your email. Please verify to change your password.')
                     ->getLang('change_password_otp_sent'),

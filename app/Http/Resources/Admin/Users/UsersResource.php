@@ -36,7 +36,7 @@ class UsersResource extends JsonResource
             'email' => $this->email,
             'full_name' => $this->full_name,
             'gender' => $this->gender,
-            'gender_label' => LangService::instance()
+            'gender_label' => $this->gender === null ? null : LangService::instance()
                 ->setDefault(Str::title($this->gender))
                 ->getLang('gender_' . $this->gender),
             'birth_date' => $this->birth_date?->toDateString(),

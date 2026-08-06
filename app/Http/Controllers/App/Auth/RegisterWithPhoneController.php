@@ -9,6 +9,7 @@ use App\Http\Requests\App\Auth\CheckPhoneOtpRequest;
 use App\Http\Requests\App\Auth\RegisterWithPhoneRequest;
 use App\Http\Requests\App\Auth\SendPhoneOtpRequest;
 use App\Http\Resources\App\Auth\UserResource;
+use App\Models\UserOtpCode;
 use App\Services\LangService;
 use App\Services\SmsService;
 use App\Services\UserService;
@@ -34,6 +35,7 @@ class RegisterWithPhoneController extends Controller
 
         return response()->json([
             'step' => 'otp_phone',
+            'otp_expires_in' => UserOtpCode::expiresInSeconds(),
             'message' => LangService::instance()
                 ->setDefault('OTP sent to your phone!')
                 ->getLang('phone_otp_sent')

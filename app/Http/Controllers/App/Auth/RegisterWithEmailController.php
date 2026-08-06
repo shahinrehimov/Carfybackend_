@@ -7,6 +7,7 @@ use App\Http\Requests\App\Auth\CheckEmailRequest;
 use App\Http\Requests\App\Auth\RegisterWithEmailRequest;
 use App\Http\Resources\App\Auth\UserResource;
 use App\Models\User;
+use App\Models\UserOtpCode;
 use App\Services\LangService;
 use App\Services\UserService;
 use Illuminate\Http\JsonResponse;
@@ -29,12 +30,20 @@ class RegisterWithEmailController extends Controller
     {
         $user = UserService::instance()->registerWithEmail($request);
 
-        return response()->json([
-            'step' => User::EMAIL_VERIFICATION_TYPE === 'otp' ? 'otp_email' : 'verify_email',
-            'user' => UserResource::make($user),
-            'message' => LangService::instance()
-                ->setDefault('Register successfully. Email verification link sent successfully!')
-                ->getLang('register_successfully_with_email'),
-        ]);
+        $isOtp = User::EMAIL_VERIFICATION_TYPE === 'otp';
+
+        $response = ['step' => $isOtp ? 'otp_email' : 'verify_email'];
+
+        // Link verification has no code to count down.
+        if ($isOtp) {
+            $response['otp_expires_in'] = UserOtpCode::expiresInSeconds();
+        }
+
+        $response['user'] = UserResource::make($user);
+        $response['message'] = LangService::instance()
+            ->setDefault('Register successfully. Email verification link sent successfully!')
+            ->getLang('register_successfully_with_email');
+
+        return response()->json($response);
     }
 }

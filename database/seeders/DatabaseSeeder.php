@@ -25,6 +25,7 @@ class DatabaseSeeder extends Seeder
             DashboardTranslationsSeeder::class,
             DefaultCommissionPercentSeeder::class,
             CommissionTierTranslationsSeeder::class,
+            ProfileContactChangeTranslationsSeeder::class,
         ]);
     }
 }

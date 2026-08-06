@@ -27,6 +27,14 @@ class UserOtpCode extends Model
     public const MAX_ATTEMPTS = 3;
     public const EXPIRED_MINUTE = 3;
 
+    /**
+     * Lifetime of a freshly generated code, for clients driving a countdown.
+     */
+    public static function expiresInSeconds(): int
+    {
+        return self::EXPIRED_MINUTE * 60;
+    }
+
     protected $casts = [
         'used_at' => 'datetime',
         'confirmation_token_used_at' => 'datetime',
