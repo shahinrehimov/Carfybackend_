@@ -5,6 +5,7 @@ namespace App\Http\Resources\App\CompanyProductVariants;
 use App\Http\Resources\App\Products\ProductsResource;
 use App\Models\CompanyProductVariant;
 use App\Services\LangService;
+use App\Services\StoreAvailabilityService;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\Str;
@@ -73,6 +74,9 @@ class CompanyProductVariantListResource extends JsonResource
                 'uuid'       => $this->uuid,
                 'store_code' => $this->company?->store_code,
                 'label'      => $this->company?->getSellerLabel(),
+                // Whether the store takes orders right now; `message` explains
+                // when it reopens and is null while open.
+                'availability' => StoreAvailabilityService::instance()->for($this->company),
                 'city'       => $this->relationLoaded('city') && $this->city
                     ? [
                         'id'    => $this->city->id,

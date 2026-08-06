@@ -447,7 +447,7 @@ class BasketService
 
         $cpvs = CompanyProductVariant::query()
             ->with([
-                'city', 'city.translatable', 'media', 'company',
+                'city', 'city.translatable', 'media', 'company', 'company.workingHours',
                 'productVariant' => fn($q) => $q->with(['media', 'product.media']),
             ])
             ->whereIn('id', $cpvIds)

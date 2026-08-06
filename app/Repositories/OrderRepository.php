@@ -104,7 +104,7 @@ class OrderRepository
                         // OrderItemsListResource — without it the seller's own
                         // photo is skipped and the product image wins.
                         'companyProductVariant' => function ($q) {
-                            $q->with(['company', 'media']);
+                            $q->with(['company', 'company.workingHours', 'media']);
                         },
                         'itemStatuses' => function ($q) {
                             $q->orderBy('id');

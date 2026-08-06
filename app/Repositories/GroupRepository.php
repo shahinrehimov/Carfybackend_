@@ -367,6 +367,7 @@ class GroupRepository
                 'city',
                 'city.translatable',
                 'company',
+                'company.workingHours',
                 'productVariant',
                 'productVariant.media',
                 'productVariant.product',

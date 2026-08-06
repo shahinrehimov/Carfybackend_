@@ -3,6 +3,7 @@
 namespace App\Http\Resources\Sellers\StoreProfile;
 
 use App\Http\Resources\Admin\Cities\CitiesListResource;
+use App\Services\StoreAvailabilityService;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -53,6 +54,9 @@ class StoreProfileResource extends JsonResource
             'working_hours' => StoreProfileWorkingHourResource::collection(
                 $this->whenLoaded('workingHours')
             ),
+            // Same payload the buyer-facing API returns, so the seller sees the
+            // exact open/closed state customers see.
+            'availability' => StoreAvailabilityService::instance()->for($this->resource),
             'avg_rating'   => $this->avg_rating ?? null,
             'review_count' => $this->review_count ?? 0,
         ];

@@ -266,6 +266,7 @@ class ProductVariantRepository
                 'city',
                 'city.translatable',
                 'company',
+                'company.workingHours',
                 'productVariant',
                 'productVariant.media',
                 'productVariant.product',
@@ -1165,7 +1166,7 @@ class ProductVariantRepository
             ->where('uuid', $cpvUuid)
             ->where('is_active', true)
             ->where('approval_status', ProductVariantApprovalStatusEnum::APPROVED->value)
-            ->with(['city', 'city.translatable', 'media', 'company', 'productVariant'])
+            ->with(['city', 'city.translatable', 'media', 'company', 'company.workingHours', 'productVariant'])
             ->whereHas('productVariant', function (Builder $query) {
                 $query->active();
                 $query->whereHas('product', fn (Builder $q) => $q->active());
@@ -1309,7 +1310,7 @@ class ProductVariantRepository
                 ->where('id', '!=', $sellerListing->id)
                 ->where('is_active', true)
                 ->where('approval_status', ProductVariantApprovalStatusEnum::APPROVED->value)
-                ->with(['city', 'city.translatable', 'media', 'company'])
+                ->with(['city', 'city.translatable', 'media', 'company', 'company.workingHours'])
                 ->orderBy('price');
 
             $otherSellersTotal = $otherSellersQuery->count();
@@ -1329,7 +1330,7 @@ class ProductVariantRepository
         $baseQuery = fn () => $productVariant->companyListings()
             ->where('is_active', true)
             ->where('approval_status', ProductVariantApprovalStatusEnum::APPROVED->value)
-            ->with(['city', 'city.translatable', 'media', 'company']);
+            ->with(['city', 'city.translatable', 'media', 'company', 'company.workingHours']);
 
         if ($sellerStoreCode) {
             $listing = $baseQuery()
@@ -1365,6 +1366,7 @@ class ProductVariantRepository
                 'city',
                 'city.translatable',
                 'company',
+                'company.workingHours',
                 'productVariant',
                 'productVariant.media',
                 'productVariant.product',
@@ -1395,7 +1397,7 @@ class ProductVariantRepository
         $paginator = $productVariant->companyListings()
             ->where('is_active', true)
             ->where('approval_status', ProductVariantApprovalStatusEnum::APPROVED->value)
-            ->with(['city', 'city.translatable', 'media', 'company'])
+            ->with(['city', 'city.translatable', 'media', 'company', 'company.workingHours'])
             ->orderBy('price')
             ->paginate($validated['limit'] ?? 20);
 

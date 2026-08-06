@@ -6,8 +6,10 @@ use App\Services\FitmentPresenter;
 use App\Http\Resources\Admin\Cities\CitiesListResource;
 use App\Http\Resources\App\CompanyProductVariants\CompanyProductVariantListResource;
 use App\Http\Resources\App\Products\ProductResource;
+use App\Http\Resources\Sellers\StoreProfile\StoreProfileWorkingHourResource;
 use App\Models\CompanyProductVariant;
 use App\Services\LangService;
+use App\Services\StoreAvailabilityService;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\Str;
@@ -98,6 +100,16 @@ class ProductVariantResource extends JsonResource
                     'store_code'   => $sl->company?->store_code,
                     'label'        => $sl->company?->getSellerLabel(),
                     'seller_label' => $sl->company?->getSellerLabel(),
+                    // Whether the store takes orders right now; `message`
+                    // explains when it reopens and is null while open.
+                    'availability' => StoreAvailabilityService::instance()->for($sl->company),
+                    // Full weekly schedule, product detail only — list rows get
+                    // `availability` alone to keep the payload small.
+                    'working_hours' => $sl->company?->relationLoaded('workingHours')
+                        ? StoreProfileWorkingHourResource::collection(
+                            $sl->company->workingHours->sortBy('day_of_week')->values()
+                        )
+                        : [],
                     'city'         => $sl->relationLoaded('city')
                         ? CitiesListResource::make($sl->city)
                         : null,

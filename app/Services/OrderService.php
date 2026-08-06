@@ -107,9 +107,13 @@ class OrderService
             }
 
             if (!isset($sellers[$companyId])) {
+                $availability = StoreAvailabilityService::instance()->for($cpv->company);
+
                 $sellers[$companyId] = [
                     'company_id'   => $companyId,
                     'store_code'   => $cpv->company?->store_code ?? '',
+                    'is_open'      => $availability['is_open'],
+                    'availability' => $availability,
                     '_company'     => $cpv->company,
                     'items'        => [],
                     '_wolt_items'  => [],
@@ -188,11 +192,25 @@ class OrderService
         $minPlatformSpend = (int) ($settings->referral_min_platform_spend ?? 2000);
         $canUseBalance   = $balance->available_balance >= $minPlatformSpend;
 
+        // Surface closed stores up front so the client can block the pay button
+        // instead of only learning about it when checkout is rejected.
+        $closedSellers = array_values(array_map(
+            static fn(array $seller) => [
+                'company_id' => $seller['company_id'],
+                'store_code' => $seller['store_code'],
+                'opens_at'   => $seller['availability']['opens_at'],
+                'message'    => $seller['availability']['message'],
+            ],
+            array_filter($sellers, static fn(array $seller) => !$seller['is_open'])
+        ));
+
         return [
             'sellers'        => array_values($sellers),
             'subtotal'       => round($subtotal, 2),
             'total_shipping' => round($totalShipping, 2),
             'grand_total'    => round($subtotal + $totalShipping, 2),
+            'can_checkout'   => $closedSellers === [],
+            'closed_sellers' => $closedSellers,
             'referral'       => [
                 'free_delivery_applied'     => $freeDeliveryApplied,
                 'discount_applied'          => $discountApplied,
@@ -206,6 +224,55 @@ class OrderService
                 'discount_orders_remaining' => $perk->remainingDiscountOrders(),
             ],
         ];
+    }
+
+    /**
+     * Reject the whole checkout while any store in the basket is outside its
+     * working hours. The basket itself is left untouched so the buyer can come
+     * back once the store opens.
+     */
+    private function assertSellersAreOpen(Collection $productVariants): void
+    {
+        $companies = [];
+
+        foreach ($productVariants as $productVariant) {
+            $company = $productVariant->seller_listing?->company;
+
+            if ($company?->id) {
+                $companies[$company->id] = $company;
+            }
+        }
+
+        if ($companies === []) {
+            return;
+        }
+
+        $availability = StoreAvailabilityService::instance();
+        $availability->preload($companies);
+
+        $closed = array_filter($companies, static fn($company) => !$availability->isOpen($company));
+
+        if ($closed === []) {
+            return;
+        }
+
+        if (count($closed) === 1) {
+            throw new BadRequestHttpException($availability->closedMessage(reset($closed)));
+        }
+
+        // Resolve the labels first: getSellerLabel() goes through the same
+        // LangService singleton and would otherwise overwrite the default text
+        // set below before getLang() runs.
+        $stores = implode(', ', array_map(
+            static fn($company) => $company->getSellerLabel(),
+            $closed
+        ));
+
+        throw new BadRequestHttpException(
+            LangService::instance()
+                ->setDefault('Some stores in your basket are closed right now: @stores. You can complete your order during their working hours.')
+                ->getLang('stores_closed_multiple', ['@stores' => $stores])
+        );
     }
 
     public function checkout(array $validated): PaymentResult
@@ -229,6 +296,8 @@ class OrderService
                     ->getLang('basket_empty')
             );
         }
+
+        $this->assertSellersAreOpen($productVariants);
 
         $address = $user->addresses()->where('id', $validated['address_id'])->first();
 
@@ -732,7 +801,7 @@ class OrderService
                             $q->when(count($productVariantRelations['with']) > 0, fn($q) => $q->with($productVariantRelations['with']));
                         },
                         'companyProductVariant' => function ($q) {
-                            $q->with(['city', 'city.translatable', 'media', 'company']);
+                            $q->with(['city', 'city.translatable', 'media', 'company', 'company.workingHours']);
                         },
                     ]);
                 },
@@ -757,7 +826,7 @@ class OrderService
                             $q->when(count($productVariantRelations['with']) > 0, fn($q) => $q->with($productVariantRelations['with']));
                         },
                         'companyProductVariant' => function ($q) {
-                            $q->with(['city', 'city.translatable', 'media', 'company']);
+                            $q->with(['city', 'city.translatable', 'media', 'company', 'company.workingHours']);
                         },
                     ]);
                 },
