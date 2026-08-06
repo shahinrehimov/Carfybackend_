@@ -71,6 +71,11 @@ class CompanyProductVariantResource extends JsonResource
             'stock' => $this->stock,
             'price' => $this->price,
             'price_final' => $this->price_final,
+            // What the buyer sees on the site: the seller price plus the
+            // platform commission this listing currently resolves to.
+            'commission_percent' => $this->applied_commission_percent,
+            'site_price' => $this->site_price,
+            'site_price_final' => $this->site_price_final,
             'discount_type' => $this->discount_type,
             'discount_type_title' => $this->discount_type
                 ? LangService::instance()

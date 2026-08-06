@@ -19,14 +19,16 @@ use Illuminate\Support\Collection;
  *   3. the platform rates — global tiers first, then the
  *      default_commission_percent setting
  *
- * Tiers pick the percent from the line amount (min inclusive, max exclusive,
- * NULL max = open ended); the chosen percent then applies to the whole
- * amount. An amount no tier covers falls through to the level's flat rate,
- * and a level with neither falls through to the next level.
+ * Tiers pick the percent from the seller's discounted unit price (min
+ * inclusive, max exclusive, NULL max = open ended); the chosen percent then
+ * applies to the whole amount. An amount no tier covers falls through to the
+ * level's flat rate, and a level with neither falls through to the next level.
  *
- * The resolved rate is only a starting point: once an order is placed the
- * percent and the resulting amount are frozen on the order item, so changing a
- * rate here never rewrites past orders.
+ * The commission is charged on top of the seller's price: the site shows and
+ * the buyer pays price + commission (see CompanyProductVariant::site_price),
+ * while the seller keeps their own price. Once an order is placed the percent
+ * and the markup share are frozen on the order item, so changing a rate here
+ * never rewrites past orders.
  */
 class CommissionService
 {
@@ -65,7 +67,8 @@ class CommissionService
 
     /**
      * Commission rate in percent for a listing, e.g. 12.5 for 12.5%.
-     * The line amount (in manats) decides which tier applies.
+     * The amount (in manats) decides which tier applies — callers pass the
+     * seller's discounted unit price so the rate never shifts with quantity.
      */
     public function percentFor(?CompanyProductVariant $cpv, float $amount = 0.0): float
     {

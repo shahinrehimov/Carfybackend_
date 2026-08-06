@@ -7,6 +7,7 @@ use App\Casts\CompanyProductVariants\PriceCast;
 use App\Casts\CompanyProductVariants\PriceFinalCast;
 use App\Enum\ProductSizeCategoryEnum;
 use App\Enum\ProductVariantApprovalStatusEnum;
+use App\Services\CommissionService;
 use App\Services\LangService;
 use App\Traits\ActionBy;
 use App\Traits\ActionUser;
@@ -38,6 +39,9 @@ use Spatie\MediaLibrary\InteractsWithMedia;
  * @property string|null $listing_main_image
  * @property array $listing_gallery
  * @property mixed $productVariant
+ * @property float $applied_commission_percent
+ * @property float $site_price
+ * @property float $site_price_final
  */
 class CompanyProductVariant extends Model implements HasMedia
 {
@@ -433,6 +437,42 @@ class CompanyProductVariant extends Model implements HasMedia
     public function views(): HasMany
     {
         return $this->hasMany(CompanyProductVariantView::class);
+    }
+
+    // ─── Commission markup (site price) ───────────────────────────────────────
+
+    /** Memoised so lists resolve the rate chain once per listing. */
+    private ?float $appliedCommissionPercent = null;
+
+    /**
+     * Commission percent this listing carries on the site. The tier is picked
+     * from the seller's discounted unit price, so the customer price never
+     * shifts with basket quantity.
+     */
+    public function getAppliedCommissionPercentAttribute(): float
+    {
+        return $this->appliedCommissionPercent ??= CommissionService::instance()
+            ->percentFor($this, (float) $this->price_final);
+    }
+
+    /**
+     * Customer-facing prices: the seller's price with the platform commission
+     * baked in. The site only ever shows these; the commission itself is
+     * invisible to the buyer.
+     */
+    public function getSitePriceAttribute(): float
+    {
+        return $this->addCommission((float) $this->price);
+    }
+
+    public function getSitePriceFinalAttribute(): float
+    {
+        return $this->addCommission((float) $this->price_final);
+    }
+
+    public function addCommission(float $amount): float
+    {
+        return round($amount * (1 + $this->applied_commission_percent / 100), 2);
     }
 
     // ─── Image cascade accessors ──────────────────────────────────────────────

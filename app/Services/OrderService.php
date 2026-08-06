@@ -328,13 +328,15 @@ class OrderService
                     }
                 }
 
-                // Freeze the commission on the line so a later rate change never
-                // rewrites what the platform earned on this order. The line
-                // amount decides which commission tier applies.
-                $commissionPercent = CommissionService::instance()->percentFor(
-                    $cpv,
-                    (float) $productVariant->price_final_in_basket
-                );
+                // The customer price already carries the commission markup, so
+                // amount_final is what the buyer pays and commission_amount is
+                // the markup share of it (line total minus the seller's own
+                // price). Both are frozen so a later rate change never rewrites
+                // what the platform earned on this order.
+                $commissionPercent = $cpv ? $cpv->applied_commission_percent : 0.0;
+                $baseLineFinal     = $cpv
+                    ? round($cpv->price_final * $productVariant->basket_quantity, 2)
+                    : (float) $productVariant->price_final_in_basket;
 
                 $items[] = [
                     'basket_id' => $productVariant->pivot->id,
@@ -344,10 +346,7 @@ class OrderService
                     'amount' => $productVariant->price_in_basket,
                     'amount_final' => $productVariant->price_final_in_basket,
                     'commission_percent' => $commissionPercent,
-                    'commission_amount' => CommissionService::instance()->applyPercent(
-                        $productVariant->price_final_in_basket,
-                        $commissionPercent
-                    ),
+                    'commission_amount' => round($productVariant->price_final_in_basket - $baseLineFinal, 2),
                     'is_set' => $productVariant->isSet(),
                     'quantity' => $productVariant->basket_quantity,
                     'sets' => $productVariant->pivot?->sets ?? [],

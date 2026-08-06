@@ -50,9 +50,11 @@ class CompanyProductVariantListResource extends JsonResource
             'hover_image' => $this->listing_hover_image,
             'is_set'      => $variant?->isSet() ?? false,
             'stock'       => $this->stock,
-            'price'       => $this->price,
-            'price_final' => $this->price_final,
-            'has_discount' => $this->price != $this->price_final,
+            // Site prices carry the platform commission; the buyer only ever
+            // sees the final number, never the commission itself.
+            'price'       => $this->site_price,
+            'price_final' => $this->site_price_final,
+            'has_discount' => $this->site_price != $this->site_price_final,
             'discount_type' => $this->discount_type,
             'discount_type_title' => $this->discount_type
                 ? LangService::instance()
@@ -63,8 +65,8 @@ class CompanyProductVariantListResource extends JsonResource
             'in_wishlist' => $this->in_wishlist ?? false,
             'in_basket'   => $this->in_basket ?? false,
             'basket_quantity' => $basketQuantity,
-            'price_in_basket' => round($this->price * $basketQuantity, 2),
-            'price_final_in_basket' => round($this->price_final * $basketQuantity, 2),
+            'price_in_basket' => round($this->site_price * $basketQuantity, 2),
+            'price_final_in_basket' => round($this->site_price_final * $basketQuantity, 2),
             'ratings'     => $this->ratings ?? ['average' => 0, 'count' => 0],
 
             'seller' => [

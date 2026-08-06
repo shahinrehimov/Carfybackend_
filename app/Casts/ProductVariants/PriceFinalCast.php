@@ -39,7 +39,12 @@ class PriceFinalCast implements CastsAttributes
             return $model->price;
         }
 
-        return round($finalPrice / 100, 2);
+        $final = round($finalPrice / 100, 2);
+
+        // Commission goes on top of the discounted price, mirroring PriceCast.
+        $cpv = $model->seller_listing ?? null;
+
+        return $cpv ? $cpv->addCommission($final) : $final;
     }
 
     /**

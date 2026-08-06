@@ -15,7 +15,13 @@ class PriceCast implements CastsAttributes
      */
     public function get(ProductVariant|Model $model, string $key, mixed $value, array $attributes): float
     {
-        return round(($value ?? 0) / 100, 2);
+        $price = round(($value ?? 0) / 100, 2);
+
+        // Customer-facing contexts swap in the seller listing; its platform
+        // commission is baked into the price the buyer sees.
+        $cpv = $model->seller_listing ?? null;
+
+        return $cpv ? $cpv->addCommission($price) : $price;
     }
 
     /**

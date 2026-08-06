@@ -34,7 +34,7 @@ class SellerStatisticsRepository
         $summary = (clone $base)
             ->selectRaw("
                 COUNT(DISTINCT o.id) as total_orders,
-                COALESCE(SUM(oi.amount_final) FILTER (WHERE {$revenue}), 0) as total_revenue_cents,
+                COALESCE(SUM(oi.amount_final - COALESCE(oi.commission_amount, 0)) FILTER (WHERE {$revenue}), 0) as total_revenue_cents,
                 COALESCE(SUM(oi.quantity)     FILTER (WHERE {$revenue}), 0) as total_quantity
             ")
             ->first();
@@ -43,7 +43,7 @@ class SellerStatisticsRepository
             ->selectRaw("
                 DATE_TRUNC('{$period}', o.created_at) as period_date,
                 COUNT(DISTINCT o.id)                  as order_count,
-                COALESCE(SUM(oi.amount_final) FILTER (WHERE {$revenue}), 0) as revenue_cents,
+                COALESCE(SUM(oi.amount_final - COALESCE(oi.commission_amount, 0)) FILTER (WHERE {$revenue}), 0) as revenue_cents,
                 COALESCE(SUM(oi.quantity)     FILTER (WHERE {$revenue}), 0) as quantity
             ")
             ->groupByRaw("DATE_TRUNC('{$period}', o.created_at)")
@@ -87,7 +87,7 @@ class SellerStatisticsRepository
             ->selectRaw('
                 cpv.id as cpv_id,
                 COALESCE(SUM(oi.quantity), 0) as quantity_sold,
-                COALESCE(SUM(oi.amount_final), 0) as revenue_cents,
+                COALESCE(SUM(oi.amount_final - COALESCE(oi.commission_amount, 0)), 0) as revenue_cents,
                 COUNT(DISTINCT oi.order_id) as order_count
             ')
             ->groupBy('cpv.id')
