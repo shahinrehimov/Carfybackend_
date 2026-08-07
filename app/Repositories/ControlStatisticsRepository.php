@@ -133,7 +133,10 @@ class ControlStatisticsRepository
                 COUNT(DISTINCT o.id)              as order_count
             ')
             ->groupBy('cpv.id')
+            // cpv.id keeps rows with equal sales in the same order the seller
+            // panel lists them, whatever plan Postgres picks.
             ->orderByDesc('quantity_sold')
+            ->orderBy('cpv.id')
             ->limit($limit)
             ->get();
 
@@ -145,7 +148,10 @@ class ControlStatisticsRepository
             ->when($dateTo, fn($q) => $q->where('v.created_at', '<=', $dateTo . ' 23:59:59'))
             ->selectRaw('cpv.id as cpv_id, COUNT(v.id) as view_count')
             ->groupBy('cpv.id')
+            // cpv.id keeps rows with equal view counts in the same order the
+            // seller panel lists them, whatever plan Postgres picks.
             ->orderByDesc('view_count')
+            ->orderBy('cpv.id')
             ->limit($limit)
             ->get();
 
