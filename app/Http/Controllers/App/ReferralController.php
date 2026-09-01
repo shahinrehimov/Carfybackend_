@@ -27,7 +27,11 @@ class ReferralController extends Controller
         $code  = $repo->getUserActiveCode($user);
 
         $stats['code'] = $code?->code;
-        $stats['link'] = $code ? config('app.frontend_url', '') . '/register?ref=' . $code->code : null;
+        $stats['link'] = $code
+            ? rtrim(config('app.frontend_url', ''), '/')
+                . '/' . LangService::instance()->getCurrentLang()
+                . '/auth/register?ref=' . $code->code
+            : null;
 
         return ReferralMyResource::make($stats)->response();
     }
