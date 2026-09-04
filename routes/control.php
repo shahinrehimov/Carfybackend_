@@ -18,6 +18,7 @@ use App\Http\Controllers\Admin\CarTypeController;
 use App\Http\Controllers\Admin\EngineVolumeController;
 use App\Http\Controllers\Admin\FuelTypeController;
 use App\Http\Controllers\Admin\TransmissionTypeController;
+use App\Http\Controllers\Admin\Auth\ForgotPasswordController;
 use App\Http\Controllers\Admin\Auth\LoginController;
 use App\Http\Controllers\Admin\Auth\LogoutController;
 use App\Http\Controllers\Admin\SessionController;
@@ -58,6 +59,8 @@ use Illuminate\Support\Facades\Route;
 
 Route::middleware(['general_access:admin', RouteLogMiddleware::class])->prefix('control')->group(callback: static function () {
     Route::post("login", [LoginController::class, 'login'])->withoutMiddleware(RouteLogMiddleware::class);
+    Route::post('forgot-password', [ForgotPasswordController::class, 'forgotPassword'])->middleware(['throttle:3,1']);
+    Route::post('reset-password', [ForgotPasswordController::class, 'resetPassword'])->withoutMiddleware(RouteLogMiddleware::class);
 
     Route::group(['middleware' => ['auth:admin']], static function () {
         Route::group(['prefix' => 'profile'], static function () {

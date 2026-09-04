@@ -26,6 +26,7 @@ class DatabaseSeeder extends Seeder
             DefaultCommissionPercentSeeder::class,
             CommissionTierTranslationsSeeder::class,
             ProfileContactChangeTranslationsSeeder::class,
+            AdminAuthTranslationsSeeder::class,
         ]);
     }
 }

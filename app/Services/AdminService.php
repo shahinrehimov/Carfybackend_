@@ -44,16 +44,18 @@ class AdminService
         return new UserResource($user);
     }
 
-    public function changePassword(array $validated): void
+    public function changePassword(array $validated, ?Admin $user = null): void
     {
-        $user = $this->getUser();
+        if ($user === null) {
+            $user = $this->getUser();
 
-        if (!Hash::check($validated['old_password'], $user->password)) {
-            throw new HttpResponseException(response()->json([
-                'message' => LangService::instance()
-                    ->setDefault('Invalid old password!')
-                    ->getLang('invalid_old_password'),
-            ], 400));
+            if (!Hash::check($validated['old_password'], $user->password)) {
+                throw new HttpResponseException(response()->json([
+                    'message' => LangService::instance()
+                        ->setDefault('Invalid old password!')
+                        ->getLang('invalid_old_password'),
+                ], 400));
+            }
         }
 
         if (Hash::check($validated['password'], $user->password)) {
@@ -64,12 +66,12 @@ class AdminService
             ], 400));
         }
 
-        $user->update($validated);
+        $user->update(['password' => $validated['password']]);
 
         $currentTokenId = $user->currentAccessToken()->id ?? 0;
 
         PersonalAccessToken::query()
-            ->where('tokenable_id', auth()->id())
+            ->where('tokenable_id', $user->id)
             ->where('tokenable_type', Admin::class)
             ->where('id', '<>', $currentTokenId)
             ->delete();

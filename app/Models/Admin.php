@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Casts\Admins\FullNameCast;
 use App\Casts\Admins\ImageCast;
+use App\Notifications\AdminResetPasswordNotification;
 use App\Traits\ActionBy;
 use App\Traits\ActionUser;
 use Dyrynda\Database\Support\CascadeSoftDeletes;
@@ -51,6 +52,11 @@ class Admin extends Authenticatable implements HasMedia
     protected array $cascadeDeletes = [
         'media',
     ];
+
+    public function sendPasswordResetNotification($token): void
+    {
+        $this->notify(new AdminResetPasswordNotification($token));
+    }
 
     public function registerMediaCollections(): void
     {
