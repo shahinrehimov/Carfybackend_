@@ -50,6 +50,11 @@ class OrderObserver
             if ($order->status === OrderStatusEnum::CANCELED) {
                 NotificationDispatchService::instance()->orderCancelled($order);
                 ReferralService::instance()->handleOrderCancelled($order);
+            } elseif ($order->status === OrderStatusEnum::RETURNED) {
+                // A returned (refunded) order must not keep the referrer's earning
+                // or the consumed perks/balance, same as a cancellation.
+                NotificationDispatchService::instance()->orderStatusChanged($order);
+                ReferralService::instance()->handleOrderCancelled($order);
             } elseif ($order->status === OrderStatusEnum::DELIVERED) {
                 NotificationDispatchService::instance()->orderDelivered($order);
                 ReferralService::instance()->handleOrderDelivered($order);

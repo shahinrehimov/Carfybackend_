@@ -692,10 +692,10 @@ class OrderService
 
     public function refund(Order $order, ?int $amount = null, string $comment = ''): PaymentResult
     {
+        // DELIVERED is allowed: a delivered order can be returned and refunded.
         $blockedOrderStatus = in_array($order->status, [
             OrderStatusEnum::RETURNED,
             OrderStatusEnum::CANCELED,
-            OrderStatusEnum::DELIVERED,
         ]);
 
         $alreadyRefunded = in_array($order->payment_status, [
