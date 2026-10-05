@@ -37,6 +37,9 @@ class CompanyProductVariantListResource extends JsonResource
     {
         $variant = $this->productVariant;
         $basketQuantity = (int) ($this->basket_quantity ?? 0);
+        // A discount outside its start/end window no longer changes the price,
+        // so its type and value are not shown either.
+        $hasDiscount = $this->site_price != $this->site_price_final;
 
         return [
             // Product variant id. Kept because clients use it as a list key and
@@ -55,14 +58,14 @@ class CompanyProductVariantListResource extends JsonResource
             // sees the final number, never the commission itself.
             'price'       => $this->site_price,
             'price_final' => $this->site_price_final,
-            'has_discount' => $this->site_price != $this->site_price_final,
-            'discount_type' => $this->discount_type,
-            'discount_type_title' => $this->discount_type
+            'has_discount' => $hasDiscount,
+            'discount_type' => $hasDiscount ? $this->discount_type : null,
+            'discount_type_title' => $hasDiscount && $this->discount_type
                 ? LangService::instance()
                     ->setDefault(Str::title($this->discount_type))
                     ->getLang('discount_types_' . $this->discount_type)
                 : null,
-            'discount'    => $this->discount,
+            'discount'    => $hasDiscount ? $this->discount : null,
             'in_wishlist' => $this->in_wishlist ?? false,
             'in_basket'   => $this->in_basket ?? false,
             'basket_quantity' => $basketQuantity,

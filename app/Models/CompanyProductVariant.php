@@ -37,6 +37,7 @@ use Spatie\MediaLibrary\InteractsWithMedia;
  * @property mixed|null $approval_status_message
  * @property string|null $listing_hover_image
  * @property string|null $listing_main_image
+ * @property string|null $listing_thumb_image
  * @property array $listing_gallery
  * @property mixed $productVariant
  * @property float $applied_commission_percent
@@ -519,6 +520,33 @@ class CompanyProductVariant extends Model implements HasMedia
 
             if ($variant->relationLoaded('product') && $variant->product?->relationLoaded('media')) {
                 return $variant->product->main_image;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Thumbnail for compact lists (search suggestions): same cascade as the
+     * main image, served from the 400x400 "thumb" conversion.
+     */
+    public function getListingThumbImageAttribute(): ?string
+    {
+        if ($this->relationLoaded('media') && $this->hasMedia('company_product_variant_images')) {
+            return $this->getWebImageUrl('company_product_variant_images', 'thumb');
+        }
+
+        if ($this->relationLoaded('productVariant') && $this->productVariant) {
+            $variant = $this->productVariant;
+
+            if ($variant->relationLoaded('media') && $variant->hasMedia('product_variants_main')) {
+                return $variant->getWebImageUrl('product_variants_main', 'thumb');
+            }
+
+            $product = $variant->relationLoaded('product') ? $variant->product : null;
+
+            if ($product?->relationLoaded('media') && $product->hasMedia('products_main')) {
+                return $product->getWebImageUrl('products_main', 'thumb');
             }
         }
 

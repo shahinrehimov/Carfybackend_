@@ -31,16 +31,22 @@ class ProductsResource extends JsonResource
     public function toArray(Request $request): array
     {
         $mainCategory = $this->relationLoaded('mainCategory') ? $this->mainCategory : null;
+        $parentCategory = $mainCategory && $mainCategory->relationLoaded('parent') ? $mainCategory->parent : null;
 
         return [
             'id' => $this->id,
             'uuid' => $this->uuid,
             'slug' => $this->slug,
             'category_slugs' => [
-                'parent_category_slug' => $mainCategory && $mainCategory->relationLoaded('parent')
-                    ? $mainCategory->parent?->slug
-                    : null,
+                'parent_category_slug' => $parentCategory?->slug,
                 'sub_category_slug' => $mainCategory?->slug,
+            ],
+            // Display names of the same categories. Titles are only read when
+            // their translations were eager loaded, so a list never lazy-loads
+            // them row by row.
+            'category' => [
+                'title' => $mainCategory?->relationLoaded('translatable') ? $mainCategory->getLang('title') : null,
+                'parent_title' => $parentCategory?->relationLoaded('translatable') ? $parentCategory->getLang('title') : null,
             ],
             'title' => $this->getLang('title'),
             'description_short' => $this->getLang('description_short'),

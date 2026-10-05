@@ -38,8 +38,10 @@ class ProductSearchService
             return [];
         }
 
+        // Only ids are needed, so skip shipping each document's _source back.
         return CompanyProductVariant::searchQuery($this->buildQuery($term))
             ->size(self::RESULT_CAP)
+            ->sourceRaw(false)
             ->execute()
             ->documents()
             ->map(static fn ($document) => (int) $document->id())
@@ -120,6 +122,23 @@ class ProductSearchService
                             'fields' => $textFields,
                             'fuzziness' => 'AUTO',
                             'operator' => 'or',
+                        ],
+                    ],
+                    // Search-as-you-type: every word must match and the last one
+                    // may be unfinished, so "nis" already finds "Nissan". Fuzzy
+                    // matching alone cannot bridge a half-typed word.
+                    [
+                        'multi_match' => [
+                            'query' => $term,
+                            'type' => 'bool_prefix',
+                            'fields' => [
+                                "title_{$lang}^3",
+                                "brand_{$lang}^2",
+                                "model_{$lang}^2",
+                                'oem_code^2',
+                                "categories_{$lang}",
+                            ],
+                            'operator' => 'and',
                         ],
                     ],
                     // Exact year token match (no fuzziness, so 2015 ≠ 2016).

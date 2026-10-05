@@ -26851,6 +26851,70 @@
               "response": []
             },
             {
+              "name": "Search Suggestions",
+              "request": {
+                "auth": {
+                  "type": "noauth"
+                },
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Token",
+                    "value": "{{app_site_token}}",
+                    "type": "text"
+                  },
+                  {
+                    "key": "accept",
+                    "value": "application/json",
+                    "type": "text"
+                  },
+                  {
+                    "key": "identifier",
+                    "value": "{{guest_identifier}}",
+                    "type": "text",
+                    "disabled": true
+                  }
+                ],
+                "url": {
+                  "raw": "{{url}}/:provider/products/suggestions?search=nis&limit=6&categories_limit=5",
+                  "host": [
+                    "{{url}}"
+                  ],
+                  "path": [
+                    ":provider",
+                    "products",
+                    "suggestions"
+                  ],
+                  "query": [
+                    {
+                      "key": "search",
+                      "value": "nis",
+                      "description": "Required, 2-100 chars. The last word may be unfinished."
+                    },
+                    {
+                      "key": "limit",
+                      "value": "6",
+                      "description": "Products to return, 1-10 (default 6)."
+                    },
+                    {
+                      "key": "categories_limit",
+                      "value": "5",
+                      "description": "Categories to return, 0-10 (default 5). 0 disables them."
+                    }
+                  ],
+                  "variable": [
+                    {
+                      "key": "provider",
+                      "value": "site",
+                      "description": "site or app"
+                    }
+                  ]
+                },
+                "description": "Search-as-you-type dropdown. Throttled to 60 requests per minute.\n\nproducts: one row per variant, shown through its cheapest listing (uuid = that listing). Each row has a thumbnail image, price/price_final, discount fields (null when no discount is active), category {title, slug, parent_title, parent_slug}, seller {store_code, label} of that cheapest listing and sellers {count, min_price, max_price, has_other_prices} so the client can show \"N stores, from X\".\n\ncategories: categories the matches fall into, most matches first, with products_count = listings the search page shows for that category. Link to the search page with search + sub_categories[] (or categories[] when is_sub is false)."
+              },
+              "response": []
+            },
+            {
               "name": "Show by slug",
               "request": {
                 "auth": {

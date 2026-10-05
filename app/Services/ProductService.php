@@ -118,7 +118,9 @@ class ProductService
                 // Brand now reaches the product through its variants' fitments.
                 $prefix . 'fitments.brand.translatable',
                 $prefix . 'mainCategory',
+                $prefix . 'mainCategory.translatable',
                 $prefix . 'mainCategory.parent',
+                $prefix . 'mainCategory.parent.translatable',
             ];
         } else {
             $arr['with'] = [
@@ -127,7 +129,9 @@ class ProductService
                 // Brand now reaches the product through its variants' fitments.
                 $prefix . 'fitments.brand.translatable',
                 $prefix . 'mainCategory',
+                $prefix . 'mainCategory.translatable',
                 $prefix . 'mainCategory.parent',
+                $prefix . 'mainCategory.parent.translatable',
             ];
         }
 

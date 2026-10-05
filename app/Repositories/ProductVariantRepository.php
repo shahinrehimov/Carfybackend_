@@ -257,10 +257,7 @@ class ProductVariantRepository
             ? ProductSearchService::instance()->searchCompanyProductVariantIds($validated['search'])
             : null;
 
-        $result = CompanyProductVariant::query()
-            ->where('company_product_variant.is_active', true)
-            ->where('company_product_variant.approval_status', ProductVariantApprovalStatusEnum::APPROVED->value)
-            ->whereHas('productVariant', fn (Builder $q) => $q->active()->whereHas('product', fn (Builder $pq) => $pq->active()))
+        $result = $this->siteVisibleCpvQuery()
             ->with([
                 'media',
                 'city',
@@ -377,6 +374,157 @@ class ProductVariantRepository
         $this->attachRatingsToCpvs($result);
 
         return $result;
+    }
+
+    /**
+     * Search-as-you-type suggestions: the best matching products, one row per
+     * variant, plus the categories the matches fall into.
+     *
+     * A variant sold by several stores is shown once, through its cheapest
+     * listing, together with the price range across all stores selling it.
+     *
+     * @return array{products: SupportCollection, categories: SupportCollection}
+     */
+    public function suggestions(array $validated): array
+    {
+        $limit = $validated['limit'] ?? 6;
+        $categoriesLimit = $validated['categories_limit'] ?? 5;
+
+        $searchIds = ProductSearchService::instance()->searchCompanyProductVariantIds($validated['search']);
+
+        if (empty($searchIds)) {
+            return ['products' => collect(), 'categories' => collect()];
+        }
+
+        // ES knows nothing about visibility changes that have not been
+        // re-indexed yet, so the matches are re-checked against PostgreSQL.
+        $position = array_flip($searchIds);
+
+        $matches = $this->siteVisibleCpvQuery()
+            ->whereIn('company_product_variant.id', $searchIds)
+            ->join('product_variants as pv_sg', 'pv_sg.id', '=', 'company_product_variant.product_variant_id')
+            ->join('products as p_sg', 'p_sg.id', '=', 'pv_sg.product_id')
+            ->get([
+                'company_product_variant.id',
+                'company_product_variant.product_variant_id',
+                'p_sg.main_category_id',
+            ])
+            ->sortBy(fn (CompanyProductVariant $cpv) => $position[$cpv->id])
+            ->values();
+
+        $variantIds = $matches->pluck('product_variant_id')->unique()->take($limit)->values();
+
+        return [
+            'products' => $this->suggestedVariants($variantIds),
+            'categories' => $categoriesLimit > 0
+                ? $this->suggestedCategories($matches, $categoriesLimit)
+                : collect(),
+        ];
+    }
+
+    /**
+     * Cheapest listing of each variant (by the customer-facing price) with the
+     * store count and price range, kept in the given relevance order.
+     */
+    private function suggestedVariants(SupportCollection $variantIds): SupportCollection
+    {
+        if ($variantIds->isEmpty()) {
+            return collect();
+        }
+
+        $listingsByVariant = $this->siteVisibleCpvQuery()
+            ->whereIn('company_product_variant.product_variant_id', $variantIds)
+            ->with([
+                'media',
+                'company',
+                'productVariant',
+                'productVariant.media',
+                'productVariant.product',
+                'productVariant.product.translatable',
+                'productVariant.product.media',
+                'productVariant.product.mainCategory',
+                'productVariant.product.mainCategory.translatable',
+                'productVariant.product.mainCategory.parent',
+                'productVariant.product.mainCategory.parent.translatable',
+                'productVariant.options',
+                'productVariant.options.option',
+                'productVariant.options.option.translatable',
+                'productVariant.options.item',
+                'productVariant.options.item.translatable',
+            ])
+            ->get()
+            ->groupBy('product_variant_id');
+
+        return $variantIds
+            ->filter(fn (int $variantId) => $listingsByVariant->has($variantId))
+            ->map(function (int $variantId) use ($listingsByVariant) {
+                $listings = $listingsByVariant->get($variantId);
+                $prices = $listings->map(fn (CompanyProductVariant $cpv) => $cpv->site_price_final);
+
+                $cheapest = $listings
+                    ->sortBy([
+                        fn (CompanyProductVariant $a, CompanyProductVariant $b) => $a->site_price_final <=> $b->site_price_final,
+                        fn (CompanyProductVariant $a, CompanyProductVariant $b) => $a->id <=> $b->id,
+                    ])
+                    ->first();
+
+                $cheapest->sellers_count = $listings->pluck('company_id')->unique()->count();
+                $cheapest->min_price = $prices->min();
+                $cheapest->max_price = $prices->max();
+
+                return $cheapest;
+            })
+            ->values();
+    }
+
+    /**
+     * Sub-categories the matches belong to, most matches first. The count is
+     * the number of listings the search page will show for that category.
+     */
+    private function suggestedCategories(SupportCollection $matches, int $limit): SupportCollection
+    {
+        $counts = $matches
+            ->whereNotNull('main_category_id')
+            ->countBy('main_category_id')
+            ->sortDesc();
+
+        if ($counts->isEmpty()) {
+            return collect();
+        }
+
+        $categories = Category::query()
+            ->whereIn('id', $counts->keys())
+            ->active()
+            ->where(fn (Builder $q) => $q
+                ->whereNull('parent_id')
+                ->orWhereHas('parent', fn (Builder $pq) => $pq->active())
+            )
+            ->with(['translatable', 'parent', 'parent.translatable'])
+            ->get()
+            ->keyBy('id');
+
+        return $counts
+            ->filter(fn (int $count, int $categoryId) => $categories->has($categoryId))
+            ->take($limit)
+            ->map(function (int $count, int $categoryId) use ($categories) {
+                $category = $categories->get($categoryId);
+                $category->products_count = $count;
+
+                return $category;
+            })
+            ->values();
+    }
+
+    /**
+     * Listings the public site may show: active and approved, on an active
+     * variant of an active product.
+     */
+    private function siteVisibleCpvQuery(): Builder
+    {
+        return CompanyProductVariant::query()
+            ->where('company_product_variant.is_active', true)
+            ->where('company_product_variant.approval_status', ProductVariantApprovalStatusEnum::APPROVED->value)
+            ->whereHas('productVariant', fn (Builder $q) => $q->active()->whereHas('product', fn (Builder $pq) => $pq->active()));
     }
 
     public function list(array $validated): LengthAwarePaginator

@@ -8,14 +8,18 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\App\Products\ProductSearchRequest;
 use App\Http\Requests\App\Products\ProductShowByUuidRequest;
 use App\Http\Requests\App\Products\ProductShowRequest;
+use App\Http\Requests\App\Products\ProductSuggestionRequest;
 use App\Http\Requests\GeneralListRequest;
 use App\Http\Resources\Admin\Brands\BrandsListResource;
 use App\Http\Resources\Admin\CarColors\CarColorsListResource;
 use App\Http\Resources\Admin\Categories\CategoriesListResource;
 use App\Http\Resources\Admin\Cities\CitiesListResource;
+use App\Http\Resources\App\Categories\CategorySuggestionResource;
 use App\Http\Resources\App\CompanyProductVariants\CompanyProductVariantListResource;
+use App\Http\Resources\App\CompanyProductVariants\CompanyProductVariantSuggestionResource;
 use App\Http\Resources\App\ProductVariants\ProductVariantResource;
 use App\Http\Resources\App\ProductVariants\ProductVariantsResource;
+use App\Http\Resources\GeneralResource;
 use App\Models\CompanyProductVariant;
 use App\Models\ProductOption;
 use App\Models\ProductOptionItem;
@@ -38,6 +42,16 @@ class ProductController extends Controller
     public function index(ProductSearchRequest $request): AnonymousResourceCollection
     {
         return CompanyProductVariantListResource::collection($this->repo->load($request->validated()));
+    }
+
+    public function suggestions(ProductSuggestionRequest $request): JsonResponse
+    {
+        $suggestions = $this->repo->suggestions($request->validated());
+
+        return response()->json(GeneralResource::make([
+            'products' => CompanyProductVariantSuggestionResource::collection($suggestions['products']),
+            'categories' => CategorySuggestionResource::collection($suggestions['categories']),
+        ]));
     }
 
     public function getProductsSearchFilters(): JsonResponse
