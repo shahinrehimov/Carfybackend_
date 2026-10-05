@@ -52,6 +52,7 @@ use Spatie\MediaLibrary\InteractsWithMedia;
  * @property mixed|null $approval_status_message
  * @property Collection|mixed $fitments
  * @property bool $is_universal
+ * @property bool $requires_fitment_selection
  * @property int|null $year_from
  * @property int|null $year_to
  * @property int|null $year deprecated, use year_from / year_to
@@ -79,10 +80,12 @@ class ProductVariant extends Model implements HasMedia
         'approval_status', // ProductVariantApprovalStatusEnum
         'approval_status_message', // nullable, max 3000
         'city_id',
+        'requires_fitment_selection', // customer picks the car brand/model when buying
     ];
 
     protected $casts = [
         'is_set' => 'boolean',
+        'requires_fitment_selection' => 'boolean',
         'title' => TitleCast::class,
         'price' => PriceCast::class,
         'price_final' => PriceFinalCast::class,

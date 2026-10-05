@@ -76,6 +76,7 @@ class ProductStoreRequest extends FormRequest
             'weight_gram'   => ['required', 'integer', 'min:1', 'max:' . config('wolt.max_weight_gram', 20000)],
 
             ...$this->fitmentRules(),
+            ...$this->fitmentSelectionRules($this->boolean('is_set')),
 
             'oem_code' => ['nullable', 'string', 'max:100'],
 

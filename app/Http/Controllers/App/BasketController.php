@@ -4,6 +4,7 @@ namespace App\Http\Controllers\App;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\App\Baskets\BasketAddRequest;
+use App\Http\Requests\App\Baskets\BasketLineRequest;
 use App\Http\Requests\GeneralListRequest;
 use App\Http\Resources\App\ProductVariants\ProductVariantsInBasketResource;
 use App\Models\CompanyProductVariant;
@@ -36,7 +37,13 @@ class BasketController extends Controller
     {
         $validated = $request->validated();
 
-        $res = BasketService::instance()->add($companyProductVariant, $validated['quantity'], $validated['sets'] ?? []);
+        $res = BasketService::instance()->add(
+            $companyProductVariant,
+            $validated['quantity'],
+            $validated['sets'] ?? [],
+            $validated['brand_id'] ?? null,
+            $validated['brand_model_id'] ?? null,
+        );
 
         return response()->json([
             'message' => $res ?
@@ -50,9 +57,9 @@ class BasketController extends Controller
         ]);
     }
 
-    public function remove(CompanyProductVariant $companyProductVariant): JsonResponse
+    public function remove(BasketLineRequest $request, CompanyProductVariant $companyProductVariant): JsonResponse
     {
-        $res = BasketService::instance()->remove($companyProductVariant);
+        $res = BasketService::instance()->remove($companyProductVariant, ...$this->line($request));
 
         return response()->json([
             'message' => $res ?
@@ -66,9 +73,9 @@ class BasketController extends Controller
         ], $res ? 200 : 400);
     }
 
-    public function increment(CompanyProductVariant $companyProductVariant): JsonResponse
+    public function increment(BasketLineRequest $request, CompanyProductVariant $companyProductVariant): JsonResponse
     {
-        $quantity = BasketService::instance()->increment($companyProductVariant);
+        $quantity = BasketService::instance()->increment($companyProductVariant, ...$this->line($request));
 
         return response()->json([
             'message' => LangService::instance()
@@ -79,9 +86,9 @@ class BasketController extends Controller
         ]);
     }
 
-    public function decrement(CompanyProductVariant $companyProductVariant): JsonResponse
+    public function decrement(BasketLineRequest $request, CompanyProductVariant $companyProductVariant): JsonResponse
     {
-        $quantity = BasketService::instance()->decrement($companyProductVariant);
+        $quantity = BasketService::instance()->decrement($companyProductVariant, ...$this->line($request));
 
         return response()->json([
             'message' => LangService::instance()
@@ -132,5 +139,15 @@ class BasketController extends Controller
             'quantity' => $quantity,
             'basket_data' => BasketService::instance()->calculateBasketData(),
         ]);
+    }
+
+    /**
+     * @return array{0: int|null, 1: int|null}
+     */
+    private function line(BasketLineRequest $request): array
+    {
+        $validated = $request->validated();
+
+        return [$validated['brand_id'] ?? null, $validated['brand_model_id'] ?? null];
     }
 }

@@ -33,6 +33,7 @@ class OrderController extends Controller
             $seller['items'] = array_map(fn($item) => [
                 'quantity' => $item['quantity'],
                 'price'    => $item['price'],
+                'fitment_selection' => $item['fitment_selection'],
                 'product'  => CompanyProductVariantListResource::make($item['_cpv']),
             ], $seller['items']);
         }

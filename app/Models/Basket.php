@@ -27,6 +27,8 @@ class Basket extends Model
         'is_set',
         'quantity',
         'sets', // [id, quantity]
+        'selected_brand_id', // nullable, the car the customer bought the part for
+        'selected_brand_model_id', // nullable
     ];
 
     protected $casts = [
@@ -63,6 +65,19 @@ class Basket extends Model
     public function companyProductVariant(): BelongsTo
     {
         return $this->belongsTo(CompanyProductVariant::class);
+    }
+
+    /**
+     * Soft-deleted brands still resolve: the choice is part of what was bought.
+     */
+    public function selectedBrand(): BelongsTo
+    {
+        return $this->belongsTo(Brand::class, 'selected_brand_id')->withTrashed();
+    }
+
+    public function selectedBrandModel(): BelongsTo
+    {
+        return $this->belongsTo(BrandModel::class, 'selected_brand_model_id')->withTrashed();
     }
 
     public function user(): MorphTo

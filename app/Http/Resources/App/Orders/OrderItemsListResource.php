@@ -3,6 +3,7 @@
 namespace App\Http\Resources\App\Orders;
 
 use App\Http\Resources\App\CompanyProductVariants\CompanyProductVariantListResource;
+use App\Services\FitmentSelectionService;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -32,6 +33,8 @@ class OrderItemsListResource extends JsonResource
             'quantity'     => $this->quantity,
             'amount'       => $this->amount,
             'amount_final' => $this->amount_final,
+            // The car this item was bought for, null when the listing does not ask.
+            'fitment_selection' => FitmentSelectionService::instance()->present($this->selectedBrand, $this->selectedBrandModel),
             'product'      => $cpv instanceof \App\Models\CompanyProductVariant
                 ? CompanyProductVariantListResource::make($cpv)
                 : null,

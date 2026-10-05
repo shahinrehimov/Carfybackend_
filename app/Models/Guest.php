@@ -65,6 +65,6 @@ class Guest extends Model
         return $this->morphToMany(ProductVariant::class, 'userable', Basket::class)
             ->whereNull('baskets.deleted_at')
             ->orderBy('baskets.id')
-            ->withPivot(['quantity', 'sets', 'id', 'company_product_variant_id']);
+            ->withPivot(['quantity', 'sets', 'id', 'company_product_variant_id', 'selected_brand_id', 'selected_brand_model_id']);
     }
 }

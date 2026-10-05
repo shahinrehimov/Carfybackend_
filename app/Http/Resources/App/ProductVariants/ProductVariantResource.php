@@ -3,6 +3,7 @@
 namespace App\Http\Resources\App\ProductVariants;
 
 use App\Services\FitmentPresenter;
+use App\Services\FitmentSelectionService;
 use App\Http\Resources\Admin\Cities\CitiesListResource;
 use App\Http\Resources\App\CompanyProductVariants\CompanyProductVariantListResource;
 use App\Http\Resources\App\Products\ProductResource;
@@ -68,6 +69,10 @@ class ProductVariantResource extends JsonResource
             'brand_models' => FitmentPresenter::instance()->brandModelsFor($this->resource),
             'fitments' => FitmentPresenter::instance()->forVariant($this->resource),
             'is_universal' => $this->is_universal,
+            // When true the client must ask which car the part is for before
+            // adding it to the basket; the options drive that modal.
+            'requires_fitment_selection' => FitmentSelectionService::instance()->requires($this->resource),
+            'fitment_selection_options' => FitmentSelectionService::instance()->optionsFor($this->resource),
             'product' => ProductResource::make($this->whenLoaded('product')),
             'is_set' => $this->isSet(),
             'sets' => ProductVariantsResource::collection($this->whenLoaded('sets')),

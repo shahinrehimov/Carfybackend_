@@ -3,6 +3,8 @@
 namespace App\Services;
 
 use App\Models\Basket;
+use App\Models\Brand;
+use App\Models\BrandModel;
 use App\Models\CompanyProductVariant;
 use App\Models\Guest;
 use App\Models\Order;
@@ -32,14 +34,18 @@ class BasketService
         return self::$instance;
     }
 
-    public function add(CompanyProductVariant $cpv, int $quantity, array $sets = []): bool
+    public function add(CompanyProductVariant $cpv, int $quantity, array $sets = [], ?int $brandId = null, ?int $brandModelId = null): bool
     {
-        $this->checkStock($cpv, $quantity);
-
         $cpv->loadMissing(['productVariant']);
         $productVariant = $cpv->productVariant;
 
         $productVariant = ProductService::instance()->setProductVariant($productVariant)->getActiveProductVariant();
+
+        [$brandId, $brandModelId] = FitmentSelectionService::instance()->resolve($productVariant, $brandId, $brandModelId);
+
+        // The quantity replaces this line's own, so only the other lines of the
+        // same listing (other chosen cars) count against the stock on top of it.
+        $this->checkStock($cpv, $quantity + $this->quantityInOtherLines($cpv, $brandId, $brandModelId));
 
         ProductService::instance()->setProductVariant($productVariant)->loadVariantRelationsForSite();
 
@@ -60,7 +66,7 @@ class BasketService
 
         [$productVariant, $sets] = $this->checkSets($productVariant, $quantity, $sets);
 
-        $basket = DB::transaction(function () use ($cpv, $productVariant, $quantity, $sets) {
+        $basket = DB::transaction(function () use ($cpv, $productVariant, $quantity, $sets, $brandId, $brandModelId) {
             return UserService::instance()->getUserOrGuest()
                 ->baskets()
                 ->updateOrCreate(
@@ -68,6 +74,8 @@ class BasketService
                         'company_product_variant_id' => $cpv->id,
                         'product_variant_id' => $productVariant->id,
                         'product_id' => $productVariant->product_id,
+                        'selected_brand_id' => $brandId,
+                        'selected_brand_model_id' => $brandModelId,
                     ],
                     [
                         'quantity' => $quantity,
@@ -86,16 +94,13 @@ class BasketService
         return true;
     }
 
-    public function increment(CompanyProductVariant $cpv): int
+    public function increment(CompanyProductVariant $cpv, ?int $brandId = null, ?int $brandModelId = null): int
     {
         $cpv->loadMissing(['productVariant']);
         $productVariant = $cpv->productVariant;
         ProductService::instance()->setProductVariant($productVariant)->getActiveProductVariant();
 
-        $basket = UserService::instance()->getUserOrGuest()
-            ->baskets()
-            ->where('company_product_variant_id', $cpv->id)
-            ->first();
+        $basket = $this->findLine($cpv, $brandId, $brandModelId);
 
         if (!$basket) {
             throw new BadRequestHttpException(
@@ -105,7 +110,7 @@ class BasketService
             );
         }
 
-        $this->checkStock($cpv, $basket->quantity + 1);
+        $this->checkStock($cpv, $basket->quantity + 1 + $this->quantityInOtherLines($cpv, $basket->selected_brand_id, $basket->selected_brand_model_id));
         $this->checkSets($productVariant, $basket->quantity + 1, $basket->sets ?? []);
 
         DB::transaction(function () use ($basket) {
@@ -115,16 +120,13 @@ class BasketService
         return $basket->quantity;
     }
 
-    public function decrement(CompanyProductVariant $cpv): int
+    public function decrement(CompanyProductVariant $cpv, ?int $brandId = null, ?int $brandModelId = null): int
     {
         $cpv->loadMissing(['productVariant']);
         $productVariant = $cpv->productVariant;
         ProductService::instance()->setProductVariant($productVariant)->getActiveProductVariant();
 
-        $basket = UserService::instance()->getUserOrGuest()
-            ->baskets()
-            ->where('company_product_variant_id', $cpv->id)
-            ->first();
+        $basket = $this->findLine($cpv, $brandId, $brandModelId);
 
         if (!$basket) {
             throw new BadRequestHttpException(
@@ -236,11 +238,8 @@ class BasketService
         $cpv->loadMissing(['productVariant']);
         $productVariant = $cpv->productVariant;
 
-        /** @var Basket $basket */
-        $basket = UserService::instance()->getUserOrGuest()
-            ->baskets()
-            ->where('company_product_variant_id', $cpv->id)
-            ->first();
+        // Sets never carry a car selection, so a set listing has a single line.
+        $basket = $this->findLine($cpv, null, null);
 
         if (!$basket) {
             throw new BadRequestHttpException(
@@ -292,6 +291,57 @@ class BasketService
         return [$basket, $sets, $selectedIndex];
     }
 
+    /**
+     * The basket line of a listing for the given car choice.
+     *
+     * A listing that asks which car the part is for can sit in the basket once
+     * per chosen car, so the choice is part of the line's identity. Without one,
+     * the listing's only line is meant; with several lines that is ambiguous and
+     * the client has to say which.
+     */
+    private function findLine(CompanyProductVariant $cpv, ?int $brandId, ?int $brandModelId): ?Basket
+    {
+        $lines = UserService::instance()->getUserOrGuest()
+            ->baskets()
+            ->where('company_product_variant_id', $cpv->id)
+            ->get();
+
+        if ($brandId !== null) {
+            return $lines->first(fn (Basket $line) => $this->lineMatches($line, $brandId, $brandModelId));
+        }
+
+        if ($lines->count() > 1) {
+            throw new BadRequestHttpException(
+                LangService::instance()
+                    ->setDefault('This product is in the basket for several cars. Please specify which one.')
+                    ->getLang('basket_line_selection_required')
+            );
+        }
+
+        return $lines->first();
+    }
+
+    private function quantityInOtherLines(CompanyProductVariant $cpv, ?int $brandId, ?int $brandModelId): int
+    {
+        return (int) UserService::instance()->getUserOrGuest()
+            ->baskets()
+            ->where('company_product_variant_id', $cpv->id)
+            ->get()
+            ->reject(fn (Basket $line) => $this->lineMatches($line, $brandId, $brandModelId))
+            ->sum('quantity');
+    }
+
+    private function lineMatches(Basket $line, ?int $brandId, ?int $brandModelId): bool
+    {
+        return $this->nullableInt($line->selected_brand_id) === $brandId
+            && $this->nullableInt($line->selected_brand_model_id) === $brandModelId;
+    }
+
+    private function nullableInt(mixed $value): ?int
+    {
+        return $value === null ? null : (int) $value;
+    }
+
     public function ids(): array
     {
         $cpvIds = UserService::instance()->getUserOrGuest()
@@ -311,13 +361,10 @@ class BasketService
             ->toArray();
     }
 
-    public function remove(CompanyProductVariant $cpv): bool
+    public function remove(CompanyProductVariant $cpv, ?int $brandId = null, ?int $brandModelId = null): bool
     {
-        return DB::transaction(function () use ($cpv) {
-            $basket = UserService::instance()->getUserOrGuest()
-                ->baskets()
-                ->where('company_product_variant_id', $cpv->id)
-                ->first();
+        return DB::transaction(function () use ($cpv, $brandId, $brandModelId) {
+            $basket = $this->findLine($cpv, $brandId, $brandModelId);
 
             if (!$basket) {
                 return false;
@@ -350,6 +397,7 @@ class BasketService
             ->get();
 
         $this->batchLoadSellerData($products);
+        $this->attachFitmentSelections($products);
 
         foreach ($products as $product) {
             $this->calculateBasketQuantity($product);
@@ -380,6 +428,32 @@ class BasketService
 
             $productVariant->in_wishlist = $cpv?->in_wishlist ?? false;
             $productVariant->in_basket = $cpv?->in_basket ?? true;
+
+            // The flags above carry the listing's total across all its lines;
+            // a basket row prices its own line only.
+            if ($cpv) {
+                $cpv->basket_quantity = $productVariant->basket_quantity;
+            }
+        }
+    }
+
+    /**
+     * Resolve each line's chosen car to titles in one pass per table and keep the
+     * rendered choice on the line as `fitment_selection`.
+     */
+    private function attachFitmentSelections(Collection $productVariants): void
+    {
+        $brandIds = $productVariants->map(fn ($pv) => $pv->pivot->selected_brand_id ?? null)->filter()->unique()->values();
+        $modelIds = $productVariants->map(fn ($pv) => $pv->pivot->selected_brand_model_id ?? null)->filter()->unique()->values();
+
+        $brands = $brandIds->isEmpty() ? collect() : Brand::query()->withTrashed()->with('translatable')->whereKey($brandIds)->get()->keyBy('id');
+        $models = $modelIds->isEmpty() ? collect() : BrandModel::query()->withTrashed()->with('translatable')->whereKey($modelIds)->get()->keyBy('id');
+
+        foreach ($productVariants as $productVariant) {
+            $productVariant->fitment_selection = FitmentSelectionService::instance()->present(
+                $brands->get($productVariant->pivot->selected_brand_id ?? null),
+                $models->get($productVariant->pivot->selected_brand_model_id ?? null),
+            );
         }
     }
 
@@ -425,6 +499,7 @@ class BasketService
             ->get();
 
         $this->batchLoadSellerData($productVariants);
+        $this->attachFitmentSelections($productVariants);
 
         foreach ($productVariants as $productVariant) {
             $this->calculateBasketQuantity($productVariant);
@@ -458,7 +533,9 @@ class BasketService
             $cpvId = $productVariant->pivot->company_product_variant_id ?? null;
 
             if ($cpvId && $cpvs->has($cpvId)) {
-                $cpv = $cpvs->get($cpvId);
+                // Cloned per line: a listing bought for two different cars is two
+                // lines, and each needs its own basket_quantity on the listing.
+                $cpv = clone $cpvs->get($cpvId);
 
                 // Swap in the variant that was already loaded with every relation
                 // the canonical list resource needs, so nothing gets lazy loaded.

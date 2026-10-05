@@ -4,6 +4,7 @@ namespace App\Http\Resources\App\CompanyProductVariants;
 
 use App\Http\Resources\App\Products\ProductsResource;
 use App\Models\CompanyProductVariant;
+use App\Services\FitmentSelectionService;
 use App\Services\LangService;
 use App\Services\StoreAvailabilityService;
 use Illuminate\Http\Request;
@@ -53,6 +54,9 @@ class CompanyProductVariantListResource extends JsonResource
             'oem_code'      => $variant?->oem_code,
             'hover_image' => $this->listing_hover_image,
             'is_set'      => $variant?->isSet() ?? false,
+            // Adding from a list card must open the car selection modal first
+            // (options come from the product show endpoint).
+            'requires_fitment_selection' => $variant ? FitmentSelectionService::instance()->requires($variant) : false,
             'stock'       => $this->stock,
             // Site prices carry the platform commission; the buyer only ever
             // sees the final number, never the commission itself.

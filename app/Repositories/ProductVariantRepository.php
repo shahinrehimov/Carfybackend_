@@ -712,6 +712,7 @@ class ProductVariantRepository
             $data['is_default'] = $isDefault;
             $data['oem_code'] = $validated['oem_code'] ?? null;
             $data['is_set'] = (bool) ($validated['is_set'] ?? false);
+            $data['requires_fitment_selection'] = ! $data['is_set'] && (bool) ($validated['requires_fitment_selection'] ?? false);
 
             if (CompanyAdminService::instance()->checkUser()) {
                 $data['company_id'] = CompanyAdminService::instance()->getUser()->company_id;
@@ -836,6 +837,10 @@ class ProductVariantRepository
                 'data' => [
                     'oem_code' => $validated['oem_code'] ?? null,
                     'fitments' => $this->fitmentsFromValidated($validated) ?? [],
+                    // null = the seller did not touch it, so approval leaves it alone
+                    'requires_fitment_selection' => isset($validated['requires_fitment_selection'])
+                        ? (bool) $validated['requires_fitment_selection']
+                        : null,
                     'options' => $validated['options'] ?? [],
                 ],
             ]);
@@ -871,6 +876,7 @@ class ProductVariantRepository
             // Apply scalar fields
             $productVariant->update([
                 'oem_code' => $data['oem_code'] ?? $productVariant->oem_code,
+                'requires_fitment_selection' => $data['requires_fitment_selection'] ?? $productVariant->requires_fitment_selection,
             ]);
 
             $this->syncFitments($productVariant, $data['fitments'] ?: null);
@@ -1824,11 +1830,15 @@ class ProductVariantRepository
             ->whereIn('company_product_variant_id', $cpvIds)
             ->pluck('company_product_variant_id');
 
+        // Summed: a listing that asks which car the part is for sits in the
+        // basket once per chosen car.
         $basketQuantities = Basket::query()
             ->where('userable_id', $user->id)
             ->where('userable_type', $user::class)
             ->whereNull('deleted_at')
             ->whereIn('company_product_variant_id', $cpvIds)
+            ->groupBy('company_product_variant_id')
+            ->selectRaw('company_product_variant_id, SUM(quantity) AS quantity')
             ->pluck('quantity', 'company_product_variant_id');
 
         foreach ($cpvs as $cpv) {

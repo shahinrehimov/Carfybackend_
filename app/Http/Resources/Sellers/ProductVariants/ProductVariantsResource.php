@@ -110,6 +110,7 @@ class ProductVariantsResource extends JsonResource
             'brand_models' => FitmentPresenter::instance()->brandModelsFor($this->resource),
             'fitments' => FitmentPresenter::instance()->forVariant($this->resource),
             'is_universal' => $this->is_universal,
+            'requires_fitment_selection' => (bool) $this->requires_fitment_selection,
             'year' => $this->year, // deprecated, use year_from / year_to
             'year_from' => $this->year_from,
             'year_to' => $this->year_to,

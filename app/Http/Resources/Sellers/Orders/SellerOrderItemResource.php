@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources\Sellers\Orders;
 
+use App\Services\FitmentSelectionService;
 use App\Services\LangService;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -28,6 +29,9 @@ class SellerOrderItemResource extends JsonResource
             'seller_amount' => round($this->amount_final - ($this->commission_amount ?? 0), 2),
             'is_set' => $this->is_set,
             'sets' => $this->sets,
+            // The car the customer bought the part for: hand the courier the
+            // part for this brand/model. Null when the listing does not ask.
+            'fitment_selection' => FitmentSelectionService::instance()->present($this->selectedBrand, $this->selectedBrandModel),
             'product_variant' => $this->whenLoaded('productVariant', fn() => [
                 'id' => $this->productVariant?->id,
                 'title' => $this->productVariant?->title,

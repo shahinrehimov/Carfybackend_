@@ -138,6 +138,7 @@ class ProductVariantController extends Controller
                 'oem_code'    => $pv->oem_code,
                 'fitments'    => FitmentPresenter::instance()->forVariant($pv),
                 'is_universal' => $pv->is_universal,
+                'requires_fitment_selection' => $pv->requires_fitment_selection,
                 'options'        => $pv->options->map(fn($o) => [
                     'option_id' => $o->product_option_id,
                     'value'     => $o->product_option_item_id ?? $o->value,

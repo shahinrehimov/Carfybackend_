@@ -5,6 +5,7 @@ namespace App\Http\Resources\Admin\Orders;
 use App\Http\Resources\Admin\AddressTypes\AddressTypesListResource;
 use App\Http\Resources\Admin\Cities\CitiesListResource;
 use App\Http\Resources\App\Orders\OrderItemsListResource;
+use App\Services\FitmentSelectionService;
 use App\Services\LangService;
 use App\Services\OrderService;
 use Illuminate\Http\Request;
@@ -68,6 +69,7 @@ class OrderResource extends JsonResource
                 'amount' => $item->amount,
                 'amount_final' => $item->amount_final,
                 'product_title' => $item->productVariant?->title,
+                'fitment_selection' => FitmentSelectionService::instance()->present($item->selectedBrand, $item->selectedBrandModel),
                 'status_history' => $item->relationLoaded('itemStatuses')
                     ? $item->itemStatuses->map(fn($s) => [
                         'status' => $s->status,

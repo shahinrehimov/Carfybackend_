@@ -26,6 +26,7 @@ use Illuminate\Support\Str;
  * @property mixed $title
  * @property mixed $oem_code
  * @property mixed $seller_listing
+ * @property mixed $fitment_selection
  * @method getLang(string $string)
  * @method isSet()
  */
@@ -53,6 +54,10 @@ class ProductVariantsInBasketResource extends JsonResource
 
         return $base + [
             'sets' => ProductVariantsInBasketResource::collection($this->whenLoaded('sets')),
+            // The car this line was added for ({brand, brand_model}), null when
+            // the listing does not ask. Send it back as brand_id / brand_model_id
+            // on increment, decrement and remove to address this exact line.
+            'fitment_selection' => $this->fitment_selection ?? null,
         ];
     }
 

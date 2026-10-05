@@ -109,6 +109,8 @@ class OrderRepository
                         'itemStatuses' => function ($q) {
                             $q->orderBy('id');
                         },
+                        'selectedBrand.translatable',
+                        'selectedBrandModel.translatable',
                     ]);
                 },
                 'statuses' => function ($query) {

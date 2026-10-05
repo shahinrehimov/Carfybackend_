@@ -47,4 +47,16 @@ trait ValidatesFitments
             'fitments.*.year_to' => ['nullable', 'integer', 'min:1900', 'max:' . $maxYear],
         ];
     }
+
+    /**
+     * Whether the customer must say which car the part is for. A set bundles
+     * several variants into one basket line with no room for a per-item choice,
+     * so it cannot ask for one.
+     */
+    protected function fitmentSelectionRules(bool $isSet): array
+    {
+        return [
+            'requires_fitment_selection' => ['nullable', 'boolean', Rule::when($isSet, ['declined'])],
+        ];
+    }
 }

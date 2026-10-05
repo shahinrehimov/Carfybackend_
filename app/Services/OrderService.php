@@ -93,6 +93,8 @@ class OrderService
             );
         }
 
+        $this->assertFitmentSelections($productVariants);
+
         $address = $user->addresses()->findOrFail($addressId);
 
         $sellers = [];
@@ -124,6 +126,7 @@ class OrderService
             $sellers[$companyId]['items'][] = [
                 'quantity' => $productVariant->basket_quantity,
                 'price'    => round($productVariant->price_final_in_basket, 2),
+                'fitment_selection' => $productVariant->fitment_selection ?? null,
                 '_cpv'     => $cpv,
             ];
 
@@ -231,6 +234,36 @@ class OrderService
      * working hours. The basket itself is left untouched so the buyer can come
      * back once the store opens.
      */
+    private function assertFitmentSelections(Collection $productVariants): void
+    {
+        foreach ($productVariants as $productVariant) {
+            if (!FitmentSelectionService::instance()->requires($productVariant)) {
+                continue;
+            }
+
+            // Re-checked rather than trusted: the seller may have switched the
+            // requirement on, or changed the fitments, after the line was added.
+            try {
+                FitmentSelectionService::instance()->resolve(
+                    $productVariant,
+                    isset($productVariant->pivot->selected_brand_id) ? (int) $productVariant->pivot->selected_brand_id : null,
+                    isset($productVariant->pivot->selected_brand_model_id) ? (int) $productVariant->pivot->selected_brand_model_id : null,
+                );
+            } catch (BadRequestHttpException $e) {
+                $title = $productVariant->title;
+
+                throw new BadRequestHttpException(
+                    LangService::instance()
+                        ->setDefault('Please choose the car brand and model for @product in your basket. @reason')
+                        ->getLang('checkout_fitment_selection_invalid', [
+                            '@product' => $title,
+                            '@reason' => $e->getMessage(),
+                        ])
+                );
+            }
+        }
+    }
+
     private function assertSellersAreOpen(Collection $productVariants): void
     {
         $companies = [];
@@ -298,6 +331,7 @@ class OrderService
         }
 
         $this->assertSellersAreOpen($productVariants);
+        $this->assertFitmentSelections($productVariants);
 
         $address = $user->addresses()->where('id', $validated['address_id'])->first();
 
@@ -419,6 +453,8 @@ class OrderService
                     'is_set' => $productVariant->isSet(),
                     'quantity' => $productVariant->basket_quantity,
                     'sets' => $productVariant->pivot?->sets ?? [],
+                    'selected_brand_id' => $productVariant->pivot->selected_brand_id ?? null,
+                    'selected_brand_model_id' => $productVariant->pivot->selected_brand_model_id ?? null,
                     'status' => OrderItemStatusEnum::PENDING,
                 ];
             }
@@ -803,6 +839,8 @@ class OrderService
                         'companyProductVariant' => function ($q) {
                             $q->with(['city', 'city.translatable', 'media', 'company', 'company.workingHours']);
                         },
+                        'selectedBrand.translatable',
+                        'selectedBrandModel.translatable',
                     ]);
                 },
             ]);
@@ -828,6 +866,8 @@ class OrderService
                         'companyProductVariant' => function ($q) {
                             $q->with(['city', 'city.translatable', 'media', 'company', 'company.workingHours']);
                         },
+                        'selectedBrand.translatable',
+                        'selectedBrandModel.translatable',
                     ]);
                 },
                 'shippings.company',

@@ -60,6 +60,7 @@ class CompanyProductVariantResource extends JsonResource
                     'brand_models' => FitmentPresenter::instance()->brandModelsFor($variant),
                     'fitments' => FitmentPresenter::instance()->forVariant($variant),
                     'is_universal' => $variant->is_universal,
+                    'requires_fitment_selection' => (bool) $variant->requires_fitment_selection,
                     'year' => $variant->year, // deprecated, use year_from / year_to
                     'year_from' => $variant->year_from,
                     'year_to' => $variant->year_to,

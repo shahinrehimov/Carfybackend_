@@ -52,6 +52,7 @@ class ProductVariantUpdateRequest extends FormRequest
             'images.*' => ['required', File::image()->max(10 * 1024)],
 
             ...$this->fitmentRules(),
+            ...$this->fitmentSelectionRules($productVariant->isSet()),
 
             'oem_code' => ['nullable', 'string', 'max:100'],
 

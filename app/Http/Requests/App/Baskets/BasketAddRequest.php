@@ -28,6 +28,11 @@ class BasketAddRequest extends FormRequest
             'sets' => ['filled', 'array', 'min:1'],
             'sets.*.id' => ['required', 'integer', 'distinct'],
             'sets.*.quantity' => ['required', 'integer', 'min:1'],
+
+            // The car the part is for, on listings that ask (requires_fitment_selection).
+            // Checked against the listing's fitments in FitmentSelectionService.
+            'brand_id' => ['nullable', 'integer'],
+            'brand_model_id' => ['nullable', 'integer'],
         ];
     }
 }
