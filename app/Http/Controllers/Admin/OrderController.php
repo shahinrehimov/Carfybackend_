@@ -132,8 +132,6 @@ class OrderController extends Controller
             $validated['cancel_reason'] ?? null,
         );
 
-        $order->statuses()->create(['status' => $newStatus]);
-
         $order = $this->repo->loadRelations($order);
 
         return response()->json(GeneralResource::make([
@@ -152,8 +150,6 @@ class OrderController extends Controller
             'courier_info' => $request->validated('courier_info'),
             'status' => OrderStatusEnum::COURIER_ASSIGNED,
         ]);
-
-        $order->statuses()->create(['status' => OrderStatusEnum::COURIER_ASSIGNED]);
 
         $order = $this->repo->loadRelations($order);
 
@@ -254,7 +250,6 @@ class OrderController extends Controller
         ]);
 
         $order->update(['status' => \App\Enum\OrderStatusEnum::COURIER_ASSIGNED]);
-        $order->statuses()->create(['status' => \App\Enum\OrderStatusEnum::COURIER_ASSIGNED]);
 
         $order = $this->repo->loadRelations($order);
 

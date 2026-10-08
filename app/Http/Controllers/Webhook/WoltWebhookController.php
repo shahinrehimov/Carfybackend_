@@ -74,7 +74,6 @@ class WoltWebhookController extends Controller
 
         if ($order && $order->status !== OrderStatusEnum::COURIER_ASSIGNED) {
             $order->update(['status' => OrderStatusEnum::COURIER_ASSIGNED]);
-            $order->statuses()->create(['status' => OrderStatusEnum::COURIER_ASSIGNED]);
         }
     }
 
@@ -101,7 +100,6 @@ class WoltWebhookController extends Controller
 
         if ($allDelivered) {
             $order->update(['status' => OrderStatusEnum::DELIVERED]);
-            $order->statuses()->create(['status' => OrderStatusEnum::DELIVERED]);
         }
     }
 
