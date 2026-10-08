@@ -115,6 +115,23 @@ class OrderController extends Controller
         return redirect($frontendUrl);
     }
 
+    public function fpayWebhook(string $paymentKey): JsonResponse
+    {
+        $order = Order::where('transaction_id', $paymentKey)
+            ->where('payment_method', 'fpay')
+            ->first();
+
+        // The webhook is unsigned and carries no result: the outcome is always
+        // re-read from FPay's /result. Repeats are harmless, since only a
+        // PAYMENT_PENDING order gets updated.
+        if ($order) {
+            OrderService::instance()->updatePaymentStatus($order);
+        }
+
+        // Always 2xx, otherwise FPay keeps retrying
+        return response()->json(['message' => 'OK']);
+    }
+
     public function kapitalbankReturn(Request $request): RedirectResponse
     {
         $kapitalOrderId = $request->get('ID');

@@ -7,13 +7,21 @@ use App\Models\Order;
 use App\DTOs\Payment\PaymentResult;
 use App\Services\LangService;
 use App\Services\OrderService;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
 
+/**
+ * FPAY Ecommerce API (https://docs.fpay.az).
+ *
+ * Every request is a signed POST: X-Api-Key (username), X-Timestamp and
+ * X-Signature = HMAC-SHA256(authKey, timestamp.METHOD.path.sha256(body)).
+ * Amounts are in minor units (100 = 1 AZN). Responses use the envelope
+ * { status, meta: { message, developerMessage, requestTrackId }, data, errors }.
+ */
 class FpayPaymentMethod extends AbstractPaymentMethod
 {
-    private const TOKEN_CACHE_TTL = 3300; // 55 minutes
+    private const PENDING_STATUSES = ['INITIAL', 'WAITING_FOR_PAYMENT', 'IN_PROGRESS'];
+    private const REFUNDED_STATUSES = ['REFUNDED', 'PARTIAL_REFUNDED', 'REVERSED'];
 
     public function getName(): string
     {
@@ -48,59 +56,50 @@ class FpayPaymentMethod extends AbstractPaymentMethod
                 return $this->mockPaymentResponse($order);
             }
 
-            $session = $this->getSession();
-
-            if (!$session) {
-                return PaymentResult::failed(
-                    LangService::instance()->setDefault('Payment gateway error')->getLang('payment_gateway_error')
-                );
-            }
-
-            $merchantName = $this->getConfig('merchant_name');
-            $amount = $order->getRawOriginal('amount_final');
-            $description = 'ORDER-' . $order->uuid;
-            $callbackUrl = url('/payment/fpay-return') . '/'; // FPay appends paymentKey directly; keep trailing slash (url() strips it)
-
             $requestBody = [
-                'merchantName' => $merchantName,
-                'amount' => $amount,
+                'merchantName' => $this->getConfig('merchant_name'),
+                'merchantTransactionId' => $order->uuid,
+                'amount' => (int) $order->getRawOriginal('amount_final'),
+                'transactionType' => 'SMS',
+                'paymentMethod' => 'CARD',
                 'lang' => LangService::instance()->getCurrentLang(),
-                'callbackUrl' => $callbackUrl,
-                'description' => $description,
-                'webUserId' => $session['webUserId'],
-                'token' => $session['token'],
-                'hashCode' => $this->buildHashCode($merchantName, (string)$amount, $description),
+                // FPay appends /{paymentKey} to both URLs
+                'callbackUrl' => url('/payment/fpay-return'),
+                'webhookUrl' => url('/payment/fpay-webhook'),
+                'description' => 'ORDER-' . $order->uuid,
+                'customer' => $this->buildCustomer($order),
             ];
 
-            $response = $this->apiRequest('POST', '/fizzapay/fpay/GetPaymentKey', $requestBody);
+            $response = $this->apiRequest('/get-payment-key', $requestBody);
+            $paymentData = $response['data'] ?? [];
 
             $this->setPaymentLog(
                 order: $order,
                 action: PaymentLogActionEnum::CHECKOUT,
-                status: ($response['status']['statusCode'] ?? 0) == 1 ? 'success' : 'failed',
-                transactionId: $response['paymentKey'] ?? null,
+                status: $this->isOk($response) ? 'success' : 'failed',
+                transactionId: $paymentData['paymentKey'] ?? null,
                 request: $requestBody,
                 response: $response,
             );
 
-            if (($response['status']['statusCode'] ?? 0) == 1 && isset($response['paymentKey'], $response['redirectUrl'])) {
+            if ($this->isOk($response) && isset($paymentData['paymentKey'], $paymentData['redirectUrl'])) {
                 return PaymentResult::pending(
-                    transactionId: $response['paymentKey'],
+                    transactionId: $paymentData['paymentKey'],
                     message: LangService::instance()
                         ->setDefault('Redirecting to @payment_method for payment')
                         ->getLang('payment_redirecting', ['payment_method' => $this->getDisplayName()]),
                     metadata: $response,
-                    redirectUrl: $response['redirectUrl'],
+                    redirectUrl: $paymentData['redirectUrl'],
                 );
             }
 
-            $this->log('error', "FPay GetPaymentKey error", ['response' => $response]);
+            $this->log('error', 'FPay get-payment-key error', ['response' => $response]);
             return PaymentResult::failed(
                 LangService::instance()->setDefault('Payment gateway error')->getLang('payment_gateway_error')
             );
 
         } catch (\Exception $e) {
-            $this->log('error', "FPay payment exception: " . $e->getMessage());
+            $this->log('error', 'FPay payment exception: ' . $e->getMessage());
             return PaymentResult::failed(
                 LangService::instance()->setDefault('Payment processing error')->getLang('payment_processing_error')
             );
@@ -109,7 +108,7 @@ class FpayPaymentMethod extends AbstractPaymentMethod
 
     public function processCallback(array $data): PaymentResult
     {
-        // FPay uses browser redirect callbacks, not server-side POST
+        // FPay notifies via GET {webhookUrl}/{paymentKey} with no body; handled by the webhook route
         return PaymentResult::failed('Not applicable for FPay');
     }
 
@@ -124,38 +123,59 @@ class FpayPaymentMethod extends AbstractPaymentMethod
                 );
             }
 
-            $requestBody = [
-                'paymentKey' => $paymentKey,
-                'hashCode' => $this->buildHashCode($paymentKey),
-            ];
+            $requestBody = ['paymentKey' => $paymentKey];
 
-            $response = $this->apiRequest('POST', '/fizzapay/fpay/GetPaymentResult', $requestBody);
+            $response = $this->apiRequest('/result', $requestBody);
+            $paymentData = $response['data'] ?? [];
+            $status = $paymentData['status'] ?? null;
 
             $this->setPaymentLog(
                 order: $order,
                 action: PaymentLogActionEnum::CHECK_STATUS,
-                status: ($response['status']['statusCode'] ?? 0) == 1 ? 'success' : 'failed',
-                transactionId: $response['paymentKey'] ?? null,
+                status: $status === 'SUCCESS' ? 'success' : 'failed',
+                transactionId: $paymentData['paymentKey'] ?? $paymentKey,
                 request: $requestBody,
                 response: $response,
             );
 
-            if (($response['status']['statusCode'] ?? 0) == 1) {
+            if ($status === 'SUCCESS') {
                 return PaymentResult::success(
-                    transactionId: $response['paymentKey'] ?? null,
+                    transactionId: $paymentData['paymentKey'] ?? $paymentKey,
                     message: LangService::instance()->setDefault('Payment approved')->getLang('payment_approved'),
+                    metadata: $paymentData,
+                );
+            }
+
+            // Already refunded/reversed — the payment did go through; never mark it as failed
+            if (in_array($status, self::REFUNDED_STATUSES, true)) {
+                return PaymentResult::success(
+                    transactionId: $paymentData['paymentKey'] ?? $paymentKey,
+                    message: LangService::instance()->setDefault('Payment reversed')->getLang('payment_reversed'),
+                    metadata: $paymentData,
+                    isRefund: true,
+                );
+            }
+
+            // Not final yet, or the request itself failed (network, 5xx) — keep the order pending
+            if ($status === null || in_array($status, self::PENDING_STATUSES, true)) {
+                return PaymentResult::pending(
+                    transactionId: $paymentKey,
+                    message: LangService::instance()->setDefault('Payment not approved yet!')->getLang('payment_status_check_pending'),
                     metadata: $response,
                 );
             }
 
+            // ERROR, FAILED, CANCELED, TIMEOUT
             return PaymentResult::failed(
-                LangService::instance()->setDefault('Payment not approved yet!')->getLang('payment_status_check_pending')
+                ($paymentData['failureReason'] ?? '') ?: LangService::instance()->setDefault('Payment failed')->getLang('payment_failed'),
+                $paymentData,
             );
 
         } catch (\Exception $e) {
-            $this->log('error', "FPay checkStatus exception: " . $e->getMessage());
-            return PaymentResult::failed(
-                LangService::instance()->setDefault('Status check error')->getLang('payment_status_check_error')
+            $this->log('error', 'FPay checkStatus exception: ' . $e->getMessage());
+            return PaymentResult::pending(
+                transactionId: $order->transaction_id,
+                message: LangService::instance()->setDefault('Status check error')->getLang('payment_status_check_error'),
             );
         }
     }
@@ -171,27 +191,31 @@ class FpayPaymentMethod extends AbstractPaymentMethod
                 );
             }
 
-            $refundAmount = $amount ?? $order->getRawOriginal('amount_final');
+            $refundAmount = $amount ?? (int) $order->getRawOriginal('amount_final');
 
+            // /refund handles both full and partial; /reverse is full-only and meant for voids
             $requestBody = [
                 'paymentKey' => $paymentKey,
                 'amount' => $refundAmount,
             ];
 
-            $response = $this->apiRequest('POST', '/fizzapay/utility/ReverseTransaction', $requestBody);
+            $response = $this->apiRequest('/refund', $requestBody);
+            $paymentData = $response['data'] ?? [];
+            $status = $paymentData['status'] ?? null;
+            $isRefunded = $this->isOk($response) && in_array($status, ['REFUNDED', 'PARTIAL_REFUNDED'], true);
 
             $this->setPaymentLog(
                 order: $order,
                 action: PaymentLogActionEnum::REFUND,
-                status: ($response['status']['statusCode'] ?? 0) == 1 ? 'success' : 'failed',
-                transactionId: $response['paymentKey'] ?? null,
+                status: $isRefunded ? 'success' : 'failed',
+                transactionId: $paymentData['paymentKey'] ?? $paymentKey,
                 request: $requestBody,
                 response: $response,
             );
 
-            if (($response['status']['statusCode'] ?? 0) == 1) {
+            if ($isRefunded) {
                 return PaymentResult::success(
-                    transactionId: $response['paymentKey'] ?? null,
+                    transactionId: $paymentData['paymentKey'] ?? $paymentKey,
                     message: LangService::instance()->setDefault('Payment reversed')->getLang('payment_reversed'),
                     metadata: $response,
                     isRefund: true,
@@ -199,12 +223,18 @@ class FpayPaymentMethod extends AbstractPaymentMethod
                 );
             }
 
-            return PaymentResult::failed(
-                LangService::instance()->setDefault('Payment refund failed')->getLang('payment_refund_failed')
-            );
+            $this->log('error', 'FPay refund error', ['response' => $response]);
+
+            // Surface FPay's reason (e.g. "amount exceeds the refundable remainder") to the admin
+            $message = LangService::instance()->setDefault('Payment refund failed')->getLang('payment_refund_failed');
+            if (!empty($response['meta']['message'])) {
+                $message .= ': ' . $response['meta']['message'];
+            }
+
+            return PaymentResult::failed($message, $response);
 
         } catch (\Exception $e) {
-            $this->log('error', "FPay refund exception: " . $e->getMessage());
+            $this->log('error', 'FPay refund exception: ' . $e->getMessage());
             return PaymentResult::failed(
                 LangService::instance()->setDefault('Refund error')->getLang('payment_refund_error')
             );
@@ -223,8 +253,7 @@ class FpayPaymentMethod extends AbstractPaymentMethod
             'api_url' => 'string',
             'display_name' => 'string',
             'username' => 'string',
-            'password' => 'string',
-            'secret_key' => 'string',
+            'auth_key' => 'string',
             'merchant_name' => 'string',
             'icon' => 'string',
             'min_amount' => 'integer',
@@ -237,11 +266,10 @@ class FpayPaymentMethod extends AbstractPaymentMethod
     {
         return [
             'enabled' => false,
-            'api_url' => 'https://payments.fpay.az',
+            'api_url' => 'https://ecommerce.fpay.az',
             'display_name' => 'FPay',
             'username' => '',
-            'password' => '',
-            'secret_key' => '',
+            'auth_key' => '',
             'merchant_name' => '',
             'icon' => 'fa-credit-card',
             'min_amount' => 50,
@@ -250,56 +278,51 @@ class FpayPaymentMethod extends AbstractPaymentMethod
         ];
     }
 
-    private function getSession(): ?array
+    private function buildCustomer(Order $order): array
     {
-        $cacheKey = 'fpay_session_' . md5($this->getConfig('username'));
+        $user = $order->user;
 
-        $session = Cache::get($cacheKey);
+        $fullName = trim(($user?->name ?? '') . ' ' . ($user?->surname ?? ''));
+        $phone = preg_replace('/\D/', '', (string) ($order->phone ?: $user?->phone));
 
-        if ($session) {
-            return $session;
+        $customer = [
+            'fullName' => $fullName !== '' ? $fullName : 'Carfy Customer',
+            'phone' => $phone !== '' ? '+' . $phone : '',
+        ];
+
+        if ($user?->email) {
+            $customer['email'] = $user->email;
         }
 
-        $session = $this->login();
-
-        if ($session) {
-            Cache::put($cacheKey, $session, self::TOKEN_CACHE_TTL);
-        }
-
-        return $session;
+        return $customer;
     }
 
-    private function login(): ?array
+    private function isOk(array $response): bool
     {
-        $response = $this->apiRequest('POST', '/fizzapay/login/LoginWebUser', [
-            'username' => $this->getConfig('username'),
-            'password' => $this->getConfig('password'),
-        ]);
-
-        if (($response['status']['statusCode'] ?? 0) == 1 && isset($response['token'], $response['webUserId'])) {
-            return [
-                'webUserId' => $response['webUserId'],
-                'token' => $response['token'],
-            ];
-        }
-
-        $this->log('error', "FPay login failed", ['response' => $response]);
-        return null;
+        return ($response['status'] ?? null) === 'OK';
     }
 
-    private function buildHashCode(string ...$parts): string
+    /**
+     * Signed POST. The body is serialized once and the exact same bytes are
+     * hashed and sent — re-serializing after signing breaks the signature.
+     */
+    private function apiRequest(string $path, array $payload): array
     {
-        return md5($this->getConfig('secret_key') . implode('', $parts));
-    }
+        $body = json_encode($payload, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+        $timestamp = (string) time();
+        $signing = $timestamp . '.POST.' . $path . '.' . hash('sha256', $body);
 
-    private function apiRequest(string $method, string $path, array $body): array
-    {
         $response = Http::timeout(30)
-            ->withBasicAuth($this->getConfig('username'), $this->getConfig('password'))
-            ->withHeaders(['Accept' => 'application/json', 'Content-Type' => 'application/json'])
-            ->send($method, $this->getConfig('api_url') . $path, ['json' => $body]);
+            ->withHeaders([
+                'Accept' => 'application/json',
+                'X-Api-Key' => $this->getConfig('username'),
+                'X-Timestamp' => $timestamp,
+                'X-Signature' => hash_hmac('sha256', $signing, $this->getConfig('auth_key')),
+            ])
+            ->withBody($body, 'application/json')
+            ->post(rtrim($this->getConfig('api_url'), '/') . $path);
 
-        return $response->json() ?? [];
+        return $response->json() ?? ['status' => 'HTTP_' . $response->status(), 'meta' => ['message' => $response->body()]];
     }
 
     private function mockPaymentResponse(Order $order): PaymentResult

@@ -27,6 +27,11 @@ Route::get('/payment/fpay-return/{paymentKey}', [OrderController::class, 'fpayRe
     ->name('payment.fpay.return')
     ->withoutMiddleware(VerifyCsrfToken::class);
 
+// FPay server-to-server notification: GET {webhookUrl}/{paymentKey}, no body, unsigned
+Route::get('/payment/fpay-webhook/{paymentKey}', [OrderController::class, 'fpayWebhook'])
+    ->name('payment.fpay.webhook')
+    ->withoutMiddleware(VerifyCsrfToken::class);
+
 Route::get('/payment/kapitalbank-return', [OrderController::class, 'kapitalbankReturn'])
     ->name('payment.kapitalbank.return')
     ->withoutMiddleware(VerifyCsrfToken::class);

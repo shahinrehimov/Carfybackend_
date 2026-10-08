@@ -299,7 +299,7 @@ class ReferralService
 
     private function findMaskedPan(array $data): ?string
     {
-        $keys = ['pan', 'maskedpan', 'cardnumber', 'card_number', 'cardmask', 'card_mask', 'maskedcardnumber'];
+        $keys = ['pan', 'maskedpan', 'cardnumber', 'card_number', 'cardmask', 'card_mask', 'maskedcardnumber', 'truncatepan'];
 
         foreach ($data as $key => $value) {
             if (is_string($value) && in_array(strtolower((string) $key), $keys, true)) {
