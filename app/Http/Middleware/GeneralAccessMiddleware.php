@@ -44,7 +44,6 @@ class GeneralAccessMiddleware
 
         return response()->json(GeneralResource::make([
             'message' => 'You do not have access!',
-            'token' => $token,
         ]), 403);
     }
 }

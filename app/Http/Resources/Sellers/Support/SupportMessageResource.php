@@ -29,7 +29,7 @@ class SupportMessageResource extends JsonResource
             'files'       => $this->whenLoaded('media', fn() => $this->getMedia('support_files')->map(fn($m) => [
                 'id'  => $m->id,
                 'url' => $m->getFullUrl(),
-                'name' => $m->file_name,
+                'name' => $m->name . '.' . $m->extension,
                 'size' => $m->size,
             ])),
             'is_read_by_seller' => $this->is_read_by_seller,

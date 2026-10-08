@@ -18,6 +18,34 @@ enum OrderStatusEnum: string
     case RETURNED = 'returned';
     case COURIER_ASSIGNED = 'courier_assigned';
 
+    /**
+     * Statuses an admin may move an order to by hand from this one.
+     * Payment-driven moves (pending -> processing, -> failed) happen only through the payment flow,
+     * and terminal statuses never move again.
+     *
+     * @return array<int, self>
+     */
+    public function manualTransitions(): array
+    {
+        return match ($this) {
+            self::PENDING, self::PAYMENT_PENDING => [self::CANCELED],
+            self::PROCESSING => [self::CONFIRMED, self::COURIER_ASSIGNED, self::SHIPPED, self::DELIVERED, self::CANCELED],
+            self::CONFIRMED => [self::COURIER_ASSIGNED, self::SHIPPED, self::DELIVERED, self::CANCELED],
+            self::COURIER_ASSIGNED => [self::SHIPPED, self::DELIVERED, self::CANCELED],
+            self::SHIPPED => [self::DELIVERED, self::RETURNED, self::CANCELED],
+            self::DELIVERED => [self::RETURNED],
+            self::FAILED, self::CANCELED, self::RETURNED => [],
+        };
+    }
+
+    /**
+     * Fulfilment statuses that require the order to be paid first (cash orders excepted: they are paid on delivery).
+     */
+    public function requiresPayment(): bool
+    {
+        return in_array($this, [self::CONFIRMED, self::COURIER_ASSIGNED, self::SHIPPED, self::DELIVERED], true);
+    }
+
     public static function getList(): array
     {
         $array = [];

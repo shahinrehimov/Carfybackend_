@@ -33,9 +33,9 @@ use Illuminate\Support\Facades\Route;
 Route::middleware(['general_access:sellers', RouteLogMiddleware::class])->prefix('sellers')->group(callback: static function () {
     // Public routes (no authentication required)
     Route::post('register', [RegisterController::class, 'register'])->withoutMiddleware(RouteLogMiddleware::class);
-    Route::post('login', [LoginController::class, 'login'])->withoutMiddleware(RouteLogMiddleware::class);
+    Route::post('login', [LoginController::class, 'login'])->withoutMiddleware(RouteLogMiddleware::class)->middleware('throttle:auth');
     Route::post('forgot-password', [ForgotPasswordController::class, 'forgotPassword'])->middleware(['throttle:3,1']);
-    Route::post('reset-password', [ForgotPasswordController::class, 'resetPassword'])->withoutMiddleware(RouteLogMiddleware::class);
+    Route::post('reset-password', [ForgotPasswordController::class, 'resetPassword'])->withoutMiddleware(RouteLogMiddleware::class)->middleware('throttle:auth');
 
     // Authenticated routes
     Route::group(['middleware' => ['auth:company_admin', CompanyAdminMiddleware::class]], static function () {

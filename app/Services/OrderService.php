@@ -630,8 +630,8 @@ class OrderService
         // cash/card gateway refund below only covers the cash-paid portion.
         ReferralService::instance()->handleItemBalanceRefund($order, $itemAmount, $productSubtotal);
 
-        // Nothing left to refund (in cash) for unpaid (e.g. cash) orders.
-        if ($order->payment_status !== OrderPaymentStatusEnum::PAID) {
+        // Nothing left to refund (in cash) for unpaid orders, and cash is handed back by hand.
+        if ($order->payment_status !== OrderPaymentStatusEnum::PAID || $order->paysOnDelivery()) {
             return;
         }
 
@@ -739,7 +739,8 @@ class OrderService
             OrderPaymentStatusEnum::PARTIALLY_REFUNDED,
         ]);
 
-        if ($order->payment_status !== OrderPaymentStatusEnum::PAID || $blockedOrderStatus || $alreadyRefunded) {
+        // Cash is handed back by hand; there is no gateway to refund it through
+        if ($order->payment_status !== OrderPaymentStatusEnum::PAID || $order->paysOnDelivery() || $blockedOrderStatus || $alreadyRefunded) {
             throw new BadRequestHttpException(
                 LangService::instance()
                     ->setDefault('Order cannot be refund')

@@ -157,12 +157,12 @@ return static function () {
                 Route::group(['prefix' => 'with-email'], static function () {
                     Route::get('check-email', [RegisterWithEmailController::class, 'checkEmail']);
                     Route::post('submit', [RegisterWithEmailController::class, 'register'])->withoutMiddleware(RouteLogMiddleware::class);
-                    Route::post('verify-otp/{userUuid}', [EmailVerificationController::class, 'verifyOtp']);
+                    Route::post('verify-otp/{userUuid}', [EmailVerificationController::class, 'verifyOtp'])->middleware('throttle:auth');
                 });
 
                 Route::group(['prefix' => 'with-phone'], static function () {
                     Route::post('send-otp', [RegisterWithPhoneController::class, 'sendOtp'])->middleware(['throttle:2,1']);
-                    Route::post('check-otp', [RegisterWithPhoneController::class, 'checkOtp']);
+                    Route::post('check-otp', [RegisterWithPhoneController::class, 'checkOtp'])->middleware('throttle:auth');
                     Route::post('submit', [RegisterWithPhoneController::class, 'register']);
                 });
             });
@@ -177,11 +177,11 @@ return static function () {
 
             // login
             Route::group(['prefix' => 'login'], static function () {
-                Route::post('with-email', [LoginController::class, 'loginWithEmail'])->withoutMiddleware(RouteLogMiddleware::class);
+                Route::post('with-email', [LoginController::class, 'loginWithEmail'])->withoutMiddleware(RouteLogMiddleware::class)->middleware('throttle:auth');
 
                 Route::group(['prefix' => 'with-phone'], static function () {
                     Route::post('send-otp', [LoginController::class, 'sendPhoneOtp'])->middleware(['throttle:2,1']);
-                    Route::post('submit', [LoginController::class, 'loginWithPhone']);
+                    Route::post('submit', [LoginController::class, 'loginWithPhone'])->withoutMiddleware(RouteLogMiddleware::class)->middleware('throttle:auth');
                 });
 
                 Route::post('with-third-party', [LoginController::class, 'loginFromThirdPartyProvider'])->withoutMiddleware(RouteLogMiddleware::class);
@@ -189,7 +189,7 @@ return static function () {
 
             Route::post('forgot-password', [ForgotPasswordController::class, 'forgotPassword'])->middleware(['throttle:3,1']);
 
-            Route::post('reset-password', [ForgotPasswordController::class, 'resetPassword'])->withoutMiddleware(RouteLogMiddleware::class);
+            Route::post('reset-password', [ForgotPasswordController::class, 'resetPassword'])->withoutMiddleware(RouteLogMiddleware::class)->middleware('throttle:auth');
 
             Route::group([
                 'middleware' => [

@@ -10,6 +10,16 @@ use JsonException;
 class RouteLogMiddleware
 {
     /**
+     * Request keys (at any depth) whose values must never be stored in the log.
+     */
+    public const SENSITIVE_KEYS = [
+        'password', 'password_confirmation', 'current_password', 'old_password',
+        'new_password', 'new_password_confirmation', 'otp', 'token', 'access_token',
+        'refresh_token', 'id_token', 'identity_token', 'authorization_code',
+        'card_number', 'cvv', 'cvc',
+    ];
+
+    /**
      * Handle an incoming request.
      *
      * @param Request $request
@@ -34,9 +44,25 @@ class RouteLogMiddleware
                 'ip' => $request->ip(),
                 'method' => $request->method(),
                 'action' => app('request')->route()?->getAction()['controller'] ?? '',
-                'requests' => json_encode($request->all(), JSON_THROW_ON_ERROR),
+                'requests' => json_encode(self::maskSensitive($request->all()), JSON_THROW_ON_ERROR),
             ]);
 
         return $next($request);
+    }
+
+    /**
+     * Replaces secret values (passwords, OTPs, tokens) with a placeholder, recursively.
+     */
+    public static function maskSensitive(array $data): array
+    {
+        foreach ($data as $key => $value) {
+            if (is_string($key) && in_array(strtolower($key), self::SENSITIVE_KEYS, true)) {
+                $data[$key] = '***';
+            } elseif (is_array($value)) {
+                $data[$key] = self::maskSensitive($value);
+            }
+        }
+
+        return $data;
     }
 }

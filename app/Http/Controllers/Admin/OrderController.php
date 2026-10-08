@@ -146,6 +146,8 @@ class OrderController extends Controller
 
     public function assignCourier(AssignCourierRequest $request, Order $order): JsonResponse
     {
+        $this->repo->guardStatusTransition($order, OrderStatusEnum::COURIER_ASSIGNED);
+
         $order->update([
             'courier_info' => $request->validated('courier_info'),
             'status' => OrderStatusEnum::COURIER_ASSIGNED,
@@ -165,6 +167,9 @@ class OrderController extends Controller
 
     public function requestWoltDelivery(RequestWoltDeliveryRequest $request, Order $order): JsonResponse
     {
+        // Check before calling Wolt so no courier is ever booked for an order that cannot ship
+        $this->repo->guardStatusTransition($order, OrderStatusEnum::COURIER_ASSIGNED);
+
         $companyId = $request->integer('company_id');
         $company   = Company::findOrFail($companyId);
 

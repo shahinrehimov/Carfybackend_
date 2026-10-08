@@ -7,7 +7,9 @@ use App\Enum\OrderStatusEnum;
 use App\Models\Order;
 use App\Services\Payment\PaymentMethodHelper;
 use App\Services\ProductService;
+use App\Services\LangService;
 use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Validation\ValidationException;
 
 class OrderRepository
 {
@@ -129,8 +131,13 @@ class OrderRepository
         return $order;
     }
 
+    /**
+     * @throws ValidationException
+     */
     public function changeStatus(Order $order, OrderStatusEnum $status, ?string $cancelReason = null): Order
     {
+        $this->guardStatusTransition($order, $status);
+
         $data = ['status' => $status];
 
         if ($status === OrderStatusEnum::CANCELED) {
@@ -143,5 +150,37 @@ class OrderRepository
         $order->update($data);
 
         return $order;
+    }
+
+    /**
+     * Rejects status jumps the order lifecycle does not allow, e.g. marking an unpaid card order as delivered.
+     * Keeping the current status (e.g. re-assigning a courier) is always allowed.
+     *
+     * @throws ValidationException
+     */
+    public function guardStatusTransition(Order $order, OrderStatusEnum $status): void
+    {
+        if ($order->status === $status) {
+            return;
+        }
+
+        if (!in_array($status, $order->status->manualTransitions(), true)) {
+            throw ValidationException::withMessages([
+                'status' => LangService::instance()
+                    ->setDefault('The order cannot be moved from @from to @to.')
+                    ->getLang('order_status_transition_not_allowed', [
+                        '@from' => $order->status->value,
+                        '@to' => $status->value,
+                    ]),
+            ]);
+        }
+
+        if ($status->requiresPayment() && !$order->isPaid() && !$order->paysOnDelivery()) {
+            throw ValidationException::withMessages([
+                'status' => LangService::instance()
+                    ->setDefault('The order has not been paid yet.')
+                    ->getLang('order_not_paid_yet'),
+            ]);
+        }
     }
 }
