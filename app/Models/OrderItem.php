@@ -80,7 +80,8 @@ class OrderItem extends Model
 
     public function companyProductVariant(): BelongsTo
     {
-        return $this->belongsTo(CompanyProductVariant::class);
+        // Order history must keep its listing after the seller or store deletes it
+        return $this->belongsTo(CompanyProductVariant::class)->withTrashed();
     }
 
     /**

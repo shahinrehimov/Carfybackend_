@@ -108,6 +108,8 @@ class Company extends Model implements TranslatableInterface, HasMedia
         'media',
         'admins',
         'workingHours',
+        // Listings cascade further to their basket and wishlist rows
+        'productVariantListings',
     ];
 
     public function registerMediaCollections(): void
