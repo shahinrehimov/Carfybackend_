@@ -1575,6 +1575,162 @@
           ]
         },
         {
+          "name": "Audit logs",
+          "description": "Admin/seller/user əməliyyatlarının jurnalı (route_logs). Yalnız Admin rolu.\nDefault olaraq GET sorğuları göstərilmir (include_reads=1 ilə göstərilir).\nŞifrə, OTP, token sahələri yazılarkən *** ilə maskalanır.",
+          "item": [
+            {
+              "name": "Load",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{token}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Token",
+                    "value": "{{app_token}}",
+                    "type": "text"
+                  },
+                  {
+                    "key": "accept",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{url}}/control/audit-logs/load?search=&actor_type=&actor_id=&company_id=&method=&include_reads=&ip=&date_from=&date_to=&limit=&page=",
+                  "host": [
+                    "{{url}}"
+                  ],
+                  "path": [
+                    "control",
+                    "audit-logs",
+                    "load"
+                  ],
+                  "query": [
+                    {
+                      "key": "search",
+                      "value": "",
+                      "description": "URL və ya action (controller@method) üzrə axtarış",
+                      "disabled": true
+                    },
+                    {
+                      "key": "actor_type",
+                      "value": "",
+                      "description": "admin | seller | user | guest",
+                      "disabled": true
+                    },
+                    {
+                      "key": "actor_id",
+                      "value": "",
+                      "description": "Actor ID (actor_type ilə birlikdə)",
+                      "disabled": true
+                    },
+                    {
+                      "key": "company_id",
+                      "value": "",
+                      "description": "Satıcı şirkəti",
+                      "disabled": true
+                    },
+                    {
+                      "key": "method",
+                      "value": "",
+                      "description": "GET | POST | PUT | PATCH | DELETE",
+                      "disabled": true
+                    },
+                    {
+                      "key": "include_reads",
+                      "value": "",
+                      "description": "1 = GET sorğularını da göstər",
+                      "disabled": true
+                    },
+                    {
+                      "key": "ip",
+                      "value": "",
+                      "description": "IP ünvanı",
+                      "disabled": true
+                    },
+                    {
+                      "key": "date_from",
+                      "value": "",
+                      "description": "Y-m-d",
+                      "disabled": true
+                    },
+                    {
+                      "key": "date_to",
+                      "value": "",
+                      "description": "Y-m-d",
+                      "disabled": true
+                    },
+                    {
+                      "key": "limit",
+                      "value": "",
+                      "description": "5-100, default 20",
+                      "disabled": true
+                    },
+                    {
+                      "key": "page",
+                      "value": "",
+                      "description": "Səhifə",
+                      "disabled": true
+                    }
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Show",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{token}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Token",
+                    "value": "{{app_token}}",
+                    "type": "text"
+                  },
+                  {
+                    "key": "accept",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{url}}/control/audit-logs/show/1",
+                  "host": [
+                    "{{url}}"
+                  ],
+                  "path": [
+                    "control",
+                    "audit-logs",
+                    "show",
+                    "1"
+                  ]
+                },
+                "description": "Detal: sorğunun body-si (payload) daxil."
+              },
+              "response": []
+            }
+          ]
+        },
+        {
           "name": "Commission tiers",
           "item": [
             {

@@ -19,13 +19,22 @@ return [
 
     'allowed_methods' => ['*'],
 
-    'allowed_origins' => ['*'],
+    // Only our own frontends; reflecting any Origin together with credentials lets any site call the API as the user
+    'allowed_origins' => array_values(array_filter(array_unique(array_map(static fn (?string $origin) => rtrim(trim((string) $origin), '/'), [
+        env('FRONTEND_URL'),
+        env('COMPANY_FRONTEND_URL'),
+        env('ADMIN_FRONTEND_URL'),
+        ...explode(',', (string) env('CORS_ALLOWED_ORIGINS', '')),
+    ])))),
 
-    'allowed_origins_patterns' => [],
+    // Local development servers on any port
+    'allowed_origins_patterns' => env('APP_ENV') === 'local'
+        ? ['#^https?://(localhost|127\.0\.0\.1)(:\d+)?$#']
+        : [],
 
     'allowed_headers' => ['*'],
 
-    'exposed_headers' => [],
+    'exposed_headers' => ['Retry-After'],
 
     'max_age' => 0,
 

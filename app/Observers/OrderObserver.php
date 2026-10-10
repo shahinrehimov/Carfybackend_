@@ -2,6 +2,7 @@
 
 namespace App\Observers;
 
+use App\Enum\OrderPaymentStatusEnum;
 use App\Enum\OrderStatusEnum;
 use App\Models\Order;
 use App\Services\NotificationDispatchService;
@@ -27,6 +28,23 @@ class OrderObserver
         }
 
         NotificationDispatchService::instance()->orderPlaced($order);
+    }
+
+    /**
+     * Cash is collected by the courier, so a delivered cash order is a paid order.
+     * Done in the same save so the payment status history is written by updated().
+     */
+    public function updating(Order $order): void
+    {
+        if (
+            $order->isDirty('status')
+            && $order->status === OrderStatusEnum::DELIVERED
+            && $order->paysOnDelivery()
+            && !$order->isPaid()
+        ) {
+            $order->payment_status = OrderPaymentStatusEnum::PAID;
+            $order->paid_at = now();
+        }
     }
 
     /**

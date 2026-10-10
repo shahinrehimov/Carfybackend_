@@ -132,8 +132,6 @@ class OrderController extends Controller
             $validated['cancel_reason'] ?? null,
         );
 
-        $order->statuses()->create(['status' => $newStatus]);
-
         $order = $this->repo->loadRelations($order);
 
         return response()->json(GeneralResource::make([
@@ -146,12 +144,12 @@ class OrderController extends Controller
 
     public function assignCourier(AssignCourierRequest $request, Order $order): JsonResponse
     {
+        $this->repo->guardStatusTransition($order, OrderStatusEnum::COURIER_ASSIGNED);
+
         $order->update([
             'courier_info' => $request->validated('courier_info'),
             'status' => OrderStatusEnum::COURIER_ASSIGNED,
         ]);
-
-        $order->statuses()->create(['status' => OrderStatusEnum::COURIER_ASSIGNED]);
 
         $order = $this->repo->loadRelations($order);
 
@@ -165,6 +163,9 @@ class OrderController extends Controller
 
     public function requestWoltDelivery(RequestWoltDeliveryRequest $request, Order $order): JsonResponse
     {
+        // Check before calling Wolt so no courier is ever booked for an order that cannot ship
+        $this->repo->guardStatusTransition($order, OrderStatusEnum::COURIER_ASSIGNED);
+
         $companyId = $request->integer('company_id');
         $company   = Company::findOrFail($companyId);
 
@@ -249,7 +250,6 @@ class OrderController extends Controller
         ]);
 
         $order->update(['status' => \App\Enum\OrderStatusEnum::COURIER_ASSIGNED]);
-        $order->statuses()->create(['status' => \App\Enum\OrderStatusEnum::COURIER_ASSIGNED]);
 
         $order = $this->repo->loadRelations($order);
 

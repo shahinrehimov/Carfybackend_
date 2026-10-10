@@ -14,8 +14,11 @@ use App\Observers\OrderObserver;
 use App\Observers\ProductSearchObserver;
 use App\Observers\ProductVariantSearchObserver;
 use App\Services\LoggerService;
+use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 use Laravel\Sanctum\Sanctum;
 use SocialiteProviders\Apple\Provider as AppleProvider;
@@ -62,5 +65,24 @@ class AppServiceProvider extends ServiceProvider
         ProductVariant::observe(ProductVariantSearchObserver::class);
         Brand::observe(BrandSearchObserver::class);
         Category::observe(CategorySearchObserver::class);
+
+        $this->configureRateLimiting();
+    }
+
+    /**
+     * Brute-force protection for login, OTP and password reset endpoints.
+     * Limits apply per account+IP, per IP, and per account across all IPs (distributed guessing).
+     */
+    private function configureRateLimiting(): void
+    {
+        RateLimiter::for('auth', static function (Request $request) {
+            $identifier = mb_strtolower(trim((string) $request->input('username', $request->input('email', $request->input('phone', '')))));
+
+            return [
+                Limit::perMinute(5)->by('auth:account-ip:' . $identifier . '|' . $request->ip()),
+                Limit::perMinute(20)->by('auth:ip:' . $request->ip()),
+                Limit::perMinutes(15, 20)->by('auth:account:' . $identifier),
+            ];
+        });
     }
 }

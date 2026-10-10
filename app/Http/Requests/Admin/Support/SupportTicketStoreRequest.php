@@ -20,7 +20,7 @@ class SupportTicketStoreRequest extends FormRequest
             'subject'    => ['required', 'string', 'max:500'],
             'body'       => ['required', 'string', 'max:5000'],
             'files'      => ['nullable', 'array', 'max:10'],
-            'files.*'    => ['file', 'max:10240'],
+            'files.*'    => ['file', 'extensions:jpg,jpeg,png,gif,webp,pdf,doc,docx,xls,xlsx', 'max:10240'],
         ];
     }
 }

@@ -216,6 +216,29 @@ class Order extends Model
         return $this->payment_status === OrderPaymentStatusEnum::PAID;
     }
 
+    /**
+     * Cash is collected by the courier, so a cash order is legitimately unpaid until delivery.
+     */
+    public function paysOnDelivery(): bool
+    {
+        return $this->payment_method === 'cash';
+    }
+
+    /**
+     * Statuses an admin can move this order to right now (lifecycle + payment rules).
+     *
+     * @return array<int, OrderStatusEnum>
+     */
+    public function allowedManualStatuses(): array
+    {
+        $canFulfil = $this->isPaid() || $this->paysOnDelivery();
+
+        return array_values(array_filter(
+            $this->status?->manualTransitions() ?? [],
+            static fn (OrderStatusEnum $status) => $canFulfil || !$status->requiresPayment(),
+        ));
+    }
+
     public function isPaymentPending(): bool
     {
         return $this->payment_status === OrderPaymentStatusEnum::PENDING;

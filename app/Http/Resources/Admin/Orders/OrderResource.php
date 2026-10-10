@@ -91,6 +91,7 @@ class OrderResource extends JsonResource
             'items_count' => $this->whenCounted('items'),
             'products_count' => $this->total_quantity,
             'status' => $this->status,
+            'allowed_statuses' => $this->resource->allowedManualStatuses(),
             'status_label' => LangService::instance()
                 ->setDefault(Str::title($this->status->value))
                 ->getLang('order_status_' . $this->status->value),
